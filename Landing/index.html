@@ -145,6 +145,74 @@ h1 em { font-style: italic; color: var(--ember); text-shadow: 0 0 30px rgba(196,
 
 .cta-note { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--muted); }
 
+/* Consent Toggle */
+.consent-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 14px 18px;
+  background: rgba(245,240,232,0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  opacity: 0;
+  animation: up 0.85s ease forwards 0.7s;
+}
+
+.consent-toggle {
+  appearance: none;
+  width: 44px;
+  height: 24px;
+  background: var(--surface-2);
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.consent-toggle::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: var(--muted);
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: all 0.3s ease;
+}
+
+.consent-toggle:checked {
+  background: rgba(196,98,45,0.2);
+  border-color: var(--ember);
+}
+
+.consent-toggle:checked::after {
+  background: var(--ember);
+  left: 22px;
+  box-shadow: 0 0 10px rgba(196,98,45,0.5);
+}
+
+.consent-text {
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--cream-60);
+  line-height: 1.5;
+}
+
+.consent-text a {
+  color: var(--cream);
+  text-decoration: none;
+  border-bottom: 1px solid var(--ember);
+  transition: color 0.2s;
+}
+
+.consent-text a:hover {
+  color: var(--ember);
+}
+
 /* PHONE MOCKUP */
 .hero-right {
   display: flex; align-items: center; justify-content: center;
@@ -382,6 +450,11 @@ footer p { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.
       </a>
       <span class="cta-note">No upfront fees · Live in 24hrs</span>
     </div>
+    
+    <label class="consent-wrap">
+      <input type="checkbox" class="consent-toggle" id="consentCheck" checked>
+      <span class="consent-text">I agree to the <a href="#" onclick="showTerms(); return false;">Service Agreement</a></span>
+    </label>
   </div>
 
   <div class="hero-right">
@@ -632,6 +705,32 @@ footer p { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.
     });
   }, { threshold: 0.1 });
   document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+  // Terms modal
+  function showTerms() {
+    const termsText = `Service Agreement
+
+By using Rekindle Pro, you agree to:
+
+1. Use the service for legitimate business review management
+2. Not use the service for spam, harassment, or fake reviews
+3. Comply with Google's review policies and terms of service
+4. Pay £2.50 per successfully captured review
+5. Allow us to send SMS messages on your behalf to your customers
+
+For full terms, contact us at hello@rekindlepro.com`;
+    
+    alert(termsText);
+  }
+
+  // Check consent before scrolling to sign section
+  document.querySelector('.btn-cta').addEventListener('click', function(e) {
+    if (!document.getElementById('consentCheck').checked) {
+      e.preventDefault();
+      alert('Please agree to the Service Agreement to continue.');
+      document.getElementById('consentCheck').focus();
+    }
+  });
 </script>
 </body>
 </html>
