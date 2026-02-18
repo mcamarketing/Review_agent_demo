@@ -1,4 +1,4 @@
-<!-- Removed sign section -->
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -376,7 +376,7 @@ footer p { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.
     <h1>Now imagine every<br><em>customer</em><br>gets this.</h1>
     <p class="hero-sub">That SMS you just received? That's exactly what your customers get after every visit — automatically. Good reviews captured. Bad ones handled before they go online.</p>
     <div class="cta-row">
-      <a href="#sign" class="btn-cta">
+      <a href="#" class="btn-cta" onclick="showTermsModal(); return false;">
         Start for £0 today
         <span class="material-symbols-outlined">arrow_downward</span>
       </a>
@@ -578,6 +578,137 @@ footer p { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.
     });
   }, { threshold: 0.1 });
   document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+
+<!-- Terms Modal -->
+<div id="terms-modal" class="terms-modal">
+  <div class="terms-content">
+    <h2>Terms & Conditions</h2>
+    <div class="terms-scroll">
+      <p>By using Rekindle Pro, you agree to the following terms:</p>
+      <ul>
+        <li>You are a business owner or authorized representative</li>
+        <li>You have consent from customers to send SMS messages</li>
+        <li>You will comply with all applicable SMS and privacy laws</li>
+        <li>You agree to our pricing: £2.50 per review captured</li>
+        <li>You can cancel anytime with no penalties</li>
+      </ul>
+      <p>Full terms available on request.</p>
+    </div>
+    <div class="terms-actions">
+      <label class="terms-checkbox">
+        <input type="checkbox" id="terms-check">
+        <span>I accept the Terms & Conditions</span>
+      </label>
+      <div class="terms-buttons">
+        <button class="btn-decline" onclick="hideTermsModal()">Decline</button>
+        <button class="btn-accept" id="btn-accept" disabled onclick="acceptTerms()">Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.terms-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.terms-modal.active { display: flex; }
+.terms-content {
+  background: #1C1A17;
+  border: 1px solid rgba(245,240,232,0.1);
+  border-radius: 16px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+.terms-content h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem;
+  color: #F5F0E8;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid rgba(245,240,232,0.1);
+}
+.terms-scroll {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+.terms-scroll p { color: #F5F0E8; font-size: 0.9rem; margin-bottom: 12px; }
+.terms-scroll ul { padding-left: 20px; color: #F5F0E8; font-size: 0.85rem; }
+.terms-scroll li { margin-bottom: 8px; color: rgba(245,240,232,0.7); }
+.terms-actions {
+  padding: 20px 24px;
+  border-top: 1px solid rgba(245,240,232,0.1);
+}
+.terms-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+.terms-checkbox input { width: 18px; height: 18px; accent-color: #C4622D; }
+.terms-checkbox span { color: #F5F0E8; font-size: 0.85rem; }
+.terms-buttons { display: flex; gap: 12px; }
+.btn-decline {
+  flex: 1;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid rgba(245,240,232,0.2);
+  color: #F5F0E8;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.btn-accept {
+  flex: 1;
+  padding: 12px;
+  background: #C4622D;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+.btn-accept:not(:disabled) { opacity: 1; }
+.btn-accept:not(:disabled):hover { background: #D4733E; }
+</style>
+
+<script>
+document.getElementById('terms-check').addEventListener('change', function() {
+  document.getElementById('btn-accept').disabled = !this.checked;
+});
+
+function showTermsModal() {
+  document.getElementById('terms-modal').classList.add('active');
+  document.getElementById('terms-check').checked = false;
+  document.getElementById('btn-accept').disabled = true;
+}
+
+function hideTermsModal() {
+  document.getElementById('terms-modal').classList.remove('active');
+}
+
+function acceptTerms() {
+  window.location.href = 'Onboarding/onboarding.html';
+}
 </script>
 </body>
 </html>
