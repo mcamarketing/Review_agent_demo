@@ -574,32 +574,28 @@ footer p { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.
   <p>© 2025 Rekindle Pro</p>
 </footer>
 
-<!-- n8n Web Chat Widget -->
-<script src="https://cdn.jsdelivr.net/npm/@n8n/n8n-webchat-widget@latest/dist/webchat.js"></script>
-<script>
-  WebChatWidget.init({
-    selector: '#chat-widget-container',
+<!-- n8n Chat Widget -->
+<link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+<script type="module">
+  import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+  createChat({
     webhookUrl: 'https://n8n.srv1334356.hstgr.cloud/webhook/client-support',
-    title: 'Rekindle Pro Demo',
-    placeholder: 'Ask me anything about onboarding or FAQs...',
-    avatarUrl: '',
-    showPoweredBy: false
+    target: '#n8n-chat-widget',
+    mode: 'window',
+    showWelcomeScreen: false,
+    i18n: {
+      en: {
+        title: 'Rekindle Pro Demo',
+        subtitle: 'Ask me anything about the service',
+        inputPlaceholder: 'Type your message...',
+        getStarted: 'New Conversation',
+        closeButtonTooltip: 'Close'
+      }
+    }
   });
 </script>
 
-<div id="chat-widget-container" style="position: fixed; bottom: 24px; right: 24px; width: 380px; height: 500px; z-index: 100; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.4);"></div>
-
-<style>
-@media (max-width: 600px) {
-  #chat-widget-container {
-    width: 100%;
-    height: 100%;
-    bottom: 0;
-    right: 0;
-    border-radius: 0;
-  }
-}
-</style>
+<div id="n8n-chat-widget" style="position: fixed; bottom: 24px; right: 24px; z-index: 100;"></div>
 
 <script>
   // Personalization from URL params
