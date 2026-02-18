@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html class="light scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Workflow Builder | Rekindle Pro</title>
+    <meta name="description" content="Visual workflow builder for lead liquidation campaigns." />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Google+Sans:wght@400;500;700&display=swap"
+        rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Google Sans', 'Inter', sans-serif;
+        }
+
+        /* Canvas styles */
+        .workflow-canvas {
+            background-image:
+                radial-gradient(circle, #e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+            min-height: calc(100vh - 140px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Node styles */
+        .workflow-node {
+            position: absolute;
+            min-width: 220px;
+            cursor: move;
+            user-select: none;
+            transition: box-shadow 0.2s;
+        }
+
+        .workflow-node:hover {
+            box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
+        }
+
+        .workflow-node.selected {
+            box-shadow: 0 0 0 2px #1a73e8, 0 8px 25px -5px rgba(26, 115, 232, 0.3);
+        }
+
+        .workflow-node.dragging {
+            opacity: 0.8;
+            z-index: 1000;
+        }
+
+        /* Connector ports */
+        .node-port {
+            width: 12px;
+            height: 12px;
+            background: white;
+            border: 2px solid #dadce0;
+            border-radius: 50%;
+            position: absolute;
+            cursor: crosshair;
+            transition: all 0.2s;
+        }
+
+        .node-port:hover {
+            border-color: #1a73e8;
+            background: #e8f0fe;
+            transform: scale(1.3);
+        }
+
+        .node-port.input {
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .node-port.output {
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .node-port.true-output {
+            bottom: -6px;
+            left: 30%;
+            transform: translateX(-50%);
+        }
+
+        .node-port.false-output {
+            bottom: -6px;
+            left: 70%;
+            transform: translateX(-50%);
+        }
+
+        /* Connection lines */
+        .connection-line {
+            stroke: #1a73e8;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .connection-temp {
+            stroke: #1a73e8;
+            stroke-width: 2;
+            stroke-dasharray: 5, 5;
+            fill: none;
+        }
+
+        /* Toolbox */
+        .toolbox-item {
+            cursor: grab;
+            transition: all 0.2s;
+        }
+
+        .toolbox-item:hover {
+            transform: translateX(4px);
+            background: #f8f9fa;
+        }
+
+        .toolbox-item:active {
+            cursor: grabbing;
+        }
+
+        /* Settings panel animation */
+        .settings-panel {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .settings-panel.hidden {
+            transform: translateX(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Node type colors */
+        .node-trigger {
+            border-left: 4px solid #1a73e8;
+        }
+
+        .node-logic {
+            border-left: 4px solid #9334ea;
+        }
+
+        .node-action {
+            border-left: 4px solid #34a853;
+        }
+
+        .node-ai {
+            border-left: 4px solid #ea4335;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        google: {
+                            blue: '#1a73e8',
+                            blueHover: '#1557b0',
+                            gray: '#f8f9fa',
+                            text: '#202124',
+                            subtext: '#5f6368',
+                            border: '#dadce0',
+                            green: '#34a853',
+                            red: '#ea4335',
+                            yellow: '#fbbc04',
+                            purple: '#9334ea',
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+
+<body class="bg-white text-google-text antialiased">
+    <!-- Header -->
+    <header class="bg-white border-b border-google-border sticky top-0 z-50">
+        <nav class="px-4 h-14 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a class="flex items-center gap-2" href="admin.html">
+                    <div
+                        class="w-8 h-8 bg-google-blue rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                        R</div>
+                    <span class="text-lg font-medium">Rekindle</span>
+                    <span class="text-google-subtext">/</span>
+                    <span class="text-lg font-medium">Builder</span>
+                </a>
+                <span class="text-xs px-2 py-1 rounded-full bg-google-blue/10 text-google-blue font-medium">DIVINE
+                    REVENUE OS</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-google-subtext flex items-center gap-1">
+                    <span class="w-2 h-2 bg-google-green rounded-full animate-pulse"></span>
+                    Auto-Saving...
+                </span>
+                <button class="px-3 py-1.5 text-sm text-google-subtext hover:bg-google-gray rounded transition-colors">
+                    Discard
+                </button>
+                <button onclick="publishWorkflow()"
+                    class="px-4 py-1.5 text-sm bg-google-green text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2">
+                    <span>⚡</span> Publish Strategy
+                </button>
+                <div class="w-8 h-8 bg-google-gray rounded-full"></div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Workflow Title Bar -->
+    <div class="bg-google-gray border-b border-google-border px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white rounded-lg border border-google-border flex items-center justify-center">
+                📋
+            </div>
+            <div>
+                <input type="text" id="workflow-name" value="Resurrection Campaign: Series B+"
+                    class="text-lg font-bold bg-transparent border-none focus:outline-none focus:ring-0 p-0" />
+                <div class="text-xs text-google-subtext">LAST EDITED <span id="last-edit">2 MINS AGO</span></div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button class="p-2 hover:bg-white rounded border border-transparent hover:border-google-border">↩️</button>
+            <button class="p-2 hover:bg-white rounded border border-transparent hover:border-google-border">↪️</button>
+            <button onclick="testRun()"
+                class="px-4 py-2 bg-white border border-google-border rounded-lg flex items-center gap-2 hover:bg-google-gray transition-colors">
+                <span class="w-2 h-2 bg-google-green rounded-full"></span>
+                Test Run
+            </button>
+        </div>
+    </div>
+
+    <div class="flex h-[calc(100vh-140px)]">
+        <!-- Toolbox Sidebar -->
+        <aside class="w-56 bg-white border-r border-google-border overflow-y-auto flex-shrink-0">
+            <div class="p-4">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-lg">🧰</span>
+                    <span class="font-bold text-sm">TOOLBOX</span>
+                </div>
+
+                <div class="relative mb-4">
+                    <input type="text" placeholder="Find component..."
+                        class="w-full pl-8 pr-3 py-2 text-sm border border-google-border rounded-lg focus:ring-1 focus:ring-google-blue focus:border-google-blue" />
+                    <svg class="w-4 h-4 absolute left-2.5 top-2.5 text-google-subtext" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+
+                <!-- Triggers -->
+                <div class="mb-4">
+                    <div class="text-xs font-bold text-google-subtext mb-2">TRIGGERS</div>
+                    <div class="space-y-1">
+                        <div class="toolbox-item p-3 rounded-lg border border-google-border" draggable="true"
+                            data-type="signal">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-google-blue/10 rounded-lg flex items-center justify-center">
+                                    ⚡
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium">Signal Detected</div>
+                                    <div class="text-xs text-google-subtext">External Event</div>
+                                </div>
+                                <div class="text-google-subtext ml-auto">⋮⋮</div>
+                            </div>
+                        </div>
+                        <div class="toolbox-item p-3 rounded-lg border border-google-border" draggable="true"
+                            data-type="timer">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-google-yellow/10 rounded-lg flex items-center justify-center">
+                                    ⏰
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium">Time Delay</div>
+                                    <div class="text-xs text-google-subtext">Wait Period</div>
+                                </div>
+                                <div class="text-google-subtext ml-auto">⋮⋮</div>
+                            </div>
+                        </div>
+                        <div class="toolbox-item p-3 rounded-lg border border-google-border" draggable="true"
+                            data-type="lead_import">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-google-green/10 rounded-lg flex items-center justify-center">
+                                    📥
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium">Lead Import</div>
+                                    <div class="text-xs text-google-subtext">CSV/CRM Sync</div>
+                                </div>
+                                <div class="text-google-subtext ml-auto">⋮⋮</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logic Flow -->
+                <div class="mb-4">
+                    <div class="text-xs font-bold text-google-subtext mb-2">LOGIC FLOW</div>
+                    <div class="space-y-1">
+                        <div class="toolbox-item p-3 rounded-lg border border-google-border" draggable="true"
+                            data-type="condition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-google-purple/10 rounded-lg flex items-center justify-center">
+                                    🔀
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium">Condition Split</div>
+                                    <div class="text-xs text-google-subtext">True / False</div>
+                                </div>
+                                <div class="text-google-subtext ml-auto">⋮⋮</div>
+                            </div>
+                        </div>
+                        <div class="toolbox-item p-3 rounded-lg border border-google-border" draggable="true"
+                            data-type="filter">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-google-purple/10 rounded-lg flex items-center justify-center">
+                                    🎯
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium">Filter Leads</div>
+                                    <div class="text-xs text-google-subtext">Match Criteria</div>
+                                </div>
+                                <div class="text-google-subtext ml-auto">⋮⋮</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="mb-4">
+                    <div class="text-xs font-bold text-google-subtext mb-2">ACTIONS</div>
+                    <div class="space-y-1">
+                        <div class="toolbox-item p-3 rounded-lg border border-google-border" draggable="true"
+                            data-type="send_email">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-google-green/10 rounded-lg flex items-center justify-center">
+                                    ✉️
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium">Send Email</div>
+                                    <div class="text-xs text-google-subtext">Compression Sequence</div>
+                                </div>
+                                <div class="text-google-subtext ml-auto">⋮⋮</div>
+                            </div>
+                        </div>
+                        <div class="toolbox-item p-3 rounded-lg border border-google-border" draggable="true"
+                            data-type="linkedin">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    💼
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium">LinkedIn Add</div>
+                                    <div class="text-xs text-google-subtext">Connect Request</div>
+                                </div>
+                                <div class="text-google-subtext ml-auto">⋮⋮</div>
+                            </div>
+                        </div>
+                        <div class="toolbox-item p-3 rounded-lg border border-google-border" draggable="true"
+                            data-type="human_gate">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-google-yellow/10 rounded-lg flex items-center justify-center">
+                                    🚩
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium">Flag for Review</div>
+                                    <div class="text-xs text-google-subtext">Human Gate Queue</div>
+                                </div>
+                                <div class="text-google-subtext ml-auto">⋮⋮</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Actions -->
+                <div class="mb-4">
+                    <div class="text-xs font-bold text-google-subtext mb-2">AI ACTIONS</div>
+                    <div class="space-y-1">
+                        <div class="toolbox-item p-3 rounded-lg border border-google-border" draggable="true"
+                            data-type="ai_compose">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-google-red/10 rounded-lg flex items-center justify-center">
+                                    🤖
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium">AI Compose</div>
+                                    <div class="text-xs text-google-subtext">Gemini Generation</div>
+                                </div>
+                                <div class="text-google-subtext ml-auto">⋮⋮</div>
+                            </div>
+                        </div>
+                        <div class="toolbox-item p-3 rounded-lg border border-google-border" draggable="true"
+                            data-type="research">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-google-red/10 rounded-lg flex items-center justify-center">
+                                    🔍
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium">Research Lead</div>
+                                    <div class="text-xs text-google-subtext">AI Agent Search</div>
+                                </div>
+                                <div class="text-google-subtext ml-auto">⋮⋮</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Canvas -->
+        <div class="flex-1 relative">
+            <div id="workflow-canvas" class="workflow-canvas w-full h-full">
+                <!-- SVG for connection lines -->
+                <svg id="connections-svg" class="absolute inset-0 w-full h-full"
+                    style="z-index: 5; pointer-events: none;"></svg>
+
+                <!-- Nodes will be added here dynamically -->
+            </div>
+
+            <!-- Help Instructions (shown when empty or ? pressed) -->
+            <div id="help-overlay"
+                class="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-white/95 backdrop-blur rounded-xl border border-google-border shadow-lg px-6 py-4 z-10">
+                <div class="text-center">
+                    <div class="font-medium text-google-text mb-2">🚀 Workflow Builder</div>
+                    <div class="text-sm text-google-subtext space-y-1">
+                        <div><span class="font-mono bg-google-gray px-1 rounded">Drag</span> from Toolbox to add nodes
+                        </div>
+                        <div><span class="font-mono bg-google-gray px-1 rounded">Click</span> output port → drag to
+                            input port to connect</div>
+                        <div><span class="font-mono bg-google-gray px-1 rounded">Double-click</span> node to delete
+                        </div>
+                        <div><span class="font-mono bg-google-gray px-1 rounded">Click</span> connection line to remove
+                        </div>
+                        <div><span class="font-mono bg-google-gray px-1 rounded">⚙️</span> Settings button to configure
+                            node</div>
+                    </div>
+                    <button onclick="document.getElementById('help-overlay').style.display='none'"
+                        class="mt-3 text-xs text-google-blue hover:underline">Got it, hide this</button>
+                </div>
+            </div>
+
+            <!-- Add Node Button (floating) -->
+            <button onclick="showAddNodeMenu(event)"
+                class="absolute bottom-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-white border border-google-border rounded-full shadow-lg flex items-center justify-center hover:bg-google-gray transition-colors z-10">
+                <span class="text-xl">+</span>
+            </button>
+        </div>
+
+        <!-- Settings Panel -->
+        <aside id="settings-panel"
+            class="settings-panel w-80 bg-white border-l border-google-border overflow-y-auto flex-shrink-0 hidden">
+            <div class="p-4 border-b border-google-border flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 bg-google-blue rounded-full"></span>
+                    <span class="font-bold text-sm" id="settings-title">TRIGGER SETTINGS</span>
+                </div>
+                <button onclick="closeSettings()" class="text-google-subtext hover:text-google-text">✕</button>
+            </div>
+
+            <div class="p-4" id="settings-content">
+                <!-- Dynamic settings form will be inserted here -->
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // =============================================
+        // WORKFLOW STATE
+        // =============================================
+        let nodes = [];
+        let connections = [];
+        let selectedNode = null;
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        let isConnecting = false;
+        let connectionStart = null;
+        let nodeIdCounter = 1;
+
+        // Node definitions
+        const nodeTypes = {
+            signal: {
+                title: 'Trigger: High Intent Signal',
+                subtitle: 'ENTRY POINT',
+                category: 'trigger',
+                icon: '⚡',
+                color: 'blue',
+                settings: [
+                    { id: 'signal_source', label: 'SIGNAL SOURCE', type: 'select', options: ['Crunchbase Data', 'LinkedIn Event', 'CRM Update', 'Manual Import'] },
+                    { id: 'confidence', label: 'MIN CONFIDENCE', type: 'number', value: 85 }
+                ]
+            },
+            timer: {
+                title: 'Time Delay',
+                subtitle: 'WAIT PERIOD',
+                category: 'trigger',
+                icon: '⏰',
+                color: 'yellow',
+                settings: [
+                    { id: 'delay_value', label: 'DELAY', type: 'number', value: 2 },
+                    { id: 'delay_unit', label: 'UNIT', type: 'select', options: ['Minutes', 'Hours', 'Days'] }
+                ]
+            },
+            lead_import: {
+                title: 'Lead Import',
+                subtitle: 'CSV/CRM SYNC',
+                category: 'trigger',
+                icon: '📥',
+                color: 'green',
+                settings: [
+                    { id: 'source', label: 'SOURCE', type: 'select', options: ['CSV Upload', 'Salesforce', 'HubSpot', 'API'] },
+                    { id: 'filter', label: 'FILTER QUERY', type: 'text', placeholder: 'status = "dead"' }
+                ]
+            },
+            condition: {
+                title: 'Check: Decision Maker?',
+                subtitle: 'Matches "VP", "Director", "Head of"',
+                category: 'logic',
+                icon: '🔀',
+                color: 'purple',
+                hasConditionalOutputs: true,
+                settings: [
+                    { id: 'field', label: 'FIELD TO CHECK', type: 'select', options: ['title', 'role', 'company_size', 'days_silent'] },
+                    { id: 'operator', label: 'OPERATOR', type: 'select', options: ['contains', 'equals', 'greater_than', 'less_than'] },
+                    { id: 'value', label: 'VALUE', type: 'text', value: 'VP' }
+                ]
+            },
+            filter: {
+                title: 'Filter Leads',
+                subtitle: 'MATCH CRITERIA',
+                category: 'logic',
+                icon: '🎯',
+                color: 'purple',
+                settings: [
+                    { id: 'vertical', label: 'VERTICAL', type: 'select', options: ['real_estate', 'mass_tort', 'roofing', 'all'] },
+                    { id: 'min_score', label: 'MIN SCORE', type: 'number', value: 50 }
+                ]
+            },
+            send_email: {
+                title: 'Start Sequence',
+                subtitle: '"Executive Intro - High Value"',
+                category: 'action',
+                icon: '✉️',
+                color: 'green',
+                settings: [
+                    { id: 'sequence', label: 'SEQUENCE', type: 'select', options: ['COD (Cause of Death)', 'EXIT Sale', 'Self-Persuasion'] },
+                    { id: 'channel', label: 'CHANNEL', type: 'pills', options: ['Email', 'Wait 2d', 'Call'] }
+                ]
+            },
+            linkedin: {
+                title: 'LinkedIn Add',
+                subtitle: 'CONNECT REQUEST',
+                category: 'action',
+                icon: '💼',
+                color: 'blue',
+                settings: [
+                    { id: 'message', label: 'CONNECTION MESSAGE', type: 'textarea', placeholder: 'Brief intro...' }
+                ]
+            },
+            human_gate: {
+                title: 'Flag for Review',
+                subtitle: 'Assign to SDR Team Queue',
+                category: 'action',
+                icon: '🚩',
+                color: 'yellow',
+                settings: [
+                    { id: 'queue', label: 'ASSIGN TO QUEUE', type: 'select', options: ['SDR Team', 'Manager Review', 'Legal Review'] },
+                    { id: 'priority', label: 'PRIORITY', type: 'select', options: ['Normal', 'High', 'Urgent'] }
+                ]
+            },
+            ai_compose: {
+                title: 'AI Compose',
+                subtitle: 'GEMINI GENERATION',
+                category: 'ai',
+                icon: '🤖',
+                color: 'red',
+                settings: [
+                    { id: 'workflow_key', label: 'WORKFLOW', type: 'select', options: ['seller_competence_attack', 'buyer_scarcity_panic', 'medical_record_flush', 'sol_liability_shield'] },
+                    { id: 'temperature', label: 'CREATIVITY', type: 'range', min: 0, max: 1, value: 0.7 }
+                ]
+            },
+            research: {
+                title: 'Research Lead',
+                subtitle: 'AI AGENT SEARCH',
+                category: 'ai',
+                icon: '🔍',
+                color: 'red',
+                settings: [
+                    { id: 'sources', label: 'SOURCES', type: 'checkboxes', options: ['LinkedIn', 'Crunchbase', 'News', 'Company Website'] }
+                ]
+            }
+        };
+
+        const colorMap = {
+            blue: 'bg-google-blue/10 text-google-blue',
+            green: 'bg-google-green/10 text-google-green',
+            yellow: 'bg-google-yellow/10 text-google-yellow',
+            purple: 'bg-purple-100 text-purple-600',
+            red: 'bg-google-red/10 text-google-red'
+        };
+
+        // =============================================
+        // INITIALIZE DEFAULT WORKFLOW
+        // =============================================
+        function initializeWorkflow() {
+            // Add some default nodes
+            addNode('signal', 400, 100, {
+                title: 'Trigger: High Intent Signal',
+                subtitle: 'ENTRY POINT',
+                signal_source: 'Crunchbase Data',
+                confidence: 85
+            });
+
+            addNode('condition', 400, 350, {
+                title: 'Check: Decision Maker?',
+                subtitle: 'Matches "VP", "Director", "Head of"'
+            });
+
+            addNode('send_email', 250, 550, {
+                title: 'Start Sequence',
+                subtitle: '"Executive Intro - High Value"'
+            });
+
+            addNode('research', 550, 550, {
+                title: 'Find Decision Maker',
+                subtitle: 'AI Agent Search Strategy'
+            });
+
+            addNode('human_gate', 550, 750, {
+                title: 'Flag for Review',
+                subtitle: 'Assign to SDR Team Queue'
+            });
+
+            // Connect nodes
+            setTimeout(() => {
+                addConnection(1, 2);
+                addConnection(2, 3, 'true');
+                addConnection(2, 4, 'false');
+                addConnection(4, 5);
+            }, 100);
+        }
+
+        // =============================================
+        // NODE OPERATIONS
+        // =============================================
+        function addNode(type, x, y, customConfig = {}) {
+            const config = nodeTypes[type];
+            if (!config) return;
+
+            const id = nodeIdCounter++;
+            const node = {
+                id,
+                type,
+                x,
+                y,
+                config: { ...config, ...customConfig }
+            };
+
+            nodes.push(node);
+            renderNode(node);
+            return node;
+        }
+
+        function renderNode(node) {
+            const canvas = document.getElementById('workflow-canvas');
+            const config = node.config;
+            const typeConfig = nodeTypes[node.type];
+
+            const categoryStyles = {
+                trigger: 'node-trigger',
+                logic: 'node-logic',
+                action: 'node-action',
+                ai: 'node-ai'
+            };
+
+            const nodeEl = document.createElement('div');
+            nodeEl.id = `node-${node.id}`;
+            nodeEl.className = `workflow-node bg-white rounded-xl border border-google-border shadow-sm ${categoryStyles[typeConfig.category] || ''}`;
+            nodeEl.style.left = `${node.x}px`;
+            nodeEl.style.top = `${node.y}px`;
+
+            nodeEl.innerHTML = `
+                <div class="node-port input"></div>
+                <div class="p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 ${colorMap[typeConfig.color]} rounded-lg flex items-center justify-center text-lg">
+                                ${typeConfig.icon}
+                            </div>
+                            <div>
+                                <div class="font-medium text-sm">${config.title || typeConfig.title}</div>
+                                <div class="text-xs text-google-subtext">${config.subtitle || typeConfig.subtitle}</div>
+                            </div>
+                        </div>
+                        <button class="w-6 h-6 hover:bg-google-gray rounded flex items-center justify-center text-google-subtext" onclick="openNodeSettings(${node.id})">
+                            ⚙️
+                        </button>
+                    </div>
+                    ${renderNodeDetails(node)}
+                </div>
+                ${typeConfig.hasConditionalOutputs ? `
+                    <div class="node-port true-output" data-output="true" style="background: #34a853;"></div>
+                    <div class="node-port false-output" data-output="false" style="background: #ea4335;"></div>
+                    <div class="flex justify-between px-4 pb-2 text-xs">
+                        <span class="text-google-green font-medium">TRUE</span>
+                        <span class="text-google-red font-medium">FALSE</span>
+                    </div>
+                ` : '<div class="node-port output"></div>'}
+            `;
+
+            // Add drag functionality - only if not clicking on a port or button
+            nodeEl.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('node-port') || e.target.closest('button')) return;
+                startDrag(e, node);
+            });
+            nodeEl.addEventListener('click', (e) => selectNode(node, e));
+
+            // Output port handlers - start connection
+            nodeEl.querySelectorAll('.node-port.output, .node-port.true-output, .node-port.false-output').forEach(port => {
+                port.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    startConnection(node, port.dataset.output || 'default');
+                });
+            });
+
+            // Input port handlers - end connection
+            nodeEl.querySelectorAll('.node-port.input').forEach(port => {
+                // Highlight on hover during connection
+                port.addEventListener('mouseenter', () => {
+                    if (isConnecting) {
+                        port.style.transform = 'translateX(-50%) scale(1.5)';
+                        port.style.background = '#34a853';
+                        port.style.borderColor = '#34a853';
+                    }
+                });
+                port.addEventListener('mouseleave', () => {
+                    port.style.transform = 'translateX(-50%)';
+                    port.style.background = 'white';
+                    port.style.borderColor = '#dadce0';
+                });
+
+                // Handle connection drop
+                port.addEventListener('mouseup', (e) => {
+                    e.stopPropagation();
+                    endConnection(node);
+                });
+            });
+
+            // Double-click to delete node
+            nodeEl.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                if (confirm(`Delete node "${typeConfig.title}"?`)) {
+                    deleteNode(node.id);
+                }
+            });
+
+            canvas.appendChild(nodeEl);
+        }
+
+        function deleteNode(nodeId) {
+            // Remove connections to/from this node
+            connections = connections.filter(c => c.from !== nodeId && c.to !== nodeId);
+
+            // Remove from nodes array
+            nodes = nodes.filter(n => n.id !== nodeId);
+
+            // Remove DOM element
+            const nodeEl = document.getElementById(`node-${nodeId}`);
+            if (nodeEl) nodeEl.remove();
+
+            updateConnections();
+            showToast('Node deleted');
+        }
+
+        function renderNodeDetails(node) {
+            const typeConfig = nodeTypes[node.type];
+
+            if (node.type === 'signal') {
+                return `
+                    <div class="space-y-2 text-sm">
+                        <div class="text-xs text-google-subtext">SIGNAL SOURCE</div>
+                        <div class="flex items-center gap-2 bg-google-gray rounded-lg px-3 py-2">
+                            <span class="text-google-green">🔵</span>
+                            <span>${node.config.signal_source || 'Funding Round > Series B'}</span>
+                        </div>
+                        <div class="text-xs text-google-subtext mt-2">CONFIDENCE</div>
+                        <div class="flex items-center gap-2 bg-google-gray rounded-lg px-3 py-2">
+                            <span>📊</span>
+                            <span>Score > ${node.config.confidence || 85}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (node.type === 'send_email') {
+                return `
+                    <div class="flex items-center gap-1 mt-2">
+                        <span class="px-2 py-1 bg-google-gray rounded text-xs">Email</span>
+                        <span class="text-google-subtext">→</span>
+                        <span class="px-2 py-1 bg-google-gray rounded text-xs">Wait 2d</span>
+                        <span class="text-google-subtext">→</span>
+                        <span class="px-2 py-1 bg-google-gray rounded text-xs">Call</span>
+                    </div>
+                `;
+            }
+
+            if (node.type === 'research') {
+                return `
+                    <div class="mt-2">
+                        <span class="px-2 py-1 bg-google-red/10 text-google-red rounded text-xs font-medium">✨ AI Action</span>
+                    </div>
+                `;
+            }
+
+            return '';
+        }
+
+        // =============================================
+        // DRAG & DROP
+        // =============================================
+        function startDrag(e, node) {
+            if (e.target.classList.contains('node-port')) return;
+
+            isDragging = true;
+            selectedNode = node;
+
+            const nodeEl = document.getElementById(`node-${node.id}`);
+            nodeEl.classList.add('dragging');
+
+            const rect = nodeEl.getBoundingClientRect();
+            const canvasRect = document.getElementById('workflow-canvas').getBoundingClientRect();
+
+            dragOffset = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('mouseup', endDrag);
+        }
+
+        function onDrag(e) {
+            if (!isDragging || !selectedNode) return;
+
+            const canvasRect = document.getElementById('workflow-canvas').getBoundingClientRect();
+            const newX = e.clientX - canvasRect.left - dragOffset.x;
+            const newY = e.clientY - canvasRect.top - dragOffset.y;
+
+            selectedNode.x = Math.max(0, newX);
+            selectedNode.y = Math.max(0, newY);
+
+            const nodeEl = document.getElementById(`node-${selectedNode.id}`);
+            nodeEl.style.left = `${selectedNode.x}px`;
+            nodeEl.style.top = `${selectedNode.y}px`;
+
+            updateConnections();
+        }
+
+        function endDrag() {
+            if (selectedNode) {
+                const nodeEl = document.getElementById(`node-${selectedNode.id}`);
+                nodeEl.classList.remove('dragging');
+            }
+            isDragging = false;
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('mouseup', endDrag);
+        }
+
+        // =============================================
+        // CONNECTIONS
+        // =============================================
+        let tempLine = null;
+
+        function addConnection(fromId, toId, outputType = 'default') {
+            // Prevent duplicate connections
+            const exists = connections.some(c => c.from === fromId && c.to === toId);
+            if (exists) return;
+
+            connections.push({ from: fromId, to: toId, outputType });
+            updateConnections();
+            showToast(`✓ Connected nodes`);
+        }
+
+        function removeConnection(fromId, toId) {
+            connections = connections.filter(c => !(c.from === fromId && c.to === toId));
+            updateConnections();
+        }
+
+        function updateConnections() {
+            const svg = document.getElementById('connections-svg');
+            // Keep temp line if exists
+            const existingTemp = svg.querySelector('.connection-temp');
+            svg.innerHTML = '';
+            if (existingTemp) svg.appendChild(existingTemp);
+
+            connections.forEach((conn, index) => {
+                const fromNode = document.getElementById(`node-${conn.from}`);
+                const toNode = document.getElementById(`node-${conn.to}`);
+
+                if (!fromNode || !toNode) return;
+
+                let fromPort;
+                if (conn.outputType === 'true') {
+                    fromPort = fromNode.querySelector('.true-output');
+                } else if (conn.outputType === 'false') {
+                    fromPort = fromNode.querySelector('.false-output');
+                } else {
+                    fromPort = fromNode.querySelector('.output');
+                }
+
+                const toPort = toNode.querySelector('.input');
+
+                if (!fromPort || !toPort) return;
+
+                const fromRect = fromPort.getBoundingClientRect();
+                const toRect = toPort.getBoundingClientRect();
+                const canvasRect = document.getElementById('workflow-canvas').getBoundingClientRect();
+
+                const x1 = fromRect.left + fromRect.width / 2 - canvasRect.left;
+                const y1 = fromRect.top + fromRect.height / 2 - canvasRect.top;
+                const x2 = toRect.left + toRect.width / 2 - canvasRect.left;
+                const y2 = toRect.top + toRect.height / 2 - canvasRect.top;
+
+                // Create bezier curve
+                const controlOffset = Math.abs(y2 - y1) * 0.5;
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', `M ${x1} ${y1} C ${x1} ${y1 + controlOffset}, ${x2} ${y2 - controlOffset}, ${x2} ${y2}`);
+                path.setAttribute('class', 'connection-line');
+                path.setAttribute('data-from', conn.from);
+                path.setAttribute('data-to', conn.to);
+                path.style.pointerEvents = 'stroke';
+                path.style.cursor = 'pointer';
+
+                if (conn.outputType === 'true') {
+                    path.style.stroke = '#34a853';
+                } else if (conn.outputType === 'false') {
+                    path.style.stroke = '#ea4335';
+                }
+
+                // Click to delete connection
+                path.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm('Delete this connection?')) {
+                        removeConnection(conn.from, conn.to);
+                        showToast('Connection removed');
+                    }
+                });
+
+                svg.appendChild(path);
+            });
+        }
+
+        function startConnection(node, outputType) {
+            isConnecting = true;
+            connectionStart = { node, outputType };
+
+            // Create temp line
+            const svg = document.getElementById('connections-svg');
+            tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            tempLine.setAttribute('class', 'connection-temp');
+            svg.appendChild(tempLine);
+
+            // Add visual feedback
+            document.body.style.cursor = 'crosshair';
+
+            document.addEventListener('mousemove', drawTempConnection);
+            document.addEventListener('mouseup', cancelConnection);
+        }
+
+        function drawTempConnection(e) {
+            if (!isConnecting || !connectionStart || !tempLine) return;
+
+            const nodeEl = document.getElementById(`node-${connectionStart.node.id}`);
+            let fromPort;
+            if (connectionStart.outputType === 'true') {
+                fromPort = nodeEl.querySelector('.true-output');
+            } else if (connectionStart.outputType === 'false') {
+                fromPort = nodeEl.querySelector('.false-output');
+            } else {
+                fromPort = nodeEl.querySelector('.output');
+            }
+
+            if (!fromPort) return;
+
+            const fromRect = fromPort.getBoundingClientRect();
+            const canvasRect = document.getElementById('workflow-canvas').getBoundingClientRect();
+
+            const x1 = fromRect.left + fromRect.width / 2 - canvasRect.left;
+            const y1 = fromRect.top + fromRect.height / 2 - canvasRect.top;
+            const x2 = e.clientX - canvasRect.left;
+            const y2 = e.clientY - canvasRect.top;
+
+            const controlOffset = Math.abs(y2 - y1) * 0.5;
+            tempLine.setAttribute('d', `M ${x1} ${y1} C ${x1} ${y1 + controlOffset}, ${x2} ${y2 - controlOffset}, ${x2} ${y2}`);
+        }
+
+        function endConnection(toNode) {
+            if (isConnecting && connectionStart && connectionStart.node.id !== toNode.id) {
+                addConnection(connectionStart.node.id, toNode.id, connectionStart.outputType);
+            }
+            cancelConnection();
+        }
+
+        function cancelConnection() {
+            isConnecting = false;
+            connectionStart = null;
+            document.body.style.cursor = 'default';
+
+            // Remove temp line
+            if (tempLine) {
+                tempLine.remove();
+                tempLine = null;
+            }
+
+            document.removeEventListener('mousemove', drawTempConnection);
+            document.removeEventListener('mouseup', cancelConnection);
+        }
+
+        // =============================================
+        // NODE SELECTION & SETTINGS
+        // =============================================
+        function selectNode(node, e) {
+            if (e) e.stopPropagation();
+
+            // Deselect all
+            document.querySelectorAll('.workflow-node').forEach(n => n.classList.remove('selected'));
+
+            // Select this one
+            const nodeEl = document.getElementById(`node-${node.id}`);
+            nodeEl.classList.add('selected');
+            selectedNode = node;
+        }
+
+        function openNodeSettings(nodeId) {
+            const node = nodes.find(n => n.id === nodeId);
+            if (!node) return;
+
+            const panel = document.getElementById('settings-panel');
+            const content = document.getElementById('settings-content');
+            const title = document.getElementById('settings-title');
+
+            const typeConfig = nodeTypes[node.type];
+            title.textContent = `${typeConfig.title.toUpperCase()} SETTINGS`;
+
+            let html = '';
+
+            typeConfig.settings.forEach(setting => {
+                if (setting.type === 'select') {
+                    html += `
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-google-subtext mb-2">${setting.label}</label>
+                            <select class="w-full border border-google-border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-google-blue focus:border-google-blue">
+                                ${setting.options.map(opt => `<option ${node.config[setting.id] === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                            </select>
+                        </div>
+                    `;
+                } else if (setting.type === 'number') {
+                    html += `
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-google-subtext mb-2">${setting.label}</label>
+                            <div class="flex items-center gap-2">
+                                <span class="text-google-subtext">$</span>
+                                <input type="number" value="${node.config[setting.id] || setting.value || ''}" 
+                                    class="flex-1 border border-google-border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-google-blue focus:border-google-blue" />
+                            </div>
+                        </div>
+                    `;
+                } else if (setting.type === 'text') {
+                    html += `
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-google-subtext mb-2">${setting.label}</label>
+                            <input type="text" value="${node.config[setting.id] || ''}" placeholder="${setting.placeholder || ''}"
+                                class="w-full border border-google-border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-google-blue focus:border-google-blue" />
+                        </div>
+                    `;
+                }
+            });
+
+            html += `
+                <button onclick="updateNodeSettings(${nodeId})" 
+                    class="w-full bg-google-blue text-white py-2 rounded-lg hover:bg-google-blueHover transition-colors font-medium">
+                    Update ${typeConfig.category === 'trigger' ? 'Trigger' : 'Settings'}
+                </button>
+            `;
+
+            content.innerHTML = html;
+            panel.classList.remove('hidden');
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-panel').classList.add('hidden');
+        }
+
+        function updateNodeSettings(nodeId) {
+            // Update node config from form
+            closeSettings();
+            showToast('Settings updated');
+        }
+
+        // =============================================
+        // TOOLBOX DRAG & DROP
+        // =============================================
+        document.querySelectorAll('.toolbox-item').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('nodeType', item.dataset.type);
+            });
+        });
+
+        document.getElementById('workflow-canvas').addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        document.getElementById('workflow-canvas').addEventListener('drop', (e) => {
+            e.preventDefault();
+            const type = e.dataTransfer.getData('nodeType');
+            if (type) {
+                const canvasRect = document.getElementById('workflow-canvas').getBoundingClientRect();
+                const x = e.clientX - canvasRect.left - 110;
+                const y = e.clientY - canvasRect.top - 50;
+                addNode(type, x, y);
+            }
+        });
+
+        // =============================================
+        // ACTIONS
+        // =============================================
+        function testRun() {
+            showToast('🧪 Running workflow test...');
+            // Simulate test
+            setTimeout(() => {
+                showToast('✅ Test completed: 3 leads processed');
+            }, 2000);
+        }
+
+        function publishWorkflow() {
+            showToast('🚀 Workflow published successfully!');
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-google-text text-white px-4 py-3 rounded-lg shadow-lg z-50';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Canvas click to deselect
+        document.getElementById('workflow-canvas').addEventListener('click', (e) => {
+            if (e.target.id === 'workflow-canvas' || e.target.id === 'connections-svg') {
+                document.querySelectorAll('.workflow-node').forEach(n => n.classList.remove('selected'));
+                selectedNode = null;
+                closeSettings();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', initializeWorkflow);
+    </script>
+</body>
+
+</html>

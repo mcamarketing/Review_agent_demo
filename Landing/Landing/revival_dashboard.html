@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekindle Pro | Revival Dashboard</title>
+    <meta name="description" content="Upload leads and start your revenue revival campaign.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        google: {
+                            blue: '#1a73e8',
+                            blueHover: '#1557b0',
+                            green: '#1e8e3e',
+                            red: '#d93025',
+                            yellow: '#fbbc04',
+                            gray: '#f8f9fa',
+                            text: '#202124',
+                            subtext: '#5f6368',
+                            border: '#dadce0',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- Dynamic Config (Injected or Default) -->
+    <script>
+        window.VERTICAL_CONFIG = {
+            vertical_name: "Solar",
+            app_title: "SunRise Reactivation",
+            entity_label: "Homeowner",
+            action_button: "Reactivate Homeowners",
+            theme_color: "amber", // Solar Yellow/Orange
+            currency: "$",
+            stats: {
+                recovered_revenue: "$412,500",
+                active_conversations: 124,
+                appointments_booked: 18,
+                response_rate: "24.5%"
+            }
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400;
+        }
+
+        /* Drop Zone Animations */
+        .drop-zone {
+            transition: all 0.2s ease;
+        }
+
+        .drop-zone.dragover {
+            border-color: #1a73e8;
+            background-color: #e8f0fe;
+            transform: scale(1.01);
+        }
+
+        /* FAB Animation */
+        .fab {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .fab:hover {
+            transform: scale(1.05);
+        }
+
+        .fab.ready {
+            background-color: #1e8e3e !important;
+        }
+
+        /* List Item Hover */
+        .activity-item {
+            transition: background-color 0.15s ease;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-slate-50">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <a href="#" id="brandName" class="text-xl font-semibold text-gray-900">Rekindle Pro</a>
+                <div class="flex items-center gap-6 text-sm">
+                    <a href="#" class="text-google-blue font-medium">Dashboard</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900">Leads</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900">Reports</a>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-gray-600">notifications</span>
+                </button>
+                <div id="userAvatar"
+                    class="w-9 h-9 rounded-full bg-google-blue text-white flex items-center justify-center text-sm font-medium">
+                    FT
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 py-8">
+
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 id="pageTitle" class="text-2xl font-medium text-gray-900">Revival Center</h1>
+            <p id="pageSubtitle" class="text-gray-600 mt-1">Upload leads to start the revival process</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Left Column: Drop Zone Card -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+
+                    <!-- Drop Zone -->
+                    <div id="dropZone"
+                        class="drop-zone border-2 border-dashed border-gray-300 rounded-xl p-12 text-center cursor-pointer hover:border-google-blue hover:bg-blue-50/30">
+                        <input type="file" id="fileInput" accept=".csv" class="hidden">
+
+                        <div id="uploadPrompt">
+                            <div
+                                class="w-16 h-16 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-google-blue text-3xl">upload_file</span>
+                            </div>
+                            <p class="text-gray-900 font-medium mb-1">Drop your leads CSV here</p>
+                            <p class="text-sm text-gray-500">or click to browse</p>
+                        </div>
+
+                        <div id="fileReady" class="hidden">
+                            <div
+                                class="w-16 h-16 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-google-green text-3xl">check_circle</span>
+                            </div>
+                            <p class="text-gray-900 font-medium mb-1" id="fileName">leads.csv</p>
+                            <p class="text-sm text-gray-500" id="rowCount">0 leads ready</p>
+                        </div>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-3 gap-4 mt-6">
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <p class="text-sm text-gray-500">Total Leads</p>
+                            <p class="text-2xl font-medium text-gray-900 mt-1" id="totalLeads">—</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <p class="text-sm text-gray-500">Est. Recovery</p>
+                            <p class="text-2xl font-medium text-google-green mt-1" id="estRecovery">—</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <p class="text-sm text-gray-500">Process Time</p>
+                            <p class="text-2xl font-medium text-google-blue mt-1">~15 min</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Info Card -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                    <h3 class="font-medium text-gray-900 mb-4">How it works</h3>
+                    <ol class="space-y-3 text-sm">
+                        <li class="flex items-start gap-3">
+                            <span
+                                class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-google-blue font-medium text-xs flex-shrink-0">1</span>
+                            <span class="text-gray-600">Upload your dormant leads CSV</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span
+                                class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-google-blue font-medium text-xs flex-shrink-0">2</span>
+                            <span class="text-gray-600">AI analyzes engagement patterns</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span
+                                class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-google-blue font-medium text-xs flex-shrink-0">3</span>
+                            <span class="text-gray-600">Automated SMS & voice outreach</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span
+                                class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-google-green font-medium text-xs flex-shrink-0">✓</span>
+                            <span class="text-gray-600">Recovered revenue deposited</span>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-medium text-gray-900">This Month</h3>
+                        <span
+                            class="bg-green-100 text-google-green text-xs font-medium px-2 py-1 rounded-full">+23%</span>
+                    </div>
+                    <p class="text-3xl font-medium text-gray-900">£12,450</p>
+                    <p class="text-sm text-gray-500 mt-1">Revenue recovered</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Feed (Gmail Style) -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm mt-8">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 class="font-medium text-gray-900">Activity Feed</h2>
+                <button class="text-sm text-google-blue hover:text-google-blueHover font-medium">View all</button>
+            </div>
+
+            <ul id="activityFeed" class="divide-y divide-gray-100">
+                <!-- SMS Sent -->
+                <li class="activity-item flex items-center gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-google-blue">sms</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <p class="font-medium text-gray-900 truncate">SMS sent to J.R.</p>
+                            <span class="text-xs text-gray-500 flex-shrink-0">2 min ago</span>
+                        </div>
+                        <p class="text-sm text-gray-500 truncate">"Hi, we noticed your treatment is overdue..."</p>
+                    </div>
+                    <span
+                        class="bg-green-100 text-google-green text-xs font-medium px-2 py-1 rounded-full">Delivered</span>
+                </li>
+
+                <!-- Call Attempted -->
+                <li class="activity-item flex items-center gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer">
+                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-purple-600">call</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <p class="font-medium text-gray-900 truncate">Voice call to S.M.</p>
+                            <span class="text-xs text-gray-500 flex-shrink-0">5 min ago</span>
+                        </div>
+                        <p class="text-sm text-gray-500 truncate">Duration: 2m 34s • Reached voicemail</p>
+                    </div>
+                    <span
+                        class="bg-yellow-100 text-yellow-700 text-xs font-medium px-2 py-1 rounded-full">Voicemail</span>
+                </li>
+
+                <!-- Payment Received -->
+                <li class="activity-item flex items-center gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer">
+                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-google-green">payments</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <p class="font-medium text-gray-900 truncate">Payment received from Lead #42</p>
+                            <span class="text-xs text-gray-500 flex-shrink-0">12 min ago</span>
+                        </div>
+                        <p class="text-sm text-gray-500 truncate">£500 deposit confirmed via Stripe</p>
+                    </div>
+                    <span class="bg-green-100 text-google-green text-xs font-medium px-2 py-1 rounded-full">£500</span>
+                </li>
+
+                <!-- Reply Received -->
+                <li class="activity-item flex items-center gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer">
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-orange-600">reply</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <p class="font-medium text-gray-900 truncate">Reply from M.T.</p>
+                            <span class="text-xs text-gray-500 flex-shrink-0">18 min ago</span>
+                        </div>
+                        <p class="text-sm text-gray-500 truncate">"Yes, I'm interested. Can we schedule?"</p>
+                    </div>
+                    <span
+                        class="bg-blue-100 text-google-blue text-xs font-medium px-2 py-1 rounded-full">Positive</span>
+                </li>
+
+                <!-- Lead Uploaded -->
+                <li class="activity-item flex items-center gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer">
+                    <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-gray-600">upload</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <p class="font-medium text-gray-900 truncate">Batch uploaded: dormant_q4.csv</p>
+                            <span class="text-xs text-gray-500 flex-shrink-0">1 hour ago</span>
+                        </div>
+                        <p class="text-sm text-gray-500 truncate">47 leads processed, 3 invalid numbers</p>
+                    </div>
+                    <span class="bg-gray-100 text-gray-600 text-xs font-medium px-2 py-1 rounded-full">Processed</span>
+                </li>
+            </ul>
+        </div>
+    </main>
+
+    <!-- Extended FAB (Floating Action Button) -->
+    <button id="fabButton"
+        class="fab fixed bottom-8 right-8 bg-google-blue text-white rounded-full px-6 py-4 shadow-lg hover:shadow-xl flex items-center gap-3 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled>
+        <span class="material-symbols-outlined" id="fabIcon">upload</span>
+        <span id="fabText">Upload First</span>
+    </button>
+
+    <script>
+        // ============ CONFIGURATION ============
+        // Tenant API Key (would come from auth in production)
+        // LIVE DEMO KEY - Fumiko Teppanyaki
+        const TENANT_KEY = 'fumiko-key-live';
+
+        // App state
+        let appConfig = null;
+        let uploadedFile = null;
+
+        // DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadPrompt = document.getElementById('uploadPrompt');
+        const fileReady = document.getElementById('fileReady');
+        const fabButton = document.getElementById('fabButton');
+        const fabIcon = document.getElementById('fabIcon');
+        const fabText = document.getElementById('fabText');
+
+        // ============ INVISIBLE VERTICAL INJECTION ============
+        // On load: Ask "Who am I?" and morph the UI
+        async function loadConfig() {
+            try {
+                const response = await fetch('/config', {
+                    headers: { 'X-Tenant-Key': TENANT_KEY }
+                });
+
+                if (!response.ok) {
+                    console.warn('Config fetch failed, using defaults');
+                    return applyDefaultConfig();
+                }
+
+                appConfig = await response.json();
+                console.log('Config loaded:', appConfig);
+                applyConfig(appConfig);
+
+            } catch (error) {
+                console.warn('Config fetch error:', error);
+                applyDefaultConfig();
+            }
+        }
+
+        function applyConfig(config) {
+            // Brand name in nav
+            document.getElementById('brandName').textContent = config.brand_name || 'Rekindle Pro';
+
+            // Page title
+            document.getElementById('pageTitle').textContent =
+                config.vertical === 'Hospitality' ? 'Guest Revival Center' : 'Revival Center';
+
+            // Page subtitle with entity label
+            document.getElementById('pageSubtitle').textContent =
+                `Upload ${config.entity_label?.toLowerCase() || 'lead'}s to start the revival process`;
+
+            // FAB button text (when ready)
+            fabText.dataset.readyText = config.button_text || 'Start Campaign';
+
+            // Currency symbol
+            window.currencySymbol = config.currency || '£';
+
+            // User avatar initials
+            document.getElementById('userAvatar').textContent =
+                config.brand_name?.split(' ').map(w => w[0]).join('').substring(0, 2) || 'RP';
+        }
+
+        function applyDefaultConfig() {
+            appConfig = {
+                brand_name: 'Rekindle Pro',
+                vertical: 'Generic',
+                entity_label: 'Lead',
+                button_text: 'Start Campaign',
+                currency: '£'
+            };
+            applyConfig(appConfig);
+        }
+
+        // ============ FILE HANDLING ============
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.name.endsWith('.csv')) {
+                handleFile(file);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        function handleFile(file) {
+            uploadedFile = file;
+            const currency = window.currencySymbol || '£';
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const lines = e.target.result.split('\n').filter(l => l.trim());
+                const rowCount = Math.max(0, lines.length - 1);
+
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('rowCount').textContent =
+                    `${rowCount} ${appConfig?.entity_label?.toLowerCase() || 'lead'}s ready`;
+                document.getElementById('totalLeads').textContent = rowCount;
+                document.getElementById('estRecovery').textContent = `${currency}${(rowCount * 150).toLocaleString()}`;
+
+                uploadPrompt.classList.add('hidden');
+                fileReady.classList.remove('hidden');
+
+                // Animate FAB to "ready" state with config button text
+                fabButton.disabled = false;
+                fabButton.classList.add('ready');
+                fabIcon.textContent = 'play_arrow';
+                fabText.textContent = fabText.dataset.readyText || 'Start Campaign';
+            };
+            reader.readAsText(file);
+        }
+
+        // ============ CAMPAIGN LAUNCH ============
+        fabButton.addEventListener('click', async () => {
+            if (!uploadedFile) return;
+
+            fabButton.disabled = true;
+            fabIcon.textContent = 'sync';
+            fabIcon.classList.add('animate-spin');
+            fabText.textContent = 'Starting...';
+
+            const formData = new FormData();
+            formData.append('file', uploadedFile);
+
+            try {
+                const response = await fetch('/start-campaign', {
+                    method: 'POST',
+                    headers: { 'X-Tenant-Key': TENANT_KEY },
+                });
+
+                const data = await response.json();
+
+                fabIcon.classList.remove('animate-spin');
+                fabIcon.textContent = 'check';
+                fabText.textContent = `${data.leads_processed || 0} ${appConfig?.entity_label || 'Lead'}s Started`;
+
+                addActivityItem('campaign', `Campaign started: ${uploadedFile.name}`, 'Just now', `${data.leads_processed || 0} calls`);
+
+            } catch (error) {
+                fabIcon.classList.remove('animate-spin');
+                fabIcon.textContent = 'error';
+                fabText.textContent = 'Error';
+                console.error(error);
+            }
+        });
+
+        // ============ ACTIVITY FEED ============
+        function addActivityItem(type, title, time, badge) {
+            const icons = {
+                campaign: { icon: 'campaign', bg: 'bg-google-blue/10', color: 'text-google-blue' },
+                sms: { icon: 'sms', bg: 'bg-blue-100', color: 'text-google-blue' },
+                call: { icon: 'call', bg: 'bg-purple-100', color: 'text-purple-600' },
+                payment: { icon: 'payments', bg: 'bg-green-100', color: 'text-google-green' },
+            };
+            const config = icons[type] || icons.campaign;
+
+            const li = document.createElement('li');
+            li.className = 'activity-item flex items-center gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer bg-blue-50/50';
+            li.innerHTML = `
+                <div class="w-10 h-10 ${config.bg} rounded-full flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined ${config.color}">${config.icon}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                        <p class="font-medium text-gray-900 truncate">${title}</p>
+                        <span class="text-xs text-gray-500 flex-shrink-0">${time}</span>
+                    </div>
+                </div>
+                <span class="bg-google-blue/10 text-google-blue text-xs font-medium px-2 py-1 rounded-full">${badge}</span>
+            `;
+
+            document.getElementById('activityFeed').prepend(li);
+            setTimeout(() => li.classList.remove('bg-blue-50/50'), 2000);
+        }
+
+        // ============ INIT ============
+        // Load config on page load - "Who am I?"
+        loadConfig();
+    </script>
+</body>
+
+</html>

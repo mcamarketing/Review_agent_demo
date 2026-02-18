@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html class="light scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Mission Control | Rekindle Pro</title>
+    <meta name="description" content="Internal admin dashboard for managing client liquidation campaigns." />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Google+Sans:wght@400;500;700&display=swap"
+        rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Google Sans', 'Inter', sans-serif;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-active {
+            background: #34a853;
+            animation: pulse 2s infinite;
+        }
+
+        .status-paused {
+            background: #fbbc04;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .tab-active {
+            border-bottom: 2px solid #1a73e8;
+            color: #1a73e8;
+        }
+
+        .modal {
+            display: none;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        google: {
+                            blue: '#1a73e8',
+                            blueHover: '#1557b0',
+                            gray: '#f8f9fa',
+                            text: '#202124',
+                            subtext: '#5f6368',
+                            border: '#dadce0',
+                            green: '#34a853',
+                            red: '#ea4335',
+                            yellow: '#fbbc04',
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+
+<body class="bg-google-gray text-google-text antialiased min-h-screen">
+    <!-- Header -->
+    <header class="bg-white border-b border-google-border sticky top-0 z-40">
+        <nav class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a class="flex items-center gap-2" href="index.html">
+                    <div
+                        class="w-8 h-8 bg-google-blue rounded-lg flex items-center justify-center text-white font-bold">
+                        R</div>
+                    <span class="text-xl font-medium tracking-tight">Rekindle <span
+                            class="text-google-blue">Pro</span></span>
+                </a>
+                <span class="text-google-subtext text-sm border-l border-google-border pl-4">Mission Control</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="api-status"
+                    class="text-xs px-2 py-1 rounded bg-google-gray text-google-subtext">Connecting...</span>
+                <button onclick="refreshData()" class="p-2 hover:bg-google-gray rounded-full" title="Refresh">
+                    <svg class="w-5 h-5 text-google-subtext" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Tabs -->
+    <div class="bg-white border-b border-google-border">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex gap-8">
+                <button onclick="showTab('dashboard')"
+                    class="tab-btn py-4 text-sm font-medium text-google-subtext hover:text-google-text border-b-2 border-transparent tab-active"
+                    data-tab="dashboard">
+                    📊 Dashboard
+                </button>
+                <button onclick="showTab('clients')"
+                    class="tab-btn py-4 text-sm font-medium text-google-subtext hover:text-google-text border-b-2 border-transparent"
+                    data-tab="clients">
+                    👥 Clients
+                </button>
+                <button onclick="showTab('leads')"
+                    class="tab-btn py-4 text-sm font-medium text-google-subtext hover:text-google-text border-b-2 border-transparent"
+                    data-tab="leads">
+                    🪦 Lead Graveyard
+                </button>
+                <button onclick="showTab('approvals')"
+                    class="tab-btn py-4 text-sm font-medium text-google-subtext hover:text-google-text border-b-2 border-transparent"
+                    data-tab="approvals">
+                    ✋ Human Gate
+                </button>
+                <button onclick="showTab('intelligence')"
+                    class="tab-btn py-4 text-sm font-medium text-google-subtext hover:text-google-text border-b-2 border-transparent"
+                    data-tab="intelligence">
+                    🧠 Intelligence
+                </button>
+                <button onclick="showTab('mission')"
+                    class="tab-btn py-4 text-sm font-medium text-google-blue hover:text-google-blueHover border-b-2 border-transparent flex items-center gap-1"
+                    data-tab="mission">
+                    🚀 Live Mission <span class="status-dot status-active ml-1"></span>
+                </button>
+                <a href="workflow_builder.html"
+                    class="py-4 text-sm font-medium text-google-blue hover:text-google-blueHover border-b-2 border-transparent flex items-center gap-1">
+                    ⚡ Workflows <span class="text-xs bg-google-blue/10 rounded px-1">Builder</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Dashboard Tab -->
+        <div id="tab-dashboard" class="tab-content">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white rounded-xl p-5 border border-google-border">
+                    <div class="text-sm text-google-subtext mb-1">Active Clients</div>
+                    <div class="text-3xl font-bold text-google-text" id="stat-clients">-</div>
+                </div>
+                <div class="bg-white rounded-xl p-5 border border-google-border">
+                    <div class="text-sm text-google-subtext mb-1">Leads in Quarantine</div>
+                    <div class="text-3xl font-bold text-google-blue" id="stat-leads">-</div>
+                </div>
+                <div class="bg-white rounded-xl p-5 border border-google-border">
+                    <div class="text-sm text-google-subtext mb-1">Pending Approval</div>
+                    <div class="text-3xl font-bold text-google-yellow" id="stat-pending">-</div>
+                </div>
+                <div class="bg-white rounded-xl p-5 border border-google-border">
+                    <div class="text-sm text-google-subtext mb-1">Liquidation Potential</div>
+                    <div class="text-3xl font-bold text-google-green" id="stat-potential">-</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-google-border p-6">
+                <h2 class="text-lg font-bold mb-4">Quick Start</h2>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <button onclick="showModal('add-client-modal')"
+                        class="p-4 border border-dashed border-google-border rounded-lg text-left hover:bg-google-gray transition-colors">
+                        <div class="text-xl mb-2">➕</div>
+                        <div class="font-medium">Add New Client</div>
+                        <div class="text-sm text-google-subtext">Onboard a new asset</div>
+                    </button>
+                    <button onclick="showTab('leads')"
+                        class="p-4 border border-dashed border-google-border rounded-lg text-left hover:bg-google-gray transition-colors">
+                        <div class="text-xl mb-2">📥</div>
+                        <div class="font-medium">Import Leads</div>
+                        <div class="text-sm text-google-subtext">Upload dead leads CSV</div>
+                    </button>
+                    <a href="roi_calculator.html"
+                        class="p-4 border border-dashed border-google-border rounded-lg text-left hover:bg-google-gray transition-colors block">
+                        <div class="text-xl mb-2">🧮</div>
+                        <div class="font-medium">ROI Calculator</div>
+                        <div class="text-sm text-google-subtext">Show prospect the math</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clients Tab -->
+        <div id="tab-clients" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-bold">Client Management</h2>
+                <button onclick="showModal('add-client-modal')"
+                    class="px-4 py-2 bg-google-blue text-white text-sm font-medium rounded-lg hover:bg-google-blueHover transition-colors">
+                    + Add Client
+                </button>
+            </div>
+            <div id="clients-list" class="space-y-3">
+                <div class="text-center py-8 text-google-subtext">Loading clients...</div>
+            </div>
+        </div>
+
+        <!-- Leads Tab -->
+        <div id="tab-leads" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-bold">Lead Graveyard</h2>
+                <div class="flex items-center gap-4">
+                    <select id="lead-client-filter" onchange="loadLeads()"
+                        class="px-3 py-2 border border-google-border rounded-lg text-sm">
+                        <option value="">All Clients</option>
+                    </select>
+                    <button onclick="showModal('import-modal')"
+                        class="px-4 py-2 bg-google-blue text-white text-sm font-medium rounded-lg hover:bg-google-blueHover transition-colors">
+                        📥 Import CSV
+                    </button>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl border border-google-border overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-google-gray">
+                        <tr>
+                            <th class="text-left p-3 font-medium text-google-subtext">Name</th>
+                            <th class="text-left p-3 font-medium text-google-subtext">Email</th>
+                            <th class="text-left p-3 font-medium text-google-subtext">Client</th>
+                            <th class="text-left p-3 font-medium text-google-subtext">Status</th>
+                            <th class="text-left p-3 font-medium text-google-subtext">Touches</th>
+                            <th class="text-left p-3 font-medium text-google-subtext">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leads-table">
+                        <tr>
+                            <td colspan="6" class="p-8 text-center text-google-subtext">Select a client or import leads
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Approvals Tab -->
+        <div id="tab-approvals" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-bold">Human Gate - Pending Approvals</h2>
+                <span id="approval-count"
+                    class="px-3 py-1 bg-google-yellow/20 text-google-yellow text-sm font-bold rounded">0 pending</span>
+            </div>
+            <div id="approvals-list" class="space-y-3">
+                <div class="text-center py-8 text-google-subtext">No pending approvals</div>
+            </div>
+        </div>
+
+        <!-- Intelligence Tab -->
+        <div id="tab-intelligence" class="tab-content hidden">
+            <div class="mb-6">
+                <h2 class="text-lg font-bold">🧠 Intelligence Analysis</h2>
+                <p class="text-sm text-google-subtext">Analyze leads using Modal serverless endpoints. Each tool
+                    calculates risk and generates urgency messages.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Intelligence Cards ... -->
+            </div>
+        </div>
+
+        <!-- Live Mission Tab -->
+        <div id="tab-mission" class="tab-content hidden">
+            <div class="mb-6">
+                <h2 class="text-lg font-bold flex items-center gap-2">
+                    🚀 Atomic PA Campaign Monitor
+                    <span id="mission-active-badge"
+                        class="text-xs px-2 py-0.5 rounded bg-google-green text-white hidden">ACTIVE</span>
+                </h2>
+                <p id="mission-batch-id" class="text-sm text-google-subtext mt-1">Acquiring signal...</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="md:col-span-2 bg-white rounded-xl border border-google-border p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium">Batch Progress (Targets: 250)</span>
+                        <span id="mission-progress-text" class="text-sm font-bold text-google-blue">0/250</span>
+                    </div>
+                    <div class="w-full bg-google-gray h-4 rounded-full overflow-hidden border border-google-border">
+                        <div id="mission-progress-bar" class="h-full bg-google-blue transition-all duration-1000"
+                            style="width: 0%"></div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 mt-6">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-google-green" id="mission-sent">0</div>
+                            <div class="text-xs text-google-subtext">Successfully Sent</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-google-red" id="mission-failed">0</div>
+                            <div class="text-xs text-google-subtext">Delivery Failures</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-google-text" id="mission-rate">0%</div>
+                            <div class="text-xs text-google-subtext">Success Rate</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-google-border p-6">
+                    <h3 class="font-bold mb-4 flex items-center gap-2">
+                        🛰️ Latest Activity
+                        <span class="animate-pulse w-2 h-2 bg-google-blue rounded-full"></span>
+                    </h3>
+                    <div id="mission-activity-feed" class="space-y-3 text-sm">
+                        <div class="py-12 text-center text-google-subtext italic">Listening for launches...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-google-border p-6">
+                <h3 class="font-bold mb-4">Tactical Configuration</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
+                    <div>
+                        <div class="text-google-subtext">Subject Line</div>
+                        <div class="font-mono text-google-blue">{FirstName}</div>
+                    </div>
+                    <div>
+                        <div class="text-google-subtext">Safety Jitter</div>
+                        <div class="font-mono">30s ± 5s</div>
+                    </div>
+                    <div>
+                        <div class="text-google-subtext">Protocol</div>
+                        <div class="font-bold text-purple-600">PATTERN-INTERRUPT (PA)</div>
+                    </div>
+                    <div>
+                        <div class="text-google-subtext">Human Gate</div>
+                        <div class="font-bold text-google-green">BYPASSED (STRICT)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- SOL Checker (Mass Tort) -->
+        <div class="bg-white rounded-xl border border-google-border p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center text-xl">⚖️
+                </div>
+                <div>
+                    <div class="font-bold text-google-text">SOL Checker</div>
+                    <div class="text-xs text-google-subtext">Mass Tort • Malpractice Shield</div>
+                </div>
+            </div>
+            <p class="text-xs text-google-subtext mb-4">Calculate Statute of Limitations risk and identify
+                malpractice exposure for mass tort claimants.</p>
+            <form id="sol-form" onsubmit="callSOLChecker(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-google-subtext mb-1">Tort Name</label>
+                    <input type="text" name="tort_name" placeholder="e.g., Camp Lejeune, Talc, Roundup" required
+                        class="w-full px-3 py-2 text-sm border border-google-border rounded-lg focus:border-google-blue focus:ring-1 focus:ring-google-blue">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-google-subtext mb-1">SOL Expiration
+                        Date</label>
+                    <input type="date" name="sol_date" required
+                        class="w-full px-3 py-2 text-sm border border-google-border rounded-lg focus:border-google-blue focus:ring-1 focus:ring-google-blue">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-google-subtext mb-1">Medical Records
+                        Status</label>
+                    <select name="meds_status"
+                        class="w-full px-3 py-2 text-sm border border-google-border rounded-lg focus:border-google-blue">
+                        <option value="missing">❌ Missing - No records submitted</option>
+                        <option value="partial">⚠️ Partial - Some records received</option>
+                        <option value="complete">✅ Complete - All records in file</option>
+                    </select>
+                </div>
+                <button type="submit"
+                    class="w-full py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors">
+                    🔍 Check SOL Risk
+                </button>
+            </form>
+            <div id="sol-result" class="mt-4 text-sm hidden"></div>
+        </div>
+
+        <!-- Compliance Audit (Roofing) -->
+        <div class="bg-white rounded-xl border border-google-border p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center text-xl">🏠
+                </div>
+                <div>
+                    <div class="font-bold text-google-text">Compliance Audit</div>
+                    <div class="text-xs text-google-subtext">Roofing • Fraud Prevention</div>
+                </div>
+            </div>
+            <p class="text-xs text-google-subtext mb-4">Check for deductible waiver fraud risk. Waiving
+                deductibles is illegal in most states (HB2102).</p>
+            <form id="compliance-form" onsubmit="callComplianceAudit(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-google-subtext mb-1">State</label>
+                    <select name="state" required
+                        class="w-full px-3 py-2 text-sm border border-google-border rounded-lg focus:border-google-blue">
+                        <option value="TX">🔴 Texas (HB2102) - Class B Misdemeanor</option>
+                        <option value="FL">🔴 Florida - Third-Degree Felony</option>
+                        <option value="CO">🟠 Colorado - Class 1 Misdemeanor</option>
+                        <option value="OK">🔴 Oklahoma - Felony (up to 10 years)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-google-subtext mb-1">Deductible Amount
+                        ($)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-google-subtext">$</span>
+                        <input type="number" name="deductible_amount" value="2500" min="0" step="100"
+                            class="w-full pl-7 pr-3 py-2 text-sm border border-google-border rounded-lg focus:border-google-blue">
+                    </div>
+                </div>
+                <div class="p-3 bg-google-red/5 border border-google-red/20 rounded-lg">
+                    <label class="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox" name="waiver_requested"
+                            class="rounded border-google-red text-google-red focus:ring-google-red">
+                        <span class="font-medium text-google-red">⚠️ Customer requested deductible waiver</span>
+                    </label>
+                    <p class="text-xs text-google-subtext mt-1">Checking this simulates FRAUD ALERT scenario</p>
+                </div>
+                <button type="submit"
+                    class="w-full py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium transition-colors">
+                    🔍 Audit Compliance
+                </button>
+            </form>
+            <div id="compliance-result" class="mt-4 text-sm hidden"></div>
+        </div>
+
+        <!-- Competence Attack (Real Estate) -->
+        <div class="bg-white rounded-xl border border-google-border p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-google-blue/10 rounded-lg flex items-center justify-center text-xl">🏡
+                </div>
+                <div>
+                    <div class="font-bold text-google-text">Competence Attack</div>
+                    <div class="text-xs text-google-subtext">Real Estate • Price Reality Check</div>
+                </div>
+            </div>
+            <p class="text-xs text-google-subtext mb-4">Calculate if listing is overpriced vs market comps. Uses
+                absorption rate to determine market conditions.</p>
+            <form id="competence-form" onsubmit="callCompetenceAttack(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-google-subtext mb-1">Current List Price
+                        ($)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-google-subtext">$</span>
+                        <input type="number" name="list_price" value="650000" min="0" step="1000"
+                            class="w-full pl-7 pr-3 py-2 text-sm border border-google-border rounded-lg focus:border-google-blue">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-google-subtext mb-1">Market Comp Price ($)
+                        <span class="font-normal">— avg of recent sales</span></label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-google-subtext">$</span>
+                        <input type="number" name="market_comp_price" value="525000" min="0" step="1000"
+                            class="w-full pl-7 pr-3 py-2 text-sm border border-google-border rounded-lg focus:border-google-blue">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-google-subtext mb-1">Days on Market
+                        (DOM)</label>
+                    <div class="relative">
+                        <input type="number" name="days_on_market" value="120" min="0"
+                            class="w-full px-3 py-2 text-sm border border-google-border rounded-lg focus:border-google-blue">
+                        <span class="absolute right-3 top-2 text-xs text-google-subtext">days</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-google-subtext mb-1">Absorption Rate <span
+                            class="font-normal">— months of inventory</span></label>
+                    <div class="relative">
+                        <input type="number" name="absorption_rate" value="8.5" min="0" step="0.1"
+                            class="w-full px-3 py-2 text-sm border border-google-border rounded-lg focus:border-google-blue">
+                        <span class="absolute right-3 top-2 text-xs text-google-subtext">months</span>
+                    </div>
+                    <p class="text-xs text-google-subtext mt-1">&lt;4 = Seller's | 4-6 = Neutral | &gt;6 =
+                        Buyer's Market</p>
+                </div>
+                <button type="submit"
+                    class="w-full py-2.5 bg-google-blue text-white rounded-lg hover:bg-google-blueHover font-medium transition-colors">
+                    🔍 Analyze Pricing
+                </button>
+            </form>
+            <div id="competence-result" class="mt-4 text-sm hidden"></div>
+        </div>
+
+        <!-- Neuro-Sequencer (Gemini AI) -->
+        <div class="bg-white rounded-xl border border-google-border p-6 relative overflow-hidden">
+            <div
+                class="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-purple-100 to-transparent -mr-4 -mt-4 rounded-full">
+            </div>
+            <div class="flex items-center gap-3 mb-4 relative">
+                <div
+                    class="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-xl">
+                    🧠</div>
+                <div>
+                    <div class="font-bold text-google-text">Neuro-Sequencer</div>
+                    <div class="text-xs text-google-subtext">GeminiAI • Dopamine Debt</div>
+                </div>
+            </div>
+            <p class="text-xs text-google-subtext mb-4">Generate unique, psychological "spears" to break lead
+                silence. Uses RAS Bypass & Zeigarnik Effect.</p>
+
+            <form id="neuro-form" onsubmit="callNeuroSequencer(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-google-subtext mb-1">Lead Name</label>
+                    <input type="text" name="lead_name" value="John"
+                        class="w-full px-3 py-2 text-sm border border-google-border rounded-lg focus:border-google-blue">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-google-subtext mb-1">Vertical</label>
+                        <select name="vertical"
+                            class="w-full px-3 py-2 text-sm border border-google-border rounded-lg bg-white">
+                            <option value="mass_tort">Mass Tort</option>
+                            <option value="real_estate">Real Estate</option>
+                            <option value="roofing">Roofing</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-google-subtext mb-1">Stage</label>
+                        <select name="lead_stage"
+                            class="w-full px-3 py-2 text-sm border border-google-border rounded-lg bg-white">
+                            <option value="1">1: Shock 🛸</option>
+                            <option value="2">2: Empathy 🦆</option>
+                            <option value="3">3: Mystery 🌀</option>
+                            <option value="4">4: Spear ✂️</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-google-subtext mb-1">Days Silent</label>
+                        <input type="number" name="days_ghosted" value="45"
+                            class="w-full px-3 py-2 text-sm border border-google-border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-google-subtext mb-1">Context
+                            (Tort/Prop)</label>
+                        <input type="text" name="context_input" placeholder="Camp Lejeune"
+                            class="w-full px-3 py-2 text-sm border border-google-border rounded-lg">
+                    </div>
+                </div>
+
+                <button type="submit"
+                    class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 font-medium transition-all shadow-sm">
+                    ✨ Generate Spear
+                </button>
+            </form>
+            <div id="neuro-result" class="mt-4 text-sm hidden"></div>
+        </div>
+        </div>
+        </div>
+    </main>
+
+    <!-- Add Client Modal -->
+    <div id="add-client-modal" class="modal fixed inset-0 bg-black/50 items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+            <h3 class="text-lg font-bold mb-4">Add New Client</h3>
+            <form id="add-client-form" onsubmit="createClient(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-google-subtext mb-1">Client Name</label>
+                        <input type="text" id="client-name" required
+                            class="w-full px-3 py-2 border border-google-border rounded-lg"
+                            placeholder="e.g., Top Tier Realty">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-google-subtext mb-1">Vertical Strategy</label>
+                        <select id="client-vertical" required
+                            class="w-full px-3 py-2 border border-google-border rounded-lg">
+                            <option value="">Select vertical...</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-google-subtext mb-1">Average Contract Value
+                                ($)</label>
+                            <input type="number" id="client-acv" value="5000"
+                                class="w-full px-3 py-2 border border-google-border rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-google-subtext mb-1">Your Commission %</label>
+                            <input type="number" id="client-commission" value="10" step="0.1"
+                                class="w-full px-3 py-2 border border-google-border rounded-lg">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="hideModal('add-client-modal')"
+                        class="flex-1 py-2 border border-google-border rounded-lg hover:bg-google-gray">Cancel</button>
+                    <button type="submit"
+                        class="flex-1 py-2 bg-google-blue text-white rounded-lg hover:bg-google-blueHover">Create
+                        Client</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Import Leads Modal -->
+    <div id="import-modal" class="modal fixed inset-0 bg-black/50 items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-lg mx-4">
+            <h3 class="text-lg font-bold mb-4">Import Dead Leads</h3>
+            <form id="import-form" onsubmit="importLeads(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-google-subtext mb-1">Select Client</label>
+                        <select id="import-client" required
+                            class="w-full px-3 py-2 border border-google-border rounded-lg">
+                            <option value="">Select client...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-google-subtext mb-1">CSV File</label>
+                        <input type="file" id="import-file" accept=".csv" required
+                            class="w-full px-3 py-2 border border-google-border rounded-lg">
+                        <p class="text-xs text-google-subtext mt-1">Required: email column. Optional: first_name,
+                            status, last_activity</p>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="hideModal('import-modal')"
+                        class="flex-1 py-2 border border-google-border rounded-lg hover:bg-google-gray">Cancel</button>
+                    <button type="submit"
+                        class="flex-1 py-2 bg-google-blue text-white rounded-lg hover:bg-google-blueHover">☠️ Import to
+                        Quarantine</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="preview-modal" class="modal fixed inset-0 bg-black/50 items-center justify-center z-50 overflow-auto">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 my-8 max-h-[90vh] overflow-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">🚀 Liquidation Preview</h3>
+                <button onclick="hideModal('preview-modal')"
+                    class="text-google-subtext hover:text-google-text">✕</button>
+            </div>
+            <div id="preview-status" class="text-sm text-google-subtext mb-4">Processing...</div>
+            <div id="preview-results" class="space-y-4"></div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="hideModal('preview-modal')"
+                    class="flex-1 py-2 border border-google-border rounded-lg hover:bg-google-gray">Close</button>
+                <button onclick="queueForApproval()" id="queue-btn"
+                    class="flex-1 py-2 bg-google-green text-white rounded-lg hover:bg-green-600" disabled>Queue All for
+                    Approval</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-google-text text-white px-4 py-3 rounded-lg shadow-lg hidden">
+        <span id="toast-message">Action completed</span>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/admin';
+
+        // Modal Serverless Webhooks (Antigravity Driver Tree)
+        // Modal Serverless Webhooks (Antigravity Driver Tree)
+        const MODAL_ENDPOINTS = {
+            sol_checker: 'https://minniti-riccardo--antigravity-sol-checker-sol-check-api.modal.run',
+            compliance_audit: 'https://minniti-riccardo--antigravity-compliance-audit-compliance-api.modal.run',
+            competence_attack: 'https://minniti-riccardo--antigravity-competence-attack-competence-api.modal.run',
+            generative_spear: "https://minniti-riccardo--antigravity-generative-spear-generativ-733635.modal.run",
+            lead_uploader: "https://minniti-riccardo--antigravity-lead-uploader-upload-leads-api.modal.run"
+        };
+
+        const VERTICAL_ICONS = {
+            'mass_tort': '⚖️', 'roofing': '🏠', 'agency_saas': '💼', 'real_estate': '🏡'
+        };
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshData();
+            loadVerticals();
+        });
+
+        // Tabs
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('tab-active'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            document.querySelector(`[data-tab="${tabId}"]`).classList.add('tab-active');
+
+            if (tabId === 'clients') loadClients();
+            if (tabId === 'leads') loadLeads();
+            if (tabId === 'approvals') loadApprovals();
+            if (tabId === 'mission') startMissionPoll();
+        }
+
+        let missionPollInterval = null;
+        function startMissionPoll() {
+            if (missionPollInterval) clearInterval(missionPollInterval);
+            pollMissionStatus();
+            missionPollInterval = setInterval(pollMissionStatus, 5000); // 5s updates
+        }
+
+        async function pollMissionStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/launch/status`);
+                const data = await res.json();
+
+                if (!data.active && !data.batch_id) return;
+
+                // Update UI
+                if (data.active) {
+                    document.getElementById('mission-active-badge').classList.remove('hidden');
+                } else {
+                    document.getElementById('mission-active-badge').classList.add('hidden');
+                }
+
+                document.getElementById('mission-batch-id').textContent = `Batch ID: ${data.batch_id} (Running from revival_engine/)`;
+
+                const total = 250; // Canonical Atomic Batch size
+                const current = data.total_attempted || 0;
+                document.getElementById('mission-progress-text').textContent = `${current}/${total}`;
+                document.getElementById('mission-progress-bar').style.width = `${(current / total) * 100}%`;
+
+                document.getElementById('mission-sent').textContent = data.sent;
+                document.getElementById('mission-failed').textContent = data.failed;
+                document.getElementById('mission-rate').textContent = `${data.success_rate}%`;
+
+                // Update Feed
+                const feed = document.getElementById('mission-activity-feed');
+                if (data.history && data.history.length > 0) {
+                    feed.innerHTML = data.history.reverse().map(h => `
+                        <div class="p-2 bg-google-gray/50 rounded border-l-2 ${h.status === 'sent' ? 'border-google-green' : 'border-google-red'}">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-bold truncate w-32">${h.email}</span>
+                                <span class="${h.status === 'sent' ? 'text-google-green' : 'text-google-red'} font-bold">${h.status.toUpperCase()}</span>
+                            </div>
+                            <div class="text-[10px] text-google-subtext mt-0.5">${new Date(h.timestamp).toLocaleTimeString()} • ${h.sender}</div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error("Mission Poll Error:", e);
+            }
+        }
+
+        // Modals
+        function showModal(id) { document.getElementById(id).classList.add('active'); }
+        function hideModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        // Data Loading
+        async function refreshData() {
+            try {
+                const res = await fetch(`${API_BASE}/stats`);
+                const data = await res.json();
+
+                document.getElementById('stat-clients').textContent = data.active_clients;
+                document.getElementById('stat-leads').textContent = data.leads_in_queue.toLocaleString();
+                document.getElementById('stat-pending').textContent = data.pending_approvals;
+                document.getElementById('stat-potential').textContent = '$' + data.liquidation_potential.toLocaleString();
+
+                document.getElementById('api-status').textContent = 'Connected';
+                document.getElementById('api-status').className = 'text-xs px-2 py-1 rounded bg-google-green/20 text-google-green';
+            } catch (e) {
+                document.getElementById('api-status').textContent = 'Offline';
+                document.getElementById('api-status').className = 'text-xs px-2 py-1 rounded bg-google-red/20 text-google-red';
+            }
+        }
+
+        async function loadVerticals() {
+            try {
+                const res = await fetch(`${API_BASE}/verticals`);
+                const verticals = await res.json();
+
+                const select1 = document.getElementById('client-vertical');
+                const select2 = document.getElementById('import-client');
+
+                select1.innerHTML = '<option value="">Select vertical...</option>';
+                verticals.forEach(v => {
+                    select1.innerHTML += `<option value="${v}">${VERTICAL_ICONS[v] || '📋'} ${v}</option>`;
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadClients() {
+            try {
+                const res = await fetch(`${API_BASE}/clients`);
+                const clients = await res.json();
+
+                const list = document.getElementById('clients-list');
+                const filter = document.getElementById('lead-client-filter');
+                const importSelect = document.getElementById('import-client');
+
+                if (clients.length === 0) {
+                    list.innerHTML = '<div class="text-center py-8 text-google-subtext">No clients yet. Click "Add Client" to get started.</div>';
+                    return;
+                }
+
+                // Update filter dropdown
+                filter.innerHTML = '<option value="">All Clients</option>';
+                importSelect.innerHTML = '<option value="">Select client...</option>';
+                clients.forEach(c => {
+                    filter.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+                    importSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+                });
+
+                list.innerHTML = clients.map(c => `
+                    <div class="bg-white rounded-xl border border-google-border p-5 hover:shadow-md transition-shadow">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="status-dot ${c.status === 'active' ? 'status-active' : 'status-paused'}"></div>
+                                <div>
+                                    <div class="font-bold">${c.name}</div>
+                                    <div class="text-sm text-google-subtext">${VERTICAL_ICONS[c.vertical] || '📋'} ${c.vertical}</div>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="triggerLiquidation(${c.id}, '${c.name}')" class="px-3 py-1 text-sm bg-google-blue text-white rounded hover:bg-google-blueHover font-medium">
+                                    🚀 Trigger
+                                </button>
+                                <button onclick="togglePause(${c.id}, '${c.status}')" class="px-3 py-1 text-sm border border-google-border rounded hover:bg-google-gray">
+                                    ${c.status === 'active' ? '⏸ Pause' : '▶ Resume'}
+                                </button>
+                                <button onclick="deleteClient(${c.id})" class="px-3 py-1 text-sm text-google-red border border-google-red/30 rounded hover:bg-google-red/10">Delete</button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 text-sm">
+                            <div><div class="text-google-subtext">Total Leads</div><div class="font-semibold">${c.lead_count}</div></div>
+                            <div><div class="text-google-subtext">Touched</div><div class="font-semibold text-google-blue">${c.touched}</div></div>
+                            <div><div class="text-google-subtext">ACV</div><div class="font-semibold">$${c.acv.toLocaleString()}</div></div>
+                            <div><div class="text-google-subtext">Commission</div><div class="font-semibold">${c.commission_rate}%</div></div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadLeads() {
+            const clientId = document.getElementById('lead-client-filter').value;
+            if (!clientId) {
+                document.getElementById('leads-table').innerHTML = '<tr><td colspan="6" class="p-8 text-center text-google-subtext">Select a client to view leads</td></tr>';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/clients/${clientId}/leads`);
+                const data = await res.json();
+
+                if (data.leads.length === 0) {
+                    document.getElementById('leads-table').innerHTML = '<tr><td colspan="6" class="p-8 text-center text-google-subtext">No leads yet. Import a CSV.</td></tr>';
+                    return;
+                }
+
+                document.getElementById('leads-table').innerHTML = data.leads.map(l => `
+                    <tr class="border-t border-google-border hover:bg-google-gray/50">
+                        <td class="p-3">${l.first_name || 'Unknown'}</td>
+                        <td class="p-3">${l.email}</td>
+                        <td class="p-3">${l.company || '-'}</td>
+                        <td class="p-3"><span class="px-2 py-1 text-xs rounded ${l.status === 'DEAD' ? 'bg-google-red/20 text-google-red' : 'bg-google-gray text-google-subtext'}">${l.status}</span></td>
+                        <td class="p-3">${l.touch_count}</td>
+                        <td class="p-3"><button class="text-google-blue text-sm hover:underline">Preview</button></td>
+                    </tr>
+                `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadApprovals() {
+            try {
+                const res = await fetch(`${API_BASE}/approvals`);
+                const approvals = await res.json();
+
+                document.getElementById('approval-count').textContent = `${approvals.length} pending`;
+
+                if (approvals.length === 0) {
+                    document.getElementById('approvals-list').innerHTML = '<div class="text-center py-8 text-google-subtext">No pending approvals 🎉</div>';
+                    return;
+                }
+
+                document.getElementById('approvals-list').innerHTML = approvals.map(a => `
+                    <div class="bg-white rounded-xl border border-google-border p-5">
+                        <div class="flex justify-between mb-3">
+                            <div><span class="font-medium">${a.lead_name}</span> <span class="text-google-subtext">• ${a.client_name}</span></div>
+                        </div>
+                        <div class="p-3 bg-google-gray rounded-lg text-sm mb-4">"${a.reply_text}"</div>
+                        <div class="flex gap-3">
+                            <button onclick="handleApproval(${a.id}, 'approve')" class="flex-1 py-2 bg-google-green text-white rounded-lg hover:bg-green-600">Approve</button>
+                            <button onclick="handleApproval(${a.id}, 'reject')" class="flex-1 py-2 border border-google-border rounded-lg hover:bg-google-gray">Reject</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        // Actions
+        async function createClient(e) {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('client-name').value,
+                vertical: document.getElementById('client-vertical').value,
+                acv: parseFloat(document.getElementById('client-acv').value),
+                commission_rate: parseFloat(document.getElementById('client-commission').value),
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/clients`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+                const result = await res.json();
+                showToast(result.message);
+                hideModal('add-client-modal');
+                document.getElementById('add-client-form').reset();
+                refreshData();
+                loadClients();
+            } catch (e) { showToast('Error creating client'); }
+        }
+
+        async function importLeads(e) {
+            e.preventDefault();
+            const clientId = document.getElementById('import-client').value;
+            const file = document.getElementById('import-file').files[0];
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch(`${API_BASE}/clients/${clientId}/leads/import`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                const result = await res.json();
+                showToast(result.message);
+                hideModal('import-modal');
+                refreshData();
+            } catch (e) { showToast('Error importing leads'); }
+        }
+
+        async function togglePause(clientId, currentStatus) {
+            const endpoint = currentStatus === 'active' ? 'pause' : 'resume';
+            try {
+                await fetch(`${API_BASE}/clients/${clientId}/${endpoint}`, { method: 'PATCH' });
+                showToast(`Client ${endpoint}d`);
+                loadClients();
+            } catch (e) { showToast('Error updating client'); }
+        }
+
+        async function deleteClient(clientId) {
+            if (!confirm('Delete this client and all their leads?')) return;
+            try {
+                await fetch(`${API_BASE}/clients/${clientId}`, { method: 'DELETE' });
+                showToast('Client deleted');
+                refreshData();
+                loadClients();
+            } catch (e) { showToast('Error deleting client'); }
+        }
+
+        async function handleApproval(approvalId, action) {
+            try {
+                await fetch(`${API_BASE}/approvals/${approvalId}/action`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action }),
+                });
+                showToast(`Approval ${action}d`);
+                loadApprovals();
+                refreshData();
+            } catch (e) { showToast('Error handling approval'); }
+        }
+
+        // =============================================
+        // TRIGGER LIQUIDATION - Uses REAL CompressionEngine
+        // =============================================
+        let currentPreviewClientId = null;
+        let currentPreviewData = null;
+
+        async function triggerLiquidation(clientId, clientName) {
+            currentPreviewClientId = clientId;
+            showModal('preview-modal');
+            document.getElementById('preview-status').innerHTML = `<span class="text-google-blue">⏳ Processing ${clientName}...</span>`;
+            document.getElementById('preview-results').innerHTML = '';
+            document.getElementById('queue-btn').disabled = true;
+
+            try {
+                const res = await fetch(`${API_BASE}/clients/${clientId}/trigger?batch_size=10&preview_only=true`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                currentPreviewData = data;
+
+                if (data.leads_processed === 0) {
+                    document.getElementById('preview-status').innerHTML = '<span class="text-google-yellow">No pending leads to process.</span>';
+                    return;
+                }
+
+                document.getElementById('preview-status').innerHTML =
+                    `<span class="text-google-green">✓ Processed ${data.leads_processed} leads for ${data.client} (${data.vertical})</span>`;
+
+                document.getElementById('preview-results').innerHTML = data.messages.map(m => {
+                    if (m.error) {
+                        return `<div class="border border-google-red/30 rounded-lg p-4 bg-google-red/5">
+                            <div class="font-medium text-google-red">${m.lead_name} - Error</div>
+                            <div class="text-sm text-google-subtext">${m.error}</div>
+                        </div>`;
+                    }
+                    if (m.should_stop) {
+                        return `<div class="border border-google-yellow/30 rounded-lg p-4 bg-google-yellow/5">
+                            <div class="font-medium">${m.lead_name} - STOPPED</div>
+                            <div class="text-sm text-google-subtext">${m.stop_reason}</div>
+                        </div>`;
+                    }
+                    return `<div class="border border-google-border rounded-lg p-4 hover:shadow-sm">
+                        <div class="flex justify-between mb-2">
+                            <div><span class="font-medium">${m.lead_name}</span> <span class="text-google-subtext text-sm">${m.email}</span></div>
+                            <span class="text-xs px-2 py-1 bg-google-blue/10 text-google-blue rounded">${m.stage}</span>
+                        </div>
+                        <div class="text-sm font-medium mb-1">Subject: ${m.subject || 'N/A'}</div>
+                        <div class="text-sm text-google-subtext whitespace-pre-wrap bg-google-gray p-3 rounded">${m.message || 'No message generated'}</div>
+                    </div>`;
+                }).join('');
+
+                // Enable queue button if there are valid messages
+                const validMessages = data.messages.filter(m => m.message && !m.should_stop && !m.error);
+                if (validMessages.length > 0) {
+                    document.getElementById('queue-btn').disabled = false;
+                    document.getElementById('queue-btn').textContent = `Queue ${validMessages.length} for Approval`;
+                }
+
+            } catch (e) {
+                document.getElementById('preview-status').innerHTML = `<span class="text-google-red">Error: ${e.message}</span>`;
+                console.error(e);
+            }
+        }
+
+        async function queueForApproval() {
+            if (!currentPreviewClientId) return;
+
+            document.getElementById('queue-btn').disabled = true;
+            document.getElementById('queue-btn').textContent = 'Queueing...';
+
+            try {
+                const res = await fetch(`${API_BASE}/clients/${currentPreviewClientId}/trigger?batch_size=10&preview_only=false`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+
+                showToast(`Queued ${data.queued_for_approval} messages for approval`);
+                hideModal('preview-modal');
+                refreshData();
+            } catch (e) {
+                showToast('Error queueing messages');
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        // =============================================
+        // MODAL WEBHOOK CALLS - Intelligence Analysis
+        // =============================================
+
+        async function callSOLChecker(e) {
+            e.preventDefault();
+            const form = e.target;
+            const resultDiv = document.getElementById('sol-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = '<span class="text-google-blue">⏳ Calling Modal...</span>';
+
+            try {
+                const res = await fetch(MODAL_ENDPOINTS.sol_checker, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tort_name: form.tort_name.value,
+                        sol_date: form.sol_date.value,
+                        meds_status: form.meds_status.value,
+                        retainer_status: 'signed'
+                    })
+                });
+                const data = await res.json();
+
+                const riskColor = data.risk_level === 'critical' ? 'text-google-red' :
+                    data.risk_level === 'high' ? 'text-orange-500' : 'text-google-green';
+
+                resultDiv.innerHTML = `
+                    <div class="p-4 rounded-lg bg-gray-50 border ${data.malpractice_exposure ? 'border-google-red' : 'border-gray-200'}">
+                        <div class="font-bold ${riskColor} text-lg mb-2">
+                            ${data.risk_level.toUpperCase()} RISK ${data.malpractice_exposure ? '⚠️ MALPRACTICE EXPOSURE' : ''}
+                        </div>
+                        <div class="text-sm space-y-1">
+                            <div><strong>Days Remaining:</strong> ${data.days_remaining}</div>
+                            <div><strong>Workflow:</strong> ${data.recommended_workflow}</div>
+                            <div><strong>Action:</strong> ${data.action_required}</div>
+                        </div>
+                        <div class="mt-3 p-3 bg-white rounded text-xs">${data.urgency_message}</div>
+                    </div>
+                `;
+            } catch (err) {
+                resultDiv.innerHTML = `<span class="text-google-red">Error: ${err.message}</span>`;
+            }
+        }
+
+        async function callComplianceAudit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const resultDiv = document.getElementById('compliance-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = '<span class="text-google-blue">⏳ Calling Modal...</span>';
+
+            try {
+                const res = await fetch(MODAL_ENDPOINTS.compliance_audit, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        state: form.state.value,
+                        deductible_amount: parseFloat(form.deductible_amount.value),
+                        waiver_requested: form.waiver_requested.checked,
+                        insurance_status: 'approved',
+                        contract_status: 'pending'
+                    })
+                });
+                const data = await res.json();
+
+                const riskColor = data.risk_level === 'felony_exposure' ? 'text-google-red' :
+                    data.risk_level === 'high' ? 'text-orange-500' : 'text-google-green';
+
+                resultDiv.innerHTML = `
+                    <div class="p-4 rounded-lg bg-gray-50 border ${data.violation_detected ? 'border-google-red' : 'border-gray-200'}">
+                        <div class="font-bold ${riskColor} text-lg mb-2">
+                            ${data.risk_level.toUpperCase().replace('_', ' ')} ${data.violation_detected ? '🚨 VIOLATION' : ''}
+                        </div>
+                        <div class="text-sm space-y-1">
+                            <div><strong>State Law:</strong> ${data.state_law}</div>
+                            <div><strong>Penalty:</strong> ${data.penalty}</div>
+                            <div><strong>Fine:</strong> $${data.fine?.toLocaleString() || 'N/A'}</div>
+                        </div>
+                        <div class="mt-3 p-3 bg-white rounded text-xs">${data.compliance_message}</div>
+                    </div>
+                `;
+            } catch (err) {
+                resultDiv.innerHTML = `<span class="text-google-red">Error: ${err.message}</span>`;
+            }
+        }
+
+        async function callCompetenceAttack(e) {
+            e.preventDefault();
+            const form = e.target;
+            const resultDiv = document.getElementById('competence-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = '<span class="text-google-blue">⏳ Calling Modal...</span>';
+
+            try {
+                const res = await fetch(MODAL_ENDPOINTS.competence_attack, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        list_price: parseFloat(form.list_price.value),
+                        market_comp_price: parseFloat(form.market_comp_price.value),
+                        days_on_market: parseInt(form.days_on_market.value),
+                        absorption_rate: parseFloat(form.absorption_rate.value),
+                        listing_status: 'expired'
+                    })
+                });
+                const data = await res.json();
+
+                const riskColor = data.pricing_risk === 'delusional' ? 'text-google-red' :
+                    data.pricing_risk === 'overpriced' ? 'text-orange-500' : 'text-google-green';
+
+                resultDiv.innerHTML = `
+                    <div class="p-4 rounded-lg bg-gray-50 border border-gray-200">
+                        <div class="font-bold ${riskColor} text-lg mb-2">
+                            ${data.pricing_risk.toUpperCase()} (${data.market_type} market)
+                        </div>
+                        <div class="text-sm space-y-1">
+                            <div><strong>Price Gap:</strong> ${data.price_gap_percent}% over market</div>
+                            <div><strong>DOM Penalty:</strong> ${data.dom_penalty_percent}%</div>
+                            <div><strong>Recommended:</strong> $${data.recommended_price?.toLocaleString()}</div>
+                        </div>
+                        <div class="mt-3 p-3 bg-white rounded text-xs whitespace-pre-wrap">${data.reality_message}</div>
+                    </div>
+                `;
+            } catch (err) {
+                resultDiv.innerHTML = `<span class="text-google-red">Error: ${err.message}</span>`;
+            }
+        }
+        // =============================================
+        // NEURO-SEQUENCER LOGIC
+        // =============================================
+
+        // Ensure endpoints are available
+        window.MODAL_ENDPOINTS = window.MODAL_ENDPOINTS || {
+            sol_checker: "https://minniti-riccardo--antigravity-sol-checker-sol-check-api.modal.run",
+            compliance_audit: "https://minniti-riccardo--antigravity-compliance-audit-compliance-api.modal.run",
+            competence_attack: "https://minniti-riccardo--antigravity-competence-attack-competence-api.modal.run"
+        };
+        // Add Generative Spear & Lead Uploader
+        window.MODAL_ENDPOINTS.generative_spear = "https://minniti-riccardo--antigravity-generative-spear-generativ-733635.modal.run";
+        window.MODAL_ENDPOINTS.lead_uploader = "https://minniti-riccardo--antigravity-lead-uploader-upload-leads-api.modal.run";
+
+        async function callNeuroSequencer(e) {
+            e.preventDefault();
+            const form = e.target;
+            const resultDiv = document.getElementById('neuro-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = '<span class="text-google-blue">🧠 Generating Neuro-Spear (Gemini AI)...</span>';
+
+            try {
+                const res = await fetch(window.MODAL_ENDPOINTS.generative_spear, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lead_stage: parseInt(form.lead_stage.value),
+                        lead_name: form.lead_name.value,
+                        vertical: form.vertical.value,
+                        context: {
+                            tort_name: form.context_input.value || "General Case",
+                            days_ghosted: parseInt(form.days_ghosted.value) || 30
+                        }
+                    })
+                });
+                const data = await res.json();
+
+                const stageColors = {
+                    1: "text-purple-600",
+                    2: "text-green-600",
+                    3: "text-orange-500",
+                    4: "text-red-600"
+                };
+
+                resultDiv.innerHTML = `
+                    <div class="p-4 rounded-lg bg-gray-50 border border-gray-200">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <div class="font-bold ${stageColors[data.stage]} text-lg">
+                                    Stage ${data.stage}: ${data.stage_name}
+                                </div>
+                                <div class="text-xs text-google-subtext">Strategy: ${data.objective}</div>
+                            </div>
+                            <div class="text-xs font-mono bg-black text-white px-2 py-1 rounded">GEMINI_ATOMIC</div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-center text-[10px] mb-3">
+                            <div class="bg-white p-2 border rounded">
+                                <div class="text-google-subtext">Pattern Violation</div>
+                                <div class="font-bold text-google-blue">${(data.solver_variables.violation * 100).toFixed(0)}%</div>
+                            </div>
+                            <div class="bg-white p-2 border rounded">
+                                <div class="text-google-subtext">Friction</div>
+                                <div class="font-bold text-green-600">${(data.solver_variables.friction * 10).toFixed(1)}</div>
+                            </div>
+                            <div class="bg-white p-2 border rounded">
+                                <div class="text-google-subtext">Zeigarnik</div>
+                                <div class="font-bold text-purple-600">${(data.solver_variables.zeigarnik * 100).toFixed(0)}%</div>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="text-[10px] text-google-subtext mb-0.5 uppercase">Subject Line</div>
+                            <div class="text-sm font-medium p-2 bg-white border rounded">${data.subject}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-google-subtext mb-0.5 uppercase">Message Body</div>
+                            <div class="text-sm p-2 bg-white border rounded whitespace-pre-wrap">${data.message}</div>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                resultDiv.innerHTML = `<span class="text-google-red">Error: ${err.message}</span>`;
+            }
+        }
+    </script>
+</body>
+
+</html>

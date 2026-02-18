@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html class="light scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Rekindle - Autonomous Revenue Recovery for Sales Teams</title>
+    <meta name="description"
+        content="Rekindle is the AI revenue engine that autonomously audits your CRM, identifies dormant opportunities, and re-engages them with perfect timing. Turn dead leads into revenue." />
+    <meta property="og:title" content="Rekindle - Resurrect Dead Leads Automatically" />
+    <meta property="og:description"
+        content="Stop letting revenue slip through the cracks. Rekindle acts as a 24/7 auditor, constantly scanning for buying signals." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://rekindle.ai" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="canonical" href="https://rekindle.ai" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+
+    <!-- Technical SEO: Schema Markups -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Rekindle",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "offers": {
+            "@type": "Offer",
+            "price": "499",
+            "priceCurrency": "USD"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "127"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Rekindle Pro",
+            "url": "https://rekindle.ai",
+            "logo": "https://rekindle.ai/logo.png"
+        }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What is Rekindle?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Rekindle is an AI revenue engine that autonomously audits your CRM, identifies dormant sales opportunities, and re-engages them with perfect timing to recover lost revenue."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How does AI lead revival work?",
+                "acceptedAnswer": {
+                    "@type": "Answer", 
+                    "text": "Rekindle uses a 7-layer intelligence architecture including causal validation, temporal modeling, and SHAP attribution to diagnose why leads went cold and prescribe optimal re-engagement interventions."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Can I integrate Rekindle with my CRM?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes, Rekindle integrates seamlessly with HubSpot, Salesforce, Pipedrive, and other leading CRMs to automate the entire lead recovery process."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Google+Sans:wght@400;500;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        google: {
+                            blue: '#1a73e8',
+                            blueHover: '#1557b0',
+                            red: '#d93025',
+                            yellow: '#fbbc04',
+                            green: '#1e8e3e',
+                            gray: '#f8f9fa',
+                            text: '#202124',
+                            subtext: '#474747',
+                            border: '#dadce0',
+                        },
+                        light: {
+                            bg: '#FAFAFA',
+                            surface: '#FFFFFF',
+                        }
+                    },
+                    fontFamily: {
+                        "sans": ["Google Sans", "Inter", "sans-serif"],
+                        "inter": ["Inter", "sans-serif"],
+                    },
+                    boxShadow: {
+                        'premium': '0 20px 40px -10px rgba(0,0,0,0.05), 0 10px 20px -10px rgba(0,0,0,0.02)',
+                        'premium-hover': '0 30px 60px -12px rgba(26,115,232,0.12), 0 15px 30px -12px rgba(26,115,232,0.08)',
+                        'glow': '0 0 25px -5px rgba(26,115,232,0.3)',
+                        'glow-lg': '0 0 40px -10px rgba(26,115,232,0.4)',
+                        'card': '0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.02)',
+                        'beam': '0 0 15px rgba(26, 115, 232, 0.4), inset 0 0 10px rgba(26, 115, 232, 0.1)'
+                    },
+                    animation: {
+                        'divine-bloom': 'divineBloom 1s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-border': 'pulseBorder 3s linear infinite',
+                        'shimmer': 'shimmer 2s linear infinite',
+                        'gradient-x': 'gradient-x 3s ease infinite',
+                        'reveal-up': 'revealUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                        'scan': 'scan 4s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        divineBloom: {
+                            '0%': { opacity: '0', transform: 'scale(0.98) translateY(10px)', filter: 'blur(10px)' },
+                            '100%': { opacity: '1', transform: 'scale(1) translateY(0)', filter: 'blur(0px)' },
+                        },
+                        revealUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '-200% 0' },
+                            '100%': { backgroundPosition: '200% 0' }
+                        },
+                        'gradient-x': {
+                            '0%, 100%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'left center'
+                            },
+                            '50%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'right center'
+                            },
+                        },
+                        scan: {
+                            '0%, 100%': { transform: 'translateY(0%)' },
+                            '50%': { transform: 'translateY(100%)' }
+                        }
+                    },
+                    backgroundImage: {
+                        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+                        'beam-gradient': 'linear-gradient(90deg, transparent, #1a73e8, transparent)',
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Google Sans', 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        *:focus-visible {
+            outline: 3px solid #3b82f6;
+            outline-offset: 2px;
+            border-radius: 4px;
+            z-index: 50;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            ::before,
+            ::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+
+            .hero-bg,
+            .bioluminescent-border::before,
+            .cta-pulse::after {
+                animation: none !important;
+            }
+
+            .scroll-reveal {
+                opacity: 1 !important;
+                transform: none !important;
+                transition: none !important;
+            }
+
+            .value-step {
+                opacity: 1 !important;
+                transform: none !important;
+                transition: none !important;
+            }
+        }
+
+        .hero-bg {
+            background-color: #FAFAFA;
+            background-image:
+                radial-gradient(circle at 50% 50%, rgba(26, 115, 232, 0.03) 0%, transparent 60%),
+                radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.8) 0%, transparent 40%),
+                radial-gradient(circle at 15% 85%, rgba(232, 240, 254, 0.4) 0%, transparent 45%);
+            will-change: transform;
+        }
+
+        .bioluminescent-border {
+            position: relative;
+            isolation: isolate;
+        }
+
+        .bioluminescent-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            background: linear-gradient(90deg, transparent, rgba(26, 115, 232, 0.3), transparent);
+            background-size: 200% 100%;
+            z-index: -1;
+            border-radius: inherit;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            animation: moveGradient 4s linear infinite;
+            will-change: background-position, opacity;
+        }
+
+        .bioluminescent-border:hover::before {
+            opacity: 1;
+        }
+
+        .cta-pulse::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: inherit;
+            box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.7);
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+            z-index: -1;
+            will-change: transform, box-shadow;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.4);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 15px rgba(26, 115, 232, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(26, 115, 232, 0);
+            }
+        }
+
+        @keyframes moveGradient {
+            0% {
+                background-position: 0% 0%;
+            }
+
+            100% {
+                background-position: 200% 0%;
+            }
+        }
+
+        .delay-50 {
+            animation-delay: 50ms;
+        }
+
+        .delay-100 {
+            animation-delay: 100ms;
+        }
+
+        .delay-150 {
+            animation-delay: 150ms;
+        }
+
+        .delay-200 {
+            animation-delay: 200ms;
+        }
+
+        .delay-250 {
+            animation-delay: 250ms;
+        }
+
+        .delay-300 {
+            animation-delay: 300ms;
+        }
+
+        .delay-400 {
+            animation-delay: 400ms;
+        }
+
+        .delay-500 {
+            animation-delay: 500ms;
+        }
+
+        .kinetic-card {
+            transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.5s ease;
+            will-change: transform, box-shadow;
+            transform: translateZ(0);
+        }
+
+        .kinetic-card:hover {
+            transform: translateY(-6px) translateZ(0);
+        }
+
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(30px) translateZ(0);
+            transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+
+        .scroll-reveal.active {
+            opacity: 1;
+            transform: translateY(0) translateZ(0);
+        }
+
+        @supports (not (backdrop-filter: blur(10px))) {
+
+            .backdrop-blur-xl,
+            .backdrop-blur-md,
+            .backdrop-blur-sm {
+                background-color: rgba(255, 255, 255, 0.98);
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #FAFAFA;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .value-step {
+            opacity: 0;
+            transform: translateY(20px) translateZ(0);
+            transition: opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+
+        .value-step.active {
+            opacity: 1;
+            transform: translateY(0) translateZ(0);
+        }
+
+        .blur-orb-optimized {
+            transform: translate3d(0, 0, 0);
+            will-change: transform, opacity;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for reduced motion preference
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Use requestAnimationFrame for smoother class additions during scroll
+                        requestAnimationFrame(() => {
+                            entry.target.classList.add('active');
+                            // Clean up will-change after animation to save memory, if desired.
+                            // For simplicity and continuous interaction potential, we might keep it or remove it after a timeout.
+                            setTimeout(() => {
+                                entry.target.style.willChange = 'auto';
+                            }, 1000);
+                        });
+                        const children = entry.target.querySelectorAll('.stagger-child');
+                        children.forEach((child, index) => {
+                            if (prefersReducedMotion) {
+                                child.classList.add('active');
+                            } else {
+                                setTimeout(() => {
+                                    child.classList.add('active');
+                                }, index * 100);
+                            }
+                        });
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            // Only observe if we have elements
+            const scrollReveals = document.querySelectorAll('.scroll-reveal');
+            if (scrollReveals.length > 0) {
+                scrollReveals.forEach(el => observer.observe(el));
+            }
+            document.querySelectorAll('.value-stack-container').forEach(el => {
+                new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const steps = entry.target.querySelectorAll('.value-step');
+                            steps.forEach((step, index) => {
+                                if (prefersReducedMotion) {
+                                    step.classList.add('active');
+                                } else {
+                                    setTimeout(() => {
+                                        requestAnimationFrame(() => step.classList.add('active'));
+                                    }, index * 200);
+                                }
+                            });
+                        }
+                    });
+                }, { threshold: 0.1 }).observe(el); // Lowered threshold slightly for earlier trigger
+            });
+        });
+
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+            const icon = document.querySelector('#mobileMenuBtn span');
+            icon.textContent = menu.classList.contains('hidden') ? 'menu' : 'close';
+            document.body.style.overflow = menu.classList.contains('hidden') ? 'auto' : 'hidden';
+        }
+        // ROI Calculator Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            const recoveryRate = document.getElementById('recovery-rate');
+            const rateLabel = document.querySelector('label[for="recovery-rate"] span.font-bold');
+            if (recoveryRate && rateLabel) {
+                recoveryRate.addEventListener('input', () => {
+                    rateLabel.textContent = recoveryRate.value + '%';
+                });
+            }
+        });
+
+        document.getElementById('mobileMenuBtn').addEventListener('click', toggleMobileMenu);
+    </script>
+</head>
+
+<body
+    class="bg-[#FAFAFA] text-gray-900 transition-colors duration-500 selection:bg-google-blue/20 selection:text-google-blue">
+    <a class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-white focus:text-google-blue focus:font-bold focus:shadow-lg focus:rounded-md"
+        href="#main-content">
+        Skip to main content
+    </a>
+    <nav aria-label="Main Navigation"
+        class="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-200 transition-all duration-500 hover:bg-white will-change-transform">
+        <div class="max-w-[1440px] mx-auto px-6 h-20 flex items-center justify-between animate-divine-bloom"
+            style="will-change: transform, opacity, filter;">
+            <div class="flex items-center gap-10">
+                <a aria-label="Rekindle Home"
+                    class="flex items-center gap-2.5 group focus:outline-none focus:ring-4 focus:ring-google-blue/30 rounded-lg p-1"
+                    href="index.html">
+                    <div
+                        class="w-9 h-9 bg-gradient-to-tr from-google-blue to-blue-700 rounded-lg flex items-center justify-center text-white shadow-lg shadow-google-blue/20 transition-all duration-300 group-hover:scale-105 group-hover:shadow-glow will-change-transform">
+                        <span aria-hidden="true" class="material-symbols-outlined text-[22px]">auto_awesome</span>
+                    </div>
+                    <span
+                        class="text-xl font-bold text-gray-900 tracking-tight group-hover:text-google-blue transition-colors">Rekindle</span>
+                </a>
+                <div class="hidden lg:flex items-center gap-8" role="menubar">
+                    <a class="text-[15px] font-semibold text-google-subtext hover:text-gray-900 transition-colors relative group py-2 focus:outline-none focus:text-google-blue"
+                        href="#features-heading" role="menuitem">
+                        Product
+                        <span
+                            class="absolute -bottom-1 left-0 w-0 h-0.5 bg-google-blue transition-all duration-300 group-hover:w-full will-change-[width]"></span>
+                    </a>
+                    <a class="text-[15px] font-semibold text-google-subtext hover:text-gray-900 transition-colors relative group py-2 focus:outline-none focus:text-google-blue"
+                        href="#solutions" role="menuitem">
+                        Solutions
+                        <span
+                            class="absolute -bottom-1 left-0 w-0 h-0.5 bg-google-blue transition-all duration-300 group-hover:w-full will-change-[width]"></span>
+                    </a>
+                    <a class="text-[15px] font-semibold text-google-subtext hover:text-gray-900 transition-colors relative group py-2 focus:outline-none focus:text-google-blue"
+                        href="resources.html" role="menuitem">
+                        Resources
+                        <span
+                            class="absolute -bottom-1 left-0 w-0 h-0.5 bg-google-blue transition-all duration-300 group-hover:w-full will-change-[width]"></span>
+                    </a>
+                    <a class="text-[15px] font-semibold text-google-subtext hover:text-gray-900 transition-colors relative group py-2 focus:outline-none focus:text-google-blue"
+                        href="#pricing-heading" role="menuitem">
+                        Pricing
+                        <span
+                            class="absolute -bottom-1 left-0 w-0 h-0.5 bg-google-blue transition-all duration-300 group-hover:w-full will-change-[width]"></span>
+                    </a>
+                    <a class="text-[15px] font-semibold text-google-subtext hover:text-gray-900 transition-colors relative group py-2 focus:outline-none focus:text-google-blue"
+                        href="coming_soon.html" role="menuitem">
+                        Enterprise
+                        <span
+                            class="absolute -bottom-1 left-0 w-0 h-0.5 bg-google-blue transition-all duration-300 group-hover:w-full will-change-[width]"></span>
+                    </a>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center gap-6">
+                <a href="dashboard.html"
+                    class="text-[15px] font-semibold text-google-subtext hover:text-gray-900 px-2 transition-colors focus:outline-none focus:ring-2 focus:ring-google-blue rounded-lg">Sign
+                    In</a>
+                <div class="h-6 w-px bg-gray-200"></div>
+                <button
+                    class="bioluminescent-border bg-gray-900 text-white hover:bg-black text-[15px] font-bold px-5 py-2.5 rounded-lg shadow-lg hover:shadow-glow transition-all duration-300 relative overflow-hidden group focus:outline-none focus:ring-4 focus:ring-google-blue/50 transform-gpu"
+                    onclick="window.location.href='onboarding.html'">
+                    <span class="relative z-10 flex items-center gap-2">Get started <span aria-hidden="true"
+                            class="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 transition-transform will-change-transform">arrow_forward</span></span>
+                </button>
+            </div>
+            <button aria-label="Open menu" id="mobileMenuBtn"
+                class="md:hidden text-gray-900 p-2 focus:outline-none focus:ring-2 focus:ring-google-blue rounded-lg">
+                <span aria-hidden="true" class="material-symbols-outlined">menu</span>
+            </button>
+        </div>
+        <!-- Mobile Menu Overlay -->
+        <div id="mobileMenu" class="hidden fixed inset-0 z-40 bg-white pt-24 px-6 md:hidden">
+            <div class="flex flex-col gap-6">
+                <a class="text-lg font-bold text-gray-900" href="#features-heading"
+                    onclick="toggleMobileMenu()">Product</a>
+                <a class="text-lg font-bold text-gray-900" href="#solutions" onclick="toggleMobileMenu()">Solutions</a>
+                <a class="text-lg font-bold text-gray-900" href="resources.html"
+                    onclick="toggleMobileMenu()">Resources</a>
+                <a class="text-lg font-bold text-gray-900" href="#pricing-heading"
+                    onclick="toggleMobileMenu()">Pricing</a>
+                <a class="text-lg font-bold text-gray-900" href="coming_soon.html">Enterprise</a>
+                <hr class="border-gray-200">
+                <a class="text-lg font-bold text-gray-900" href="dashboard.html">Sign In</a>
+                <a class="bg-google-blue text-white text-center py-4 rounded-xl font-bold" href="onboarding.html">Get
+                    started</a>
+            </div>
+        </div>
+    </nav>
+    <main class="relative pt-40 pb-32 overflow-hidden hero-bg" id="main-content">
+        <div aria-hidden="true" class="absolute inset-0 z-0 pointer-events-none">
+            <div class="absolute top-0 left-1/3 w-[600px] h-[600px] bg-blue-100/40 rounded-full blur-[120px] mix-blend-multiply animate-pulse transform-gpu blur-orb-optimized"
+                style="animation-duration: 8s;"></div>
+            <div class="absolute bottom-0 right-1/3 w-[500px] h-[500px] bg-purple-100/40 rounded-full blur-[100px] mix-blend-multiply animate-pulse transform-gpu blur-orb-optimized"
+                style="animation-duration: 10s;"></div>
+            <div
+                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/60 rounded-full blur-[80px] transform-gpu">
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-6 text-center relative z-10">
+            <div
+                class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 border border-gray-200 shadow-[0_2px_10px_rgba(0,0,0,0.03)] mb-10 animate-divine-bloom bioluminescent-border backdrop-blur-md cursor-default hover:border-google-blue/30 transition-all hover:-translate-y-0.5 will-change-transform">
+                <span aria-hidden="true" class="relative flex h-2 w-2">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-google-blue opacity-75"></span>
+                    <span
+                        class="relative inline-flex rounded-full h-2 w-2 bg-google-blue shadow-[0_0_8px_rgba(26,115,232,0.6)]"></span>
+                </span>
+                <span class="text-[12px] font-bold tracking-widest uppercase text-google-subtext">Free AI Audit · Review Agent Demo</span>
+            </div>
+            <h1 class="text-6xl md:text-7xl lg:text-[5.5rem] font-medium tracking-tight text-gray-900 mb-8 leading-[1.05] animate-divine-bloom delay-100"
+                style="will-change: transform, opacity, filter;">
+                Turn missed opportunities <br />
+                <span class="relative inline-block">
+                    <span
+                        class="bg-clip-text text-transparent bg-gradient-to-r from-google-blue via-blue-700 to-purple-700 animate-gradient-x pb-2"
+                        style="will-change: background-position;">into revenue</span>
+                    <span
+                        class="absolute -inset-1 bg-gradient-to-r from-google-blue/10 to-purple-500/10 blur-xl opacity-50 -z-10"></span>
+                    <svg aria-hidden="true" class="absolute w-full h-3 -bottom-1 left-0 text-google-blue/20"
+                        preserveAspectRatio="none" viewBox="0 0 100 10">
+                        <path d="M0 5 Q 50 10 100 5" fill="none" stroke="currentColor" stroke-width="2"></path>
+                    </svg>
+                </span>
+            </h1>
+            <p class="text-xl md:text-2xl text-google-subtext max-w-2xl mx-auto mb-12 leading-relaxed font-inter font-normal animate-divine-bloom delay-200"
+                style="will-change: transform, opacity, filter;">
+                We fix the gaps in your business: missed reviews, lost leads, no-shows. Get a free AI audit to see what's broken.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-5 justify-center items-center w-full mb-24 animate-divine-bloom delay-300"
+                style="will-change: transform, opacity, filter;">
+                <button
+                    class="cta-pulse relative group bg-[#1a73e8] hover:bg-[#1557b0] text-white text-lg font-bold px-8 py-4 rounded-xl shadow-[0_10px_30px_-10px_rgba(26,115,232,0.5)] hover:shadow-[0_20px_40px_-15px_rgba(26,115,232,0.6)] hover:-translate-y-1 transition-all duration-300 flex items-center gap-3 overflow-hidden focus:outline-none focus:ring-4 focus:ring-google-blue/50 transform-gpu will-change-transform"
+                    onclick="window.location.href='onboarding.html?type=audit'">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700 will-change-transform">
+                    </div>
+                    <span class="relative z-10">Get Free AI Audit</span>
+                    <span aria-hidden="true"
+                        class="material-symbols-outlined text-xl relative z-10 group-hover:translate-x-1 transition-transform will-change-transform">auto_awesome</span>
+                </button>
+                <button
+                    class="group bg-[#C4622D] hover:bg-[#D4733E] text-white border border-[#C4622D] text-lg font-bold px-8 py-4 rounded-xl shadow-[0_10px_30px_-10px_rgba(196,98,45,0.5)] hover:shadow-[0_20px_40px_-15px_rgba(196,98,45,0.6)] hover:-translate-y-1 transition-all duration-300 flex items-center gap-3 backdrop-blur-sm focus:outline-none focus:ring-4 focus:ring-[#C4622D]/50 transform-gpu will-change-transform"
+                    onclick="window.location.href='../Landing_Demo/index.html'">
+                    <span aria-hidden="true" class="material-symbols-outlined text-xl">sms</span>
+                    <span class="relative z-10">Try Review Agent Demo</span>
+                </button>
+            </div>
+            <div class="relative w-full max-w-7xl mx-auto animate-divine-bloom delay-400 perspective-1000 group/dashboard"
+                style="will-change: transform, opacity, filter;">
+                <!-- Atmospheric Glow Behind Dashboard -->
+                <div
+                    class="absolute -inset-10 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-blue-500/20 blur-3xl opacity-50 rounded-[3rem] animate-pulse-slow">
+                </div>
+
+                <!-- Main Dashboard Image Container -->
+                <div
+                    class="relative rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10 transform-gpu transition-all duration-700 hover:scale-[1.005] hover:shadow-premium-hover bg-[#050505]">
+                    <!-- Window Controls overlay (Optional, if screenshot is full window) -->
+                    <!-- We assume the screenshot includes the UI, but we add a subtle border/glass effect -->
+
+                    <img src="./assets/dashboard_full.png" alt="Rekindle Sovereign Command Center"
+                        class="w-full h-auto object-cover opacity-95 hover:opacity-100 transition-opacity"
+                        loading="eager">
+
+                    <!-- Glass Reflection Overlay -->
+                    <div class="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none">
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="mt-32 pt-16">
+                <p class="text-xs font-bold tracking-[0.2em] text-google-subtext mb-12 uppercase opacity-80 animate-divine-bloom delay-500"
+                    style="will-change: opacity, transform;">Powering Revenue Teams At</p>
+                <div class="flex flex-wrap justify-center gap-12 md:gap-20 opacity-70 hover:opacity-100 transition-opacity duration-700 grayscale hover:grayscale-0 animate-divine-bloom delay-500"
+                    role="list" style="will-change: opacity, filter;">
+                    <div class="flex items-center gap-2 text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors"
+                        role="listitem"><span class="w-6 h-6 bg-current rounded-full opacity-90"></span> Stripe</div>
+                    <div class="flex items-center gap-2 text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors"
+                        role="listitem"><span class="w-6 h-6 bg-current rounded-sm rotate-45 opacity-90"></span> Airbnb
+                    </div>
+                    <div class="flex items-center gap-2 text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors"
+                        role="listitem"><span class="w-6 h-6 bg-current rounded-md opacity-90"></span> Spotify</div>
+                    <div class="flex items-center gap-2 text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors"
+                        role="listitem"><span
+                            class="w-6 h-6 bg-current rounded-full border-4 border-white ring-2 ring-current opacity-90"></span>
+                        Linear</div>
+                    <div class="flex items-center gap-2 text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors"
+                        role="listitem"><span class="w-6 h-6 bg-current opacity-90 clip-path-polygon"></span> Vercel
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <section aria-labelledby="features-heading" class="py-32 bg-white relative overflow-hidden">
+        <div aria-hidden="true"
+            class="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-gradient-to-b from-[#FAFAFA] to-white z-0">
+        </div>
+        <div aria-hidden="true"
+            class="absolute top-1/4 right-0 w-[600px] h-[600px] bg-blue-50/50 rounded-full blur-[100px] pointer-events-none transform-gpu blur-orb-optimized">
+        </div>
+        <div class="max-w-[1200px] mx-auto px-6 relative z-10">
+            <div class="text-center max-w-3xl mx-auto mb-24 scroll-reveal">
+                <div class="text-google-blue font-extrabold tracking-widest text-xs uppercase mb-4">The Engine</div>
+                <h2 class="text-4xl md:text-5xl font-medium text-gray-900 mb-6 tracking-tight" id="features-heading">
+                    Built for <span class="text-google-blue">divine performance</span></h2>
+                <p class="text-xl text-google-subtext font-inter font-normal">
+                    A suite of autonomous agents working in concert to purify your pipeline.
+                </p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 value-stack-container">
+                <!-- Card 1: Omniscient Context (Layers 1 & 2) -->
+                <div class="col-span-1 kinetic-card p-8 rounded-3xl bg-white border border-gray-200 hover:border-blue-500/30 transition-all duration-500 group cursor-default value-step shadow-card hover:shadow-premium-hover relative overflow-hidden transform-gpu flex flex-col h-full min-h-[500px]"
+                    tabindex="0">
+                    <div aria-hidden="true"
+                        class="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
+                    </div>
+                    <div class="inline-flex items-center gap-2 mb-6 relative z-10">
+                        <span
+                            class="px-3 py-1 rounded-full bg-blue-50 text-google-blue text-[11px] font-bold uppercase tracking-widest border border-blue-100/50">Layers
+                            1-2</span>
+                    </div>
+                    <div class="mb-6 relative z-10">
+                        <div
+                            class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-white flex items-center justify-center shadow-lg shadow-blue-600/20 mb-5 group-hover:scale-110 transition-transform duration-500">
+                            <span class="material-symbols-outlined text-3xl">memory</span>
+                        </div>
+                        <h3
+                            class="text-2xl font-bold text-gray-900 mb-2 group-hover:text-google-blue transition-colors">
+                            Omniscient Context</h3>
+                        <p class="text-xs font-bold text-google-blue uppercase tracking-widest opacity-80">Total Recall
+                        </p>
+                    </div>
+                    <p
+                        class="text-google-subtext leading-relaxed text-[15px] font-inter relative z-10 font-medium mb-8 flex-grow">
+                        Ingests every signal—emails, calls, CRM history. Vectors 1 & 2 normalize chaos into a unified
+                        State Vector, giving the AI perfect memory of every interaction.
+                    </p>
+                    <!-- Visual Micro-UI -->
+                    <div
+                        class="mt-auto relative z-10 w-full h-40 bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden shadow-inner group-hover:shadow-md transition-all duration-500">
+                        <div
+                            class="absolute inset-x-0 top-0 h-8 bg-white border-b border-gray-100 flex items-center px-3 gap-1.5">
+                            <div class="w-2 h-2 rounded-full bg-red-400/20"></div>
+                            <div class="w-2 h-2 rounded-full bg-yellow-400/20"></div>
+                            <div class="w-2 h-2 rounded-full bg-green-400/20"></div>
+                            <div class="ml-auto text-[9px] font-mono text-gray-400">context_window.active</div>
+                        </div>
+                        <div class="p-4 pt-12 text-[10px] font-mono text-gray-500 space-y-2 opacity-80">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                                <span class="text-blue-600 font-bold">INGEST</span>
+                                <span>lead_id: ax_992</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                                <span class="text-purple-600 font-bold">VECTOR</span>
+                                <span>tensor: [0.98, 0.02, ...]</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                <span class="text-green-600 font-bold">STATUS</span>
+                                <span>memory: SYNCHRONIZED</span>
+                            </div>
+                        </div>
+                        <!-- Scanline effect -->
+                        <div
+                            class="absolute inset-0 bg-gradient-to-b from-transparent via-blue-500/5 to-transparent h-[200%] w-full animate-[scan_3s_linear_infinite] pointer-events-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Decision Matrix (Layers 3-5) -->
+                <div class="col-span-1 kinetic-card p-8 rounded-3xl bg-white border border-gray-200 hover:border-purple-500/30 transition-all duration-500 group cursor-default value-step shadow-card hover:shadow-premium-hover relative overflow-hidden transform-gpu flex flex-col h-full min-h-[500px]"
+                    tabindex="0">
+                    <div aria-hidden="true"
+                        class="absolute inset-0 bg-gradient-to-br from-purple-50/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
+                    </div>
+                    <div class="inline-flex items-center gap-2 mb-6 relative z-10">
+                        <span
+                            class="px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-[11px] font-bold uppercase tracking-widest border border-purple-100/50">Layers
+                            3-5</span>
+                    </div>
+                    <div class="mb-6 relative z-10">
+                        <div
+                            class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-600 to-purple-700 text-white flex items-center justify-center shadow-lg shadow-purple-600/20 mb-5 group-hover:scale-110 transition-transform duration-500">
+                            <span class="material-symbols-outlined text-3xl">balance</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2 group-hover:text-purple-700 transition-colors">
+                            Divine Judgment</h3>
+                        <p class="text-xs font-bold text-purple-600 uppercase tracking-widest opacity-80">The Decision
+                            Matrix</p>
+                    </div>
+                    <p
+                        class="text-google-subtext leading-relaxed text-[15px] font-inter relative z-10 font-medium mb-8 flex-grow">
+                        Calculates the precise moment to strike. Causal inference and temporal reasoning determine not
+                        just *if* a lead will convert, but *when* and *why*.
+                    </p>
+                    <!-- Visual Micro-UI -->
+                    <div
+                        class="mt-auto relative z-10 w-full h-40 bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden shadow-inner group-hover:shadow-md transition-all duration-500 flex items-center justify-center">
+                        <div
+                            class="absolute inset-0 bg-[radial-gradient(#e9d5ff_1px,transparent_1px)] [background-size:16px_16px] opacity-30">
+                        </div>
+                        <div
+                            class="text-center relative z-10 transform group-hover:scale-110 transition-transform duration-500">
+                            <div class="text-5xl font-mono font-bold text-gray-900 tracking-tighter mb-1">94%</div>
+                            <div
+                                class="text-[10px] text-purple-600 uppercase tracking-widest font-bold bg-purple-50 px-2 py-1 rounded-full border border-purple-100">
+                                Conversion Probability</div>
+                        </div>
+                        <!-- Animated Graph Line -->
+                        <svg class="absolute bottom-0 left-0 right-0 w-full h-12 text-purple-500 opacity-20"
+                            viewBox="0 0 100 20" preserveAspectRatio="none">
+                            <path d="M0 20 Q 25 20 40 10 T 100 0 V 20 H 0 Z" fill="currentColor" class="animate-pulse">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Card 3: Sovereign Execution (Layers 6-7) -->
+                <div class="col-span-1 kinetic-card p-8 rounded-3xl bg-white border border-gray-200 hover:border-green-500/30 transition-all duration-500 group cursor-default value-step shadow-card hover:shadow-premium-hover relative overflow-hidden transform-gpu flex flex-col h-full min-h-[500px]"
+                    tabindex="0">
+                    <div aria-hidden="true"
+                        class="absolute inset-0 bg-gradient-to-br from-green-50/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
+                    </div>
+                    <div class="inline-flex items-center gap-2 mb-6 relative z-10">
+                        <span
+                            class="px-3 py-1 rounded-full bg-green-50 text-green-700 text-[11px] font-bold uppercase tracking-widest border border-green-100/50">Layers
+                            6-7</span>
+                    </div>
+                    <div class="mb-6 relative z-10">
+                        <div
+                            class="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-600 to-green-700 text-white flex items-center justify-center shadow-lg shadow-green-600/20 mb-5 group-hover:scale-110 transition-transform duration-500">
+                            <span class="material-symbols-outlined text-3xl">auto_mode</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2 group-hover:text-green-700 transition-colors">
+                            Sovereign Execution</h3>
+                        <p class="text-xs font-bold text-green-600 uppercase tracking-widest opacity-80">Autonomous
+                            Evolution</p>
+                    </div>
+                    <p
+                        class="text-google-subtext leading-relaxed text-[15px] font-inter relative z-10 font-medium mb-8 flex-grow">
+                        Game Theory Agents negotiate the deal, while Infinite Learning analyzes every win and loss to
+                        update the master model daily. It gets smarter while you sleep.
+                    </p>
+                    <!-- Visual Micro-UI -->
+                    <div
+                        class="mt-auto relative z-10 w-full h-40 bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden shadow-inner group-hover:shadow-md transition-all duration-500 p-4 relative">
+                        <!-- Chat bubbles simulation -->
+                        <div
+                            class="absolute top-4 left-4 right-12 bg-white border border-gray-200 rounded-2xl rounded-tl-none px-3 py-2 text-[10px] text-gray-600 shadow-sm animate-[revealUp_0.5s_ease-out_forwards]">
+                            <span class="font-bold block text-gray-900 mb-0.5">Agent (Layer 6)</span>
+                            Objection handled. Scheduling demo for Tuesday @ 2pm.
+                        </div>
+                        <div class="absolute top-20 right-4 left-16 bg-blue-600 border border-blue-500 rounded-2xl rounded-tr-none px-3 py-2 text-[10px] text-white shadow-md animate-[revealUp_0.5s_ease-out_0.2s_forwards] opacity-0 text-right"
+                            style="animation-fill-mode: forwards;">
+                            <span class="font-bold block text-blue-100 mb-0.5">Infinite Learning</span>
+                            Win recorded. Model Weight Updated +0.02
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </section>
+
+    <!-- SERVICES SECTION -->
+    <section class="py-32 bg-gray-50 relative overflow-hidden border-t border-gray-200">
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="text-center max-w-3xl mx-auto mb-16 scroll-reveal">
+                <div class="text-[#C4622D] font-extrabold tracking-widest text-xs uppercase mb-4">What We Fix</div>
+                <h2 class="text-4xl md:text-5xl font-medium text-gray-900 mb-6 tracking-tight">
+                    Turn missed opportunities into revenue</h2>
+                <p class="text-xl text-google-subtext font-inter font-normal">
+                    We identify and fix the gaps in your business that cost you customers.
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Review Automation -->
+                <div class="bg-white p-8 rounded-3xl border border-gray-200 hover:border-[#C4622D]/30 hover:shadow-xl transition-all duration-300">
+                    <div class="w-14 h-14 rounded-2xl bg-[#C4622D]/10 flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-3xl text-[#C4622D]">star</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Review Automation</h3>
+                    <p class="text-google-subtext mb-4">Automated SMS requests after every customer visit. Capture good reviews, fix bad ones privately.</p>
+                    <a href="../Landing_Demo/index.html" class="text-[#C4622D] font-bold text-sm hover:underline">Try Demo →</a>
+                </div>
+                <!-- Lead Reactivation -->
+                <div class="bg-white p-8 rounded-3xl border border-gray-200 hover:border-google-blue/30 hover:shadow-xl transition-all duration-300">
+                    <div class="w-14 h-14 rounded-2xl bg-google-blue/10 flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-3xl text-google-blue">recall</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Lead Reactivation</h3>
+                    <p class="text-google-subtext mb-4">AI finds dormant leads and re-engages them with personalized outreach at the perfect time.</p>
+                    <a href="onboarding.html?type=lead" class="text-google-blue font-bold text-sm hover:underline">Get Audit →</a>
+                </div>
+                <!-- No-Show Recovery -->
+                <div class="bg-white p-8 rounded-3xl border border-gray-200 hover:border-purple-500/30 hover:shadow-xl transition-all duration-300">
+                    <div class="w-14 h-14 rounded-2xl bg-purple-500/10 flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-3xl text-purple-600">event_busy</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">No-Show Recovery</h3>
+                    <p class="text-google-subtext mb-4">Automated follow-ups for missed appointments. Convert no-shows into rebookings.</p>
+                    <a href="onboarding.html?type=noshow" class="text-purple-600 font-bold text-sm hover:underline">Learn More →</a>
+                </div>
+                <!-- AI Audit -->
+                <div class="bg-white p-8 rounded-3xl border border-gray-200 hover:border-green-500/30 hover:shadow-xl transition-all duration-300">
+                    <div class="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-3xl text-green-600">psychology</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Free AI Audit</h3>
+                    <p class="text-google-subtext mb-4">We scan your systems and show you exactly what's broken and how much it's costing you.</p>
+                    <a href="onboarding.html?type=audit" class="text-green-600 font-bold text-sm hover:underline">Get Free Audit →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HIGH-STAKES PROTOCOL: MULTI-AGENT DEBATE -->
+    <section class="py-32 bg-white relative overflow-hidden border-t border-gray-100">
+        <!-- Google-esque Light Background -->
+        <div aria-hidden="true"
+            class="absolute inset-0 z-0 bg-[radial-gradient(circle_at_top_right,#f1f5f9,transparent_30%)]"></div>
+
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <div
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-google-blue text-[11px] font-bold uppercase tracking-widest mb-6">
+                    <span class="w-2 h-2 rounded-full bg-google-blue animate-pulse"></span>
+                    Interactive Protocol
+                </div>
+                <h2 class="text-4xl md:text-5xl font-medium text-gray-900 mb-6 tracking-tight leading-tight">
+                    Three Agents. <br>One Strategic Decision.
+                </h2>
+                <p class="text-xl text-google-subtext font-inter font-normal mb-10">
+                    For high-value opportunities, our Sovereign Engine convenes a digital war room. <br
+                        class="hidden md:block">
+                    Select a scenario to witness the <span class="text-gray-900 font-bold">actual debate logic</span> in
+                    real-time.
+                </p>
+
+                <!-- Interactive Scenario Selector -->
+                <div class="flex flex-wrap justify-center gap-3 relative z-20">
+                    <button onclick="runDebate('competitor')"
+                        class="scenario-btn active px-6 py-2.5 rounded-full bg-gray-900 text-white font-medium text-sm transition-all hover:shadow-lg scale-100 ring-2 ring-gray-900 ring-offset-2">
+                        Scenario: Competitor Hire
+                    </button>
+                    <button onclick="runDebate('budget')"
+                        class="scenario-btn px-6 py-2.5 rounded-full bg-white text-gray-600 border border-gray-200 font-medium text-sm transition-all hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300">
+                        Scenario: Budget Freeze
+                    </button>
+                    <button onclick="runDebate('ghosted')"
+                        class="scenario-btn px-6 py-2.5 rounded-full bg-white text-gray-600 border border-gray-200 font-medium text-sm transition-all hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300">
+                        Scenario: C-Suite Ghosting
+                    </button>
+                </div>
+            </div>
+
+            <!-- THE DEBATE FLOOR (Light Theme) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 relative pb-20">
+                <!-- Connecting Line -->
+                <div
+                    class="hidden lg:block absolute top-[88px] left-[16%] right-[16%] h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent z-0">
+                </div>
+
+                <!-- AGENT 1: PROSECUTOR -->
+                <div
+                    class="bg-white rounded-2xl border border-gray-200 p-8 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 relative z-10 flex flex-col h-full">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center border border-red-100">
+                            <span class="material-symbols-outlined text-[24px]">gavel</span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-gray-900">Prosecutor</h3>
+                            <div class="text-[10px] font-mono text-gray-500 uppercase tracking-wider">Risk Analysis
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-mono text-sm leading-relaxed text-gray-700 typing-container h-full"
+                            data-agent="prosecutor">
+                            <span class="typing-cursor animate-pulse text-red-500">|</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AGENT 2: ADVOCATE -->
+                <div
+                    class="bg-white rounded-2xl border border-gray-200 p-8 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 relative z-10 flex flex-col h-full">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+                            <span class="material-symbols-outlined text-[24px]">campaign</span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-gray-900">Advocate</h3>
+                            <div class="text-[10px] font-mono text-gray-500 uppercase tracking-wider">Opportunity
+                                Scanner</div>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-mono text-sm leading-relaxed text-gray-700 typing-container h-full"
+                            data-agent="advocate">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AGENT 3: MEDIATOR -->
+                <div
+                    class="bg-white rounded-2xl border-2 border-purple-50 p-8 shadow-[0_8px_30px_rgba(59,130,246,0.1)] transition-all duration-300 relative z-20 flex flex-col h-full lg:-mt-4 lg:-mb-4 transform scale-100 lg:scale-105">
+                    <div
+                        class="absolute -top-3 left-1/2 -translate-x-1/2 bg-white text-gray-900 border border-gray-200 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm z-30">
+                        Strategist
+                    </div>
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100">
+                            <span class="material-symbols-outlined text-[24px]">psychology</span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-gray-900">Mediator</h3>
+                            <div class="text-[10px] font-mono text-gray-500 uppercase tracking-wider">Final Verdict
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-mono text-sm leading-relaxed text-gray-800 typing-container h-full font-medium"
+                            data-agent="mediator">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOGICAL OUTCOME -->
+            <div id="debate-outcome"
+                class="max-w-2xl mx-auto bg-gray-50 rounded-xl border border-gray-200 p-6 opacity-0 transition-opacity duration-700">
+                <div class="flex items-start gap-4">
+                    <div
+                        class="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center shrink-0 mt-0.5">
+                        <span class="material-symbols-outlined text-[18px]">check</span>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wide mb-1">Generated Strategy</h4>
+                        <p class="text-gray-600 text-sm leading-relaxed" id="debate-result-text">
+                            Waiting for consensus...
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- JS for Interactive Logic -->
+            <script>
+                // Database of Rigorous Scenarios (Mirroring Backend Logic)
+                const SCENARIOS = {
+                    competitor: {
+                        risk: "🚨 RISK ASSESSMENT: Lead hired VP of Sales from direct competitor (Salesforce, 2mo ago). High probability of vendor consolidation. Risk = 88%.",
+                        opportunity: "💡 OPPORTUNITY SCAN: New VP typically means 'Evaluation Window' is open (0-90 days). Competitor displacement simulation shows 4x higher LTV if successful.",
+                        verdict: "✓ STRATEGIC DECISION: EXECUTE. Do not pitch features. Pivot completely to 'Transition Efficiency' play. \n\nSubject: 'The Salesforce migration headache'\nCTA: '30-day overlap strategy'",
+                        outcome: "Pivot to 'Transition Efficiency' vs 'Feature Pitch'"
+                    },
+                    budget: {
+                        risk: "🚨 RISK ASSESSMENT: 10-K filing indicates 15% reduction in OpEx. Marketing team shrank by 4 heads last month.",
+                        opportunity: "💡 OPPORTUNITY SCAN: Despite cuts, they have 3 open roles for 'RevOps Analyst'. They are trading headcount for efficiency tools.",
+                        verdict: "✓ STRATEGIC DECISION: EXECUTE. Position Rekindle not as 'new spend' but as 'headcount replacement'. \n\nSubject: 'Structuring the RevOps team'\nCTA: 'Automate limits'",
+                        outcome: "Position as 'Headcount Replacement'"
+                    },
+                    ghosted: {
+                        risk: "🚨 RISK ASSESSMENT: CEO has not opened last 8 emails. Intent signal degraded to < 12%. Domain reputation risk if we continue.",
+                        opportunity: "💡 OPPORTUNITY SCAN: CTO just viewed our 'API Documentation' page for 42 minutes yesterday. Technical intent is SPIKING.",
+                        verdict: "✓ STRATEGIC DECISION: FLANK. Stop emailing CEO. Immediately engage CTO with technical comprehensive.\n\nSubject: 'API throughput limits'\nCTA: 'Dev docs access'",
+                        outcome: "Flank Strategy: Engage CTO"
+                    }
+                };
+
+                let isDebating = false;
+
+                async function runDebate(scenarioKey) {
+                    if (isDebating) return;
+                    isDebating = true;
+
+                    // UI Updates
+                    document.querySelectorAll('.scenario-btn').forEach(b => {
+                        b.classList.remove('bg-gray-900', 'text-white', 'ring-2', 'ring-gray-900', 'ring-offset-2', 'scale-105');
+                        b.classList.add('bg-white', 'text-gray-600', 'border-gray-200');
+                    });
+                    const activeBtn = document.querySelector(`button[onclick="runDebate('${scenarioKey}')"]`);
+                    activeBtn.classList.remove('bg-white', 'text-gray-600', 'border-gray-200');
+                    activeBtn.classList.add('bg-gray-900', 'text-white', 'ring-2', 'ring-gray-900', 'ring-offset-2', 'scale-105');
+
+                    const containers = {
+                        pro: document.querySelector('[data-agent="prosecutor"]'),
+                        adv: document.querySelector('[data-agent="advocate"]'),
+                        med: document.querySelector('[data-agent="mediator"]'),
+                        result: document.getElementById('debate-result-text'),
+                        wrapper: document.getElementById('debate-outcome')
+                    };
+
+                    // Reset
+                    containers.pro.innerHTML = '';
+                    containers.adv.innerHTML = '';
+                    containers.med.innerHTML = '';
+                    containers.wrapper.classList.add('opacity-0');
+
+                    const data = SCENARIOS[scenarioKey];
+
+                    // Sequence
+                    await typeText(containers.pro, data.risk, 'text-red-700');
+                    await new Promise(r => setTimeout(r, 400));
+                    await typeText(containers.adv, data.opportunity, 'text-blue-700');
+                    await new Promise(r => setTimeout(r, 400));
+                    await typeText(containers.med, data.verdict, 'text-gray-900');
+
+                    containers.result.textContent = data.outcome;
+                    containers.wrapper.classList.remove('opacity-0');
+
+                    isDebating = false;
+                }
+
+                async function typeText(element, text, colorClass, speed = 15) {
+                    const span = document.createElement('span');
+                    span.className = colorClass;
+                    element.appendChild(span);
+
+                    const cursor = document.createElement('span');
+                    cursor.className = 'typing-cursor animate-pulse text-gray-400 ml-1';
+                    cursor.textContent = '|';
+                    element.appendChild(cursor);
+
+                    for (let i = 0; i < text.length; i++) {
+                        if (text[i] === '\n') {
+                            span.appendChild(document.createElement('br'));
+                        } else {
+                            span.appendChild(document.createTextNode(text[i]));
+                        }
+                        // Faster typing for demo feel
+                        if (i % 3 === 0) await new Promise(r => setTimeout(r, speed));
+                    }
+                    cursor.remove();
+                }
+
+                // Auto-run first scenario
+                setTimeout(() => runDebate('competitor'), 1000);
+
+            </script>
+        </div>
+    </section>
+    <section class="py-32 bg-[#FAFAFA] relative border-t border-gray-200">
+        <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <div class="order-2 lg:order-1 scroll-reveal">
+                <div
+                    class="inline-flex items-center gap-2 text-google-red font-bold mb-8 bg-red-50 px-4 py-1.5 rounded-full border border-red-200 shadow-sm">
+                    <span aria-hidden="true" class="material-symbols-outlined text-[18px] animate-pulse">error</span>
+                    <span class="text-[12px] uppercase tracking-wider">The Revenue Gap</span>
+                </div>
+                <h2
+                    class="text-4xl md:text-5xl lg:text-6xl font-medium text-gray-900 tracking-tight leading-[1.1] mb-8">
+                    Stop letting revenue <br />slip through the cracks.
+                </h2>
+                <p class="text-xl text-google-subtext leading-relaxed mb-10 font-inter font-normal">
+                    Most CRMs are graveyards of forgotten opportunities. Rekindle acts as a <button
+                        class="text-gray-900 font-bold border-b-2 border-google-blue/30 hover:border-google-blue transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-google-blue focus:ring-offset-2">24/7
+                        auditor</button>, constantly scanning for buying signals.
+                </p>
+                <div class="space-y-4 font-inter">
+                    <div class="flex items-center gap-5 p-5 rounded-2xl hover:bg-white transition-all duration-300 hover:translate-x-2 border border-transparent hover:border-gray-200 hover:shadow-card group cursor-default transform-gpu"
+                        tabindex="0">
+                        <div
+                            class="w-12 h-12 rounded-full bg-green-100/50 flex items-center justify-center shrink-0 text-green-700 group-hover:scale-110 transition-transform will-change-transform">
+                            <span aria-hidden="true" class="material-symbols-outlined">check_circle</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg text-gray-900 mb-0.5">Seamless Integration</h4>
+                            <p class="text-google-subtext text-sm font-medium">Connects to Salesforce, HubSpot, and
+                                Pipedrive in 1 click.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-5 p-5 rounded-2xl hover:bg-white transition-all duration-300 hover:translate-x-2 border border-transparent hover:border-gray-200 hover:shadow-card group cursor-default transform-gpu"
+                        tabindex="0">
+                        <div
+                            class="w-12 h-12 rounded-full bg-blue-100/50 flex items-center justify-center shrink-0 text-google-blue group-hover:scale-110 transition-transform will-change-transform">
+                            <span aria-hidden="true" class="material-symbols-outlined">security</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg text-gray-900 mb-0.5">Secure by Default</h4>
+                            <p class="text-google-subtext text-sm font-medium">Your data is encrypted in transit and at
+                                rest.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="order-1 lg:order-2 scroll-reveal">
+                <div
+                    class="bg-white rounded-3xl p-8 md:p-10 shadow-premium border border-gray-200 relative overflow-hidden group hover:shadow-2xl transition-all duration-500 bioluminescent-border transform-gpu will-change-transform">
+                    <div aria-hidden="true"
+                        class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-gray-50 to-white rounded-bl-[100px] -z-0">
+                    </div>
+                    <div class="flex items-center justify-between mb-10 relative z-10">
+                        <h3 class="text-2xl font-bold text-gray-900">ROI Calculator</h3>
+                        <span
+                            class="bg-green-50 text-green-800 border border-green-200 text-[11px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm">Free
+                            Tool</span>
+                    </div>
+                    <div class="space-y-8 relative z-10">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-3 uppercase tracking-widest"
+                                for="total-dead-leads">Total Dead Leads</label>
+                            <div class="relative group/input">
+                                <input
+                                    class="w-full bg-gray-50 border-0 border-b-2 border-gray-300 rounded-t-lg px-4 py-4 text-xl text-gray-900 font-bold focus:ring-0 focus:border-google-blue focus:bg-white transition-all outline-none placeholder-gray-500 font-mono"
+                                    id="total-dead-leads" placeholder="5000" type="number" value="5000" />
+                                <span aria-hidden="true"
+                                    class="material-symbols-outlined absolute right-4 top-4 text-gray-500 group-focus-within/input:text-google-blue transition-colors group-focus-within/input:scale-110">groups</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-3 uppercase tracking-widest"
+                                for="avg-deal-size">Average Deal Size ($)</label>
+                            <div class="relative group/input">
+                                <input
+                                    class="w-full bg-gray-50 border-0 border-b-2 border-gray-300 rounded-t-lg px-4 py-4 text-xl text-gray-900 font-bold focus:ring-0 focus:border-google-blue focus:bg-white transition-all outline-none placeholder-gray-500 font-mono"
+                                    id="avg-deal-size" placeholder="2500" type="number" value="2500" />
+                                <span aria-hidden="true"
+                                    class="material-symbols-outlined absolute right-4 top-4 text-gray-500 group-focus-within/input:text-google-blue transition-colors group-focus-within/input:scale-110">attach_money</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-4">
+                                <label class="text-xs font-bold text-gray-700 uppercase tracking-widest"
+                                    for="recovery-rate">Recovery Rate</label>
+                                <span
+                                    class="text-google-blue font-bold bg-blue-50 px-2 py-1 rounded text-sm font-mono shadow-sm">4.5%</span>
+                            </div>
+                            <input
+                                class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-google-blue hover:accent-google-blueHover transition-colors focus:outline-none focus:ring-2 focus:ring-google-blue focus:ring-offset-2"
+                                id="recovery-rate" max="10" min="1" step="0.1" type="range" value="4.5" />
+                            <div
+                                class="flex justify-between text-[11px] text-gray-600 mt-2 font-bold uppercase tracking-wider">
+                                <span>1% (Conservative)</span>
+                                <span>10% (Aggressive)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="mt-10 pt-8 bg-gray-50 border-t border-gray-200 -mx-10 -mb-10 px-10 pb-10 relative overflow-hidden">
+                        <div class="relative z-10">
+                            <p class="text-gray-600 text-[11px] font-bold uppercase tracking-widest mb-2">Potential
+                                Revenue Unlocked</p>
+                            <div id="roi-result"
+                                class="text-5xl font-bold text-gray-900 tracking-tight drop-shadow-sm font-mono">
+                                $562,500
+                            </div>
+                            <div class="mt-4">
+                                <a href="roi_calculator.html"
+                                    class="text-sm text-google-blue font-medium hover:underline flex items-center gap-1">
+                                    Launch Full Calculator <span
+                                        class="material-symbols-outlined text-[14px]">open_in_new</span>
+                                </a>
+                            </div>
+                        </div>
+                        <div aria-hidden="true"
+                            class="absolute right-[-20px] bottom-[-20px] opacity-[0.05] pointer-events-none transform rotate-12">
+                            <span class="material-symbols-outlined text-[180px] text-gray-900">payments</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section aria-labelledby="pricing-heading" class="py-32 bg-white relative overflow-hidden">
+        <div aria-hidden="true" class="absolute inset-0 z-0 pointer-events-none opacity-30">
+            <div
+                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-google-blue/10 to-purple-500/10 rounded-full blur-[120px] transform-gpu blur-orb-optimized">
+            </div>
+        </div>
+        <div class="max-w-[1200px] mx-auto px-6 relative z-10">
+            <div class="text-center mb-24 scroll-reveal">
+                <h2 class="text-4xl md:text-5xl font-medium text-gray-900 mb-6 tracking-tight" id="pricing-heading">
+                    Simple, transparent pricing</h2>
+                <p class="text-xl text-google-subtext font-inter font-normal">Start for free, scale as you recover
+                    revenue.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start value-stack-container">
+                <div
+                    class="bg-white rounded-3xl p-8 border border-gray-200 hover:border-google-blue/20 hover:shadow-xl transition-all duration-300 kinetic-card value-step transform-gpu">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Starter</h3>
+                    <div class="flex items-baseline gap-1 mb-8">
+                        <span class="text-4xl font-bold text-gray-900 tracking-tight">$0</span>
+                        <span class="text-sm text-google-subtext font-bold">/mo</span>
+                    </div>
+                    <button
+                        class="w-full py-3 rounded-xl border-2 border-gray-200 text-gray-900 font-bold hover:bg-gray-50 hover:border-gray-300 transition-colors mb-8 focus:outline-none focus:ring-4 focus:ring-gray-300"
+                        onclick="window.location.href='onboarding.html?plan=starter'">Get
+                        Started</button>
+                    <ul class="space-y-4 text-[15px] text-google-subtext font-inter font-medium">
+                        <li class="flex gap-3 items-center"><span aria-hidden="true"
+                                class="material-symbols-outlined text-green-700 text-xl">check</span>Up to 500 leads
+                        </li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true"
+                                class="material-symbols-outlined text-green-700 text-xl">check</span>Basic Templates
+                        </li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true"
+                                class="material-symbols-outlined text-green-700 text-xl">check</span>Community Support
+                        </li>
+                    </ul>
+                </div>
+                <div
+                    class="bg-white rounded-3xl p-8 border-2 border-google-blue shadow-glow-lg relative z-10 transform md:-translate-y-4 bioluminescent-border kinetic-card value-step transform-gpu will-change-transform">
+                    <div
+                        class="absolute top-0 right-0 left-0 bg-google-blue text-white text-[11px] font-bold py-2 rounded-t-[22px] uppercase tracking-widest text-center shadow-md">
+                        Most Popular</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2 mt-6">Growth</h3>
+                    <div class="flex items-baseline gap-1 mb-8">
+                        <span class="text-5xl font-bold text-gray-900 tracking-tight">$149</span>
+                        <span class="text-sm text-google-subtext font-bold">/mo</span>
+                    </div>
+                    <button
+                        class="w-full py-3.5 rounded-xl bg-google-blue text-white font-bold hover:bg-google-blueHover shadow-lg shadow-google-blue/30 transition-all mb-8 hover:shadow-google-blue/50 hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-google-blue/50 transform-gpu will-change-transform"
+                        onclick="window.location.href='onboarding.html?plan=growth'">Start
+                        Free Trial</button>
+                    <ul class="space-y-4 text-[15px] text-gray-900 font-inter font-bold">
+                        <li class="flex gap-3 items-center"><span aria-hidden="true"
+                                class="material-symbols-outlined text-google-blue text-xl">check_circle</span>Unlimited
+                            scans</li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true"
+                                class="material-symbols-outlined text-google-blue text-xl">check_circle</span>AI
+                            Personalization</li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true"
+                                class="material-symbols-outlined text-google-blue text-xl">check_circle</span>CRM 2-way
+                            sync</li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true"
+                                class="material-symbols-outlined text-google-blue text-xl">check_circle</span>Priority
+                            Support</li>
+                    </ul>
+                </div>
+                <div
+                    class="bg-white rounded-3xl p-8 border border-gray-200 hover:border-google-blue/20 hover:shadow-xl transition-all duration-300 kinetic-card value-step transform-gpu">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Enterprise</h3>
+                    <div class="flex items-baseline gap-1 mb-8">
+                        <span class="text-4xl font-bold text-gray-900 tracking-tight">Custom</span>
+                    </div>
+                    <button
+                        class="w-full py-3 rounded-xl border-2 border-gray-200 text-gray-900 font-bold hover:bg-gray-50 hover:border-gray-300 transition-colors mb-8 focus:outline-none focus:ring-4 focus:ring-gray-300"
+                        onclick="window.location.href='onboarding.html?plan=enterprise'">Contact
+                        Sales</button>
+                    <ul class="space-y-4 text-[15px] text-google-subtext font-inter font-medium">
+                        <li class="flex gap-3 items-center"><span aria-hidden="true"
+                                class="material-symbols-outlined text-gray-500 text-xl">check</span>Custom integrations
+                        </li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true"
+                                class="material-symbols-outlined text-gray-500 text-xl">check</span>Dedicated Success
+                            Manager</li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true"
+                                class="material-symbols-outlined text-gray-500 text-xl">check</span>SLA &amp; SSO</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+    <footer class="bg-gray-50 border-t border-gray-200 pt-20 pb-12 relative">
+        <div class="max-w-[1200px] mx-auto px-6 relative z-10">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-12 mb-16 scroll-reveal">
+                <div>
+                    <h4 class="font-bold text-gray-900 mb-6">Product</h4>
+                    <ul class="space-y-4 text-sm text-google-subtext font-inter font-medium">
+                        <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
+                                href="index.html">Overview</a></li>
+                        <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
+                                href="#features-heading">Features</a></li>
+                        <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
+                                href="#pricing-heading">Pricing</a></li>
+                        <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
+                                href="resources.html">Resources</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-900 mb-6">Resources</h4>
+                    <ul class="space-y-4 text-sm text-google-subtext font-inter font-medium">
+                        <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
+                                href="resources.html">Blog</a></li>
+                        <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
+                                href="resources.html">Newsletter</a></li>
+                        <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
+                                href="resources.html">Help Center</a></li>
+                        <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
+                                href="resources.html">Tutorials</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-900 mb-6">Company</h4>
+                    <ul class="space-y-4 text-sm text-google-subtext font-inter font-medium">
+                        <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
+                                href="about.html">About</a></li>
+                        <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
+                                href="mailto:contact@rekindle.ai">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-900 mb-6">Legal</h4>
+                    <ul class="space-y-4 text-sm text-google-subtext font-inter font-medium">
+                        <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
+                                href="terms.html">Terms</a></li>
+                        <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
+                                href="privacy.html">Privacy</a></li>
+                        <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
+                                href="cookies.html">Cookies</a></li>
+                        <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
+                                href="licenses.html">Licenses</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div
+                class="flex flex-col md:flex-row justify-between items-center gap-6 border-t border-gray-200 pt-8 scroll-reveal">
+                <div class="flex items-center gap-2.5">
+                    <div aria-hidden="true"
+                        class="w-6 h-6 bg-gradient-to-tr from-gray-500 to-gray-600 rounded flex items-center justify-center text-white">
+                        <span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+                    </div>
+                    <span class="text-lg font-bold text-gray-600 tracking-tight">Rekindle</span>
+                    <span class="text-sm text-gray-500 ml-2">© 2024 Rekindle Inc.</span>
+                </div>
+                <div class="flex gap-6">
+                    <a aria-label="Follow us on Twitter"
+                        class="text-gray-500 hover:text-google-blue transition-colors hover:scale-110 focus:outline-none focus:ring-2 focus:ring-google-blue rounded-full p-1 will-change-transform"
+                        href="#">
+                        <svg aria-hidden="true" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84">
+                            </path>
+                        </svg>
+                    </a>
+                    <a aria-label="Connect with us on LinkedIn"
+                        class="text-gray-500 hover:text-google-blue transition-colors hover:scale-110 focus:outline-none focus:ring-2 focus:ring-google-blue rounded-full p-1 will-change-transform"
+                        href="#">
+                        <svg aria-hidden="true" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path clip-rule="evenodd"
+                                d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+                                fill-rule="evenodd"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script>
+        // ROI Calculator Logic (Moved to end of body)
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('ROI Calculator Initializing...');
+            const inputs = {
+                leads: document.getElementById('total-dead-leads'),
+                dealSize: document.getElementById('avg-deal-size'),
+                recoveryRate: document.getElementById('recovery-rate')
+            };
+            const resultDisplay = document.getElementById('roi-result');
+
+            if (!resultDisplay || !inputs.leads) {
+                console.error('ROI Elements not found!');
+                return;
+            }
+
+            function calculateROI() {
+                const leads = parseFloat(inputs.leads.value) || 0;
+                const dealSize = parseFloat(inputs.dealSize.value) || 0;
+                const recoveryRate = parseFloat(inputs.recoveryRate.value) || 0;
+
+                // Calculation: Leads * (Rate/100) * Deal Size
+                const revenue = leads * (recoveryRate / 100) * dealSize;
+
+                // Format currency
+                resultDisplay.textContent = new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    maximumFractionDigits: 0
+                }).format(revenue);
+            }
+
+            // Attach listeners
+            Object.values(inputs).forEach(input => {
+                if (input) input.addEventListener('input', calculateROI);
+            });
+
+            // Initial calculation
+            calculateROI();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html class="light scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Intervention Debugger | Rekindle</title>
+    <meta name="description"
+        content="Debug specific lead re-engagements and view causal autopsies on the Rekindle debugger." />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Google+Sans:wght@400;500;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        google: {
+                            blue: '#1a73e8',
+                            blueHover: '#1557b0',
+                            red: '#d93025',
+                            yellow: '#fbbc04',
+                            green: '#1e8e3e',
+                            gray: '#f8f9fa',
+                            text: '#202124',
+                            subtext: '#5f6368',
+                            border: '#dadce0',
+                        },
+                        light: {
+                            bg: '#FAFAFA',
+                            surface: '#FFFFFF',
+                        }
+                    },
+                    fontFamily: {
+                        "sans": ["Google Sans", "Inter", "sans-serif"],
+                        "inter": ["Inter", "sans-serif"],
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px rgba(60,64,67,0.1), 0 1px 2px rgba(60,64,67,0.06)',
+                        'card-hover': '0 4px 12px rgba(60,64,67,0.15), 0 2px 4px rgba(60,64,67,0.1)',
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Google Sans', 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-google-border sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <a href="index.html" class="text-xl font-semibold text-google-text">Rekindle</a>
+            <div class="flex items-center gap-6">
+                <a href="dashboard.html"
+                    class="text-google-subtext hover:text-google-text transition-colors">Dashboard</a>
+                <a href="debugger.html" class="text-google-blue font-medium">Debugger</a>
+                <a href="resources.html"
+                    class="text-google-subtext hover:text-google-text transition-colors">Resources</a>
+                <button onclick="alert('Analysis engine spinning up...')"
+                    class="bg-google-blue text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-google-blueHover transition-colors mr-2">
+                    New Analysis
+                </button>
+                <div class="flex items-center gap-3 pl-4 border-l border-google-border group relative cursor-pointer">
+                    <div
+                        class="w-8 h-8 rounded-full bg-google-yellow flex items-center justify-center text-white text-xs font-bold">
+                        JD</div>
+                    <span class="text-sm font-medium text-google-text">Jane Doe</span>
+                    <span class="material-symbols-outlined text-sm text-google-subtext">expand_more</span>
+                    <!-- Dropdown Placeholder -->
+                    <div
+                        class="absolute top-full right-0 mt-2 w-48 bg-white border border-google-border rounded-lg shadow-xl hidden group-hover:block transition-all">
+                        <a href="index.html"
+                            class="block px-4 py-2 text-sm text-google-red hover:bg-red-50 font-medium">Log out</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-5xl mx-auto px-6 py-8">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-2xl font-medium text-google-text">Intervention Debugger</h1>
+            <div class="flex items-center gap-2 mt-1">
+                <p class="text-google-subtext">Real-time autopsy and recommendations</p>
+                <span class="text-google-border">|</span>
+                <a href="dashboard.html" class="text-google-blue text-sm hover:underline flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">arrow_back</span>
+                    Back to Pipeline
+                </a>
+            </div>
+        </div>
+
+        <!-- Lead Card -->
+        <div class="bg-white rounded-lg border border-google-border shadow-card mb-6">
+            <!-- Lead Header -->
+            <div class="px-6 py-5 border-b border-google-border flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="w-12 h-12 bg-google-blue rounded-full flex items-center justify-center text-white font-medium text-lg">
+                        AC
+                    </div>
+                    <div>
+                        <h2 id="leadName" class="text-lg font-medium text-google-text">Acme Corp</h2>
+                        <p id="leadEmail" class="text-sm text-google-subtext">john.smith@acme.com</p>
+                    </div>
+                </div>
+                <div id="outcomeStatus" class="px-3 py-1.5 rounded-full text-sm font-medium bg-red-100 text-google-red">
+                    Ignored
+                </div>
+            </div>
+
+            <!-- State Diagnosis -->
+            <div class="px-6 py-5 border-b border-google-border">
+                <h3 class="text-xs font-medium text-google-subtext uppercase tracking-wider mb-4">State Diagnosis</h3>
+                <div class="grid grid-cols-2 gap-8">
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm text-google-text">Primary State</span>
+                            <span id="primaryConfidence" class="text-sm font-medium text-google-blue">65%</span>
+                        </div>
+                        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div id="primaryBar" class="h-full bg-google-blue rounded-full transition-all duration-500"
+                                style="width: 65%"></div>
+                        </div>
+                        <p id="primaryState" class="text-sm font-medium text-google-text mt-2">Priority-displaced</p>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm text-google-text">Secondary State</span>
+                            <span id="secondaryConfidence" class="text-sm font-medium text-google-subtext">28%</span>
+                        </div>
+                        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div id="secondaryBar" class="h-full bg-gray-400 rounded-full transition-all duration-500"
+                                style="width: 28%"></div>
+                        </div>
+                        <p id="secondaryState" class="text-sm text-google-subtext mt-2">Budget-constrained</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Last Intervention -->
+            <div class="px-6 py-5 border-b border-google-border">
+                <h3 class="text-xs font-medium text-google-subtext uppercase tracking-wider mb-4">Last Intervention</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-google-gray rounded-lg p-4">
+                        <p class="text-xs text-google-subtext mb-1">Intervention</p>
+                        <p id="interventionName" class="text-sm font-medium text-google-text">Re-anchor Urgency</p>
+                    </div>
+                    <div class="bg-google-gray rounded-lg p-4">
+                        <p class="text-xs text-google-subtext mb-1">Channel</p>
+                        <p id="channel" class="text-sm font-medium text-google-text">Email</p>
+                    </div>
+                    <div class="bg-google-gray rounded-lg p-4">
+                        <p class="text-xs text-google-subtext mb-1">Sent</p>
+                        <p id="sentTime" class="text-sm font-medium text-google-text">2 days ago</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Autopsy Analysis -->
+            <div class="px-6 py-5 border-b border-google-border bg-red-50">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="material-symbols-outlined text-google-red">analytics</span>
+                    <h3 class="text-xs font-medium text-google-red uppercase tracking-wider">Autopsy Analysis</h3>
+                </div>
+                <div class="grid grid-cols-4 gap-4 mb-4">
+                    <div class="bg-white rounded-lg p-4 text-center border border-google-border">
+                        <p class="text-2xl font-medium text-google-text" id="opens">2</p>
+                        <p class="text-xs text-google-subtext">Opens</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 text-center border border-google-border">
+                        <p class="text-2xl font-medium text-google-text" id="clicks">0</p>
+                        <p class="text-xs text-google-subtext">Clicks</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 text-center border border-google-border">
+                        <p class="text-2xl font-medium text-google-text" id="replies">0</p>
+                        <p class="text-xs text-google-subtext">Replies</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 text-center border border-google-border">
+                        <p class="text-sm font-medium text-google-red" id="frictionType">Interest Failure</p>
+                        <p class="text-xs text-google-subtext">Friction Type</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg p-4 border border-google-border">
+                    <p id="autopsyInterpretation" class="text-sm text-google-text">
+                        <span class="font-medium">Interpretation:</span> Subject line worked (high opens), but body copy
+                        failed to convert interest. Try a different value proposition angle.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Recommendation -->
+            <div class="px-6 py-5 border-b border-google-border bg-green-50">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="material-symbols-outlined text-google-green">lightbulb</span>
+                    <h3 class="text-xs font-medium text-google-green uppercase tracking-wider">Next Recommendation</h3>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p id="nextAction" class="text-lg font-medium text-google-text">Pivot Value Prop</p>
+                        <p id="nextSuggestion" class="text-sm text-google-subtext mt-1">Try "Budget Reframe"
+                            intervention</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-google-subtext">Expected Lift</p>
+                        <p id="expectedLift" class="text-2xl font-medium text-google-green">+18%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Billing & Credits -->
+            <div class="px-6 py-5 border-b border-google-border">
+                <h3 class="text-xs font-medium text-google-subtext uppercase tracking-wider mb-4">Billing & Credits</h3>
+                <div class="grid grid-cols-2 gap-8 mb-6">
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm text-google-text">Credits Used</span>
+                            <span id="creditsDisplay" class="text-sm font-medium text-google-text">12 / 2,000</span>
+                        </div>
+                        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div id="creditsBar" class="h-full bg-google-blue rounded-full" style="width: 0.6%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm text-google-text">Disputes Available</span>
+                            <span id="disputesDisplay" class="text-sm font-medium text-google-text">2 / 3</span>
+                        </div>
+                        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div id="disputesBar" class="h-full bg-google-yellow rounded-full" style="width: 66%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-4 gap-4">
+                    <div class="bg-google-gray rounded-lg p-4 text-center">
+                        <p class="text-xs text-google-subtext mb-1">Resurrections</p>
+                        <p id="resurrectionFee" class="text-lg font-medium text-google-text">$1.50</p>
+                    </div>
+                    <div class="bg-google-gray rounded-lg p-4 text-center">
+                        <p class="text-xs text-google-subtext mb-1">Bookings</p>
+                        <p id="bookingFee" class="text-lg font-medium text-google-text">$100</p>
+                    </div>
+                    <div class="bg-google-gray rounded-lg p-4 text-center">
+                        <p class="text-xs text-google-subtext mb-1">Deals</p>
+                        <p id="dealFee" class="text-lg font-medium text-google-text">$500</p>
+                    </div>
+                    <div class="bg-blue-50 rounded-lg p-4 text-center border border-google-blue/20">
+                        <p class="text-xs text-google-blue mb-1">Lead Revenue</p>
+                        <p id="leadRevenue" class="text-lg font-medium text-google-blue">$601.50</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="px-6 py-5 flex items-center gap-4">
+                <button id="applyBtn" onclick="applyIntervention()"
+                    class="flex-1 bg-google-blue text-white py-3 px-6 rounded-md font-medium hover:bg-google-blueHover transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-lg">bolt</span>
+                    Apply Recommended Intervention
+                </button>
+                <button onclick="refreshCard()"
+                    class="px-6 py-3 border border-google-border rounded-md font-medium text-google-text hover:bg-google-gray transition-colors">
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Intervention Timeline -->
+        <div class="bg-white rounded-lg border border-google-border shadow-card p-6">
+            <h3 class="text-sm font-medium text-google-text mb-4">Intervention Timeline</h3>
+            <div class="space-y-4" id="timeline">
+                <div class="flex items-start gap-4">
+                    <div class="w-2.5 h-2.5 bg-google-red rounded-full mt-1.5 flex-shrink-0"></div>
+                    <div class="flex-1 pb-4 border-b border-google-border">
+                        <div class="flex justify-between">
+                            <p class="text-sm font-medium text-google-text">Re-anchor Urgency</p>
+                            <span class="text-xs text-google-subtext">2 days ago</span>
+                        </div>
+                        <p class="text-xs text-google-subtext mt-1">Email • Ignored • Friction: Interest Failure</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="w-2.5 h-2.5 bg-google-yellow rounded-full mt-1.5 flex-shrink-0"></div>
+                    <div class="flex-1 pb-4 border-b border-google-border">
+                        <div class="flex justify-between">
+                            <p class="text-sm font-medium text-google-text">Initial Outreach</p>
+                            <span class="text-xs text-google-subtext">14 days ago</span>
+                        </div>
+                        <p class="text-xs text-google-subtext mt-1">Email • Opened • No Click</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="w-2.5 h-2.5 bg-google-green rounded-full mt-1.5 flex-shrink-0"></div>
+                    <div class="flex-1">
+                        <div class="flex justify-between">
+                            <p class="text-sm font-medium text-google-text">Lead Created</p>
+                            <span class="text-xs text-google-subtext">30 days ago</span>
+                        </div>
+                        <p class="text-xs text-google-subtext mt-1">CRM Import • Acme Corp • $25,000 deal value</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let currentInterventionId = 'demo-fail-001';
+
+        async function fetchDebugData(interventionId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/debug/${interventionId}`);
+                if (!response.ok) throw new Error('Failed to fetch');
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                return getMockData();
+            }
+        }
+
+        function getMockData() {
+            return {
+                intervention: { name: "Re-anchor Urgency", channel: "email", status: "IGNORED" },
+                state_snapshot: { primary_diagnosis: "Priority-displaced", confidence: 0.65, secondary_diagnosis: "Budget-constrained", secondary_confidence: 0.28 },
+                autopsy: { friction_type: "INTEREST_FAILURE", evidence: { opens: 2, clicks: 0 }, interpretation: "Subject line worked (high opens), but body copy failed to convert interest." },
+                recommendation: { next_action: "Pivot Value Prop", suggested_template: "Budget_Reframe_v1", predicted_probability: 0.18 },
+                billing: { credits_used: 12, credits_total: 2000, resurrection_fee: 1.50, booking_fee: 100, deal_fee: 500, lead_revenue: 601.50, disputes_remaining: 2 }
+            };
+        }
+
+        function updateCard(data) {
+            document.getElementById('primaryState').textContent = data.state_snapshot.primary_diagnosis;
+            document.getElementById('primaryConfidence').textContent = `${(data.state_snapshot.confidence * 100).toFixed(0)}%`;
+            document.getElementById('primaryBar').style.width = `${data.state_snapshot.confidence * 100}%`;
+            document.getElementById('secondaryState').textContent = data.state_snapshot.secondary_diagnosis || 'None';
+            document.getElementById('interventionName').textContent = data.intervention.name;
+            document.getElementById('frictionType').textContent = data.autopsy.friction_type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+            document.getElementById('opens').textContent = data.autopsy.evidence.opens;
+            document.getElementById('clicks').textContent = data.autopsy.evidence.clicks;
+            document.getElementById('nextAction').textContent = data.recommendation.next_action;
+            document.getElementById('expectedLift').textContent = `+${((data.recommendation.predicted_probability - 0.08) * 100).toFixed(0)}%`;
+            if (data.billing) {
+                document.getElementById('creditsDisplay').textContent = `${data.billing.credits_used} / ${data.billing.credits_total.toLocaleString()}`;
+                document.getElementById('leadRevenue').textContent = `$${data.billing.lead_revenue.toFixed(2)}`;
+            }
+        }
+
+        async function refreshCard() {
+            const data = await fetchDebugData(currentInterventionId);
+            updateCard(data);
+        }
+
+        async function applyIntervention() {
+            const btn = document.getElementById('applyBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-lg">progress_activity</span> Applying...';
+            await new Promise(r => setTimeout(r, 2000));
+            btn.innerHTML = '<span class="material-symbols-outlined text-lg">check</span> Intervention Queued';
+            btn.classList.remove('bg-google-blue', 'hover:bg-google-blueHover');
+            btn.classList.add('bg-google-green');
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-lg">bolt</span> Apply Recommended Intervention';
+                btn.classList.remove('bg-google-green');
+                btn.classList.add('bg-google-blue', 'hover:bg-google-blueHover');
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const data = await fetchDebugData(currentInterventionId);
+            updateCard(data);
+        });
+    </script>
+</body>
+
+</html>

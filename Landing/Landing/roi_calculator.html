@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html class="light scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>The True Cost of Bad Data | Rekindle Pro ROI Calculator</title>
+    <meta name="description"
+        content="Calculate the real cost of bad data: wasted SDR hours AND lost revenue opportunity. See how much pipeline is bleeding out." />
+    <meta property="og:title" content="Bad Data Cost Calculator - Rekindle Pro" />
+    <meta property="og:description"
+        content="Most companies only count direct costs. We calculate the opportunity cost too." />
+    <meta property="og:type" content="website" />
+    <link rel="canonical" href="https://rekindle.ai/resources/calculator/roi" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Google+Sans:wght@400;500;700&display=swap"
+        rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Google Sans', 'Inter', sans-serif;
+        }
+
+        .vertical-card {
+            transition: all 0.2s ease;
+        }
+
+        .vertical-card:hover {
+            border-color: #1a73e8;
+        }
+
+        .vertical-card.selected {
+            border-color: #1a73e8;
+            background: #e8f0fe;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        google: {
+                            blue: '#1a73e8',
+                            blueHover: '#1557b0',
+                            gray: '#f8f9fa',
+                            text: '#202124',
+                            subtext: '#5f6368',
+                            border: '#dadce0',
+                            green: '#34a853',
+                            red: '#ea4335',
+                            yellow: '#fbbc04',
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+
+<body class="bg-white text-google-text antialiased">
+    <!-- Header -->
+    <header class="border-b border-google-border">
+        <nav class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <a class="flex items-center gap-2" href="index.html">
+                <div class="w-8 h-8 bg-google-blue rounded-lg flex items-center justify-center text-white font-bold">R
+                </div>
+                <span class="text-xl font-medium tracking-tight">Rekindle <span
+                        class="text-google-blue">Pro</span></span>
+            </a>
+            <a href="resources.html"
+                class="text-sm font-medium text-google-blue hover:underline flex items-center gap-1">
+                ← Back to Resources
+            </a>
+        </nav>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-12">
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <p class="text-sm font-semibold text-google-red uppercase tracking-wider mb-3">The Sovereign Audit</p>
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">The True Cost of <span class="text-google-red">Bad
+                    Data</span></h1>
+            <p class="text-lg text-google-subtext max-w-3xl mx-auto">
+                Most companies only count direct costs. <strong>That's a fatal mistake.</strong><br>
+                The real bleeding is the opportunity cost — deals your team <em>could have closed</em>.
+            </p>
+        </div>
+
+        <!-- Calculator Container -->
+        <div class="bg-google-gray rounded-3xl p-6 md:p-10 border border-google-border shadow-sm mb-8">
+            <!-- Step 1: Vertical Selection -->
+            <div class="mb-8">
+                <label class="block text-sm font-semibold text-google-subtext uppercase tracking-wider mb-4">
+                    Step 1: Select Your Industry
+                </label>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <button type="button" onclick="selectVertical('mass_tort')" id="btn-mass_tort"
+                        class="vertical-card bg-white rounded-xl p-5 text-left cursor-pointer border-2 border-google-border">
+                        <div class="text-2xl mb-2">⚖️</div>
+                        <div class="font-bold">Mass Tort Law</div>
+                        <div class="text-xs text-google-subtext mt-1">SOL Malpractice Risk</div>
+                    </button>
+                    <button type="button" onclick="selectVertical('roofing')" id="btn-roofing"
+                        class="vertical-card bg-white rounded-xl p-5 text-left cursor-pointer border-2 border-google-border">
+                        <div class="text-2xl mb-2">🏠</div>
+                        <div class="font-bold">Commercial Roofing</div>
+                        <div class="text-xs text-google-subtext mt-1">Deductible Compliance</div>
+                    </button>
+                    <button type="button" onclick="selectVertical('agency_saas')" id="btn-agency_saas"
+                        class="vertical-card bg-white rounded-xl p-5 text-left cursor-pointer border-2 border-google-border selected">
+                        <div class="text-2xl mb-2">💼</div>
+                        <div class="font-bold">Agency / SaaS</div>
+                        <div class="text-xs text-google-subtext mt-1">Ghosted Proposals</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Input Sliders -->
+            <div class="grid md:grid-cols-4 gap-6 mb-10">
+                <div class="bg-white rounded-xl p-5 border border-google-border">
+                    <label class="block text-sm font-medium text-google-subtext mb-1">Number of SDRs</label>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-3xl font-bold text-google-text" id="sdr-val">5</span>
+                        <span class="text-google-subtext">reps</span>
+                    </div>
+                    <input type="range" min="1" max="50" step="1" value="5"
+                        class="w-full h-2 mt-3 bg-google-border rounded-lg appearance-none cursor-pointer accent-google-blue"
+                        id="sdr-slider">
+                </div>
+
+                <div class="bg-white rounded-xl p-5 border border-google-border">
+                    <label class="block text-sm font-medium text-google-subtext mb-1">Hours Lost/Year (per SDR)</label>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-3xl font-bold text-google-text" id="hours-val">546</span>
+                        <span class="text-google-subtext">hrs</span>
+                    </div>
+                    <input type="range" min="100" max="1000" step="10" value="546"
+                        class="w-full h-2 mt-3 bg-google-border rounded-lg appearance-none cursor-pointer accent-google-blue"
+                        id="hours-slider">
+                </div>
+
+                <div class="bg-white rounded-xl p-5 border border-google-border">
+                    <label class="block text-sm font-medium text-google-subtext mb-1">Hourly Cost (Loaded)</label>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-3xl font-bold text-google-text">$<span id="rate-val">50</span></span>
+                        <span class="text-google-subtext">/hr</span>
+                    </div>
+                    <input type="range" min="25" max="150" step="5" value="50"
+                        class="w-full h-2 mt-3 bg-google-border rounded-lg appearance-none cursor-pointer accent-google-blue"
+                        id="rate-slider">
+                </div>
+
+                <div class="bg-white rounded-xl p-5 border border-google-border">
+                    <label class="block text-sm font-medium text-google-subtext mb-1">Average Contract Value</label>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-3xl font-bold text-google-text">$<span id="acv-val">50</span>K</span>
+                    </div>
+                    <input type="range" min="5" max="500" step="5" value="50"
+                        class="w-full h-2 mt-3 bg-google-border rounded-lg appearance-none cursor-pointer accent-google-blue"
+                        id="acv-slider">
+                </div>
+            </div>
+
+            <!-- The Two Costs Side by Side -->
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Direct Cost (Left) -->
+                <div class="bg-white rounded-2xl p-6 border border-google-border">
+                    <div class="flex items-center gap-2 mb-6">
+                        <div class="w-10 h-10 rounded-full bg-google-yellow/20 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-google-yellow" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                </path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg">Direct Cost</h3>
+                            <p class="text-xs text-google-subtext">What most people calculate</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center py-2 border-b border-google-border">
+                            <span class="text-google-subtext">Total Wasted Hours</span>
+                            <span class="font-semibold" id="total-hours">2,730</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-google-border">
+                            <span class="text-google-subtext">× Hourly Rate</span>
+                            <span class="font-semibold">$<span id="hourly-rate-display">50</span>/hr</span>
+                        </div>
+                        <div class="flex justify-between items-center py-3 bg-google-yellow/10 rounded-lg px-3 -mx-3">
+                            <span class="font-bold">Direct Cost/Year</span>
+                            <span class="text-2xl font-bold text-google-text" id="direct-cost">$136,500</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Opportunity Cost (Right) -->
+                <div class="bg-red-50 rounded-2xl p-6 border-2 border-google-red/30">
+                    <div class="flex items-center gap-2 mb-6">
+                        <div class="w-10 h-10 rounded-full bg-google-red/20 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-google-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-google-red">Opportunity Cost</h3>
+                            <p class="text-xs text-google-subtext">What you're REALLY losing</p>
+                        </div>
+                    </div>
+
+                    <!-- The Cascade -->
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between items-center py-2 border-b border-google-red/20">
+                            <span class="text-google-subtext"><span id="cascade-hours">2,730</span> hrs ÷
+                                30min/touch</span>
+                            <span class="font-semibold"><span id="cascade-touches">5,460</span> touches</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-google-red/20">
+                            <span class="text-google-subtext">÷ 10:1 touch ratio</span>
+                            <span class="font-semibold"><span id="cascade-convos">546</span> conversations</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-google-red/20">
+                            <span class="text-google-subtext">× <span id="close-rate-display">3</span>% close
+                                rate</span>
+                            <span class="font-semibold"><span id="cascade-deals">16</span> deals</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-google-red/20">
+                            <span class="text-google-subtext">× $<span id="acv-display">50</span>K ACV</span>
+                            <span class="font-bold text-google-red text-lg">$<span
+                                    id="cascade-revenue">800</span>K</span>
+                        </div>
+
+                        <div class="flex justify-between items-center py-4 bg-google-red/10 rounded-lg px-4 -mx-4 mt-4">
+                            <span class="font-bold text-google-red">LOST REVENUE/YEAR</span>
+                            <span class="text-2xl font-bold text-google-red" id="opportunity-cost">$800,000</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Impact Section -->
+        <div class="bg-google-text rounded-3xl p-8 md:p-12 text-white text-center mb-8">
+            <p class="text-sm font-semibold text-google-yellow uppercase tracking-wider mb-3">Total Annual Impact</p>
+            <div class="text-5xl md:text-6xl font-bold mb-2" id="total-impact">$936,500</div>
+            <p class="text-white/70 mb-2" id="risk-warning">
+                Risk Factor: <span class="text-google-yellow font-semibold">Competitor Displacement</span>
+            </p>
+            <p class="text-white/50 max-w-xl mx-auto mb-8">
+                Every year, your team burns <span class="text-white font-semibold" id="summary-hours">2,730 hours</span>
+                on zombies while <span class="text-google-yellow font-semibold" id="summary-deals">16 real
+                    deals</span> slip through the cracks.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="https://calendly.com/your-link" target="_blank"
+                    class="px-8 py-4 bg-google-green text-white font-bold rounded-xl hover:bg-green-600 transition-all shadow-lg">
+                    Book a Liquidation Consultation →
+                </a>
+                <a href="index.html#debate"
+                    class="px-8 py-4 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition-all border border-white/20">
+                    See How It Works
+                </a>
+            </div>
+            <p class="text-white/50 text-sm mt-4">Let me stop this bleeding for you. 30-min call. No pitch.</p>
+        </div>
+
+        <!-- Methodology Note -->
+        <div class="bg-google-gray rounded-xl p-6 border border-google-border">
+            <h4 class="font-bold mb-3 flex items-center gap-2">
+                <svg class="w-5 h-5 text-google-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Methodology
+            </h4>
+            <div class="text-sm text-google-subtext space-y-2">
+                <p><strong>Industry-Specific Close Rates:</strong> Mass Tort (15%), Roofing (5%), Agency/SaaS (3%).
+                    Based on vertical benchmarks.</p>
+                <p><strong>Hours Lost to Bad Data:</strong> ZoomInfo research shows SDRs waste 27% of time on bad data.
+                    At 2,020 hours/year = 546 hours per SDR.</p>
+                <p><strong>Touch Duration:</strong> 30 minutes per quality touch (research + personalization + send +
+                    follow-up).</p>
+                <p><strong>This calculator is conservative.</strong> It doesn't account for brand damage, deliverability
+                    degradation, or rep turnover.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-google-border py-8 mt-12">
+        <div class="max-w-6xl mx-auto px-4 text-center text-sm text-google-subtext">
+            <p>&copy; 2025 Rekindle Pro. Built for sales teams tired of chasing ghosts.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Vertical benchmarks (from liquidation_audit.py)
+        const BENCHMARKS = {
+            mass_tort: {
+                name: "Mass Tort Law",
+                closeRate: 0.15,  // 15% re-retainer rate
+                riskFactor: "Malpractice Liability",
+            },
+            roofing: {
+                name: "Commercial Roofing",
+                closeRate: 0.05,  // 5% appointment rate
+                riskFactor: "Felony Non-Compliance (Deductibles)",
+            },
+            agency_saas: {
+                name: "Agency / SaaS",
+                closeRate: 0.03,  // 3% re-booking rate
+                riskFactor: "Competitor Displacement",
+            },
+        };
+
+        let selectedVertical = 'agency_saas';
+
+        function selectVertical(vertical) {
+            selectedVertical = vertical;
+
+            // Update UI
+            document.querySelectorAll('.vertical-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.getElementById('btn-' + vertical).classList.add('selected');
+
+            // Recalculate
+            update();
+        }
+
+        const sdrSlider = document.getElementById('sdr-slider');
+        const hoursSlider = document.getElementById('hours-slider');
+        const rateSlider = document.getElementById('rate-slider');
+        const acvSlider = document.getElementById('acv-slider');
+
+        function update() {
+            const sdrs = parseInt(sdrSlider.value);
+            const hoursPerSdr = parseInt(hoursSlider.value);
+            const rate = parseInt(rateSlider.value);
+            const acv = parseInt(acvSlider.value);
+            const closeRate = BENCHMARKS[selectedVertical].closeRate;
+            const riskFactor = BENCHMARKS[selectedVertical].riskFactor;
+
+            // Display input values
+            document.getElementById('sdr-val').textContent = sdrs;
+            document.getElementById('hours-val').textContent = hoursPerSdr.toLocaleString();
+            document.getElementById('rate-val').textContent = rate;
+            document.getElementById('acv-val').textContent = acv;
+
+            // Calculate direct cost
+            const totalHours = sdrs * hoursPerSdr;
+            const directCost = totalHours * rate;
+
+            // Calculate opportunity cost cascade
+            const touches = totalHours * 2; // 30min per touch = 2 touches per hour
+            const conversations = Math.round(touches / 10); // 10:1 ratio
+            const deals = Math.round(conversations * closeRate);
+            const lostRevenue = deals * acv * 1000; // ACV in thousands
+
+            // Total impact
+            const totalImpact = directCost + lostRevenue;
+
+            // Update Direct Cost section
+            document.getElementById('total-hours').textContent = totalHours.toLocaleString();
+            document.getElementById('hourly-rate-display').textContent = rate;
+            document.getElementById('direct-cost').textContent = '$' + directCost.toLocaleString();
+
+            // Update Opportunity Cost cascade
+            document.getElementById('cascade-hours').textContent = totalHours.toLocaleString();
+            document.getElementById('cascade-touches').textContent = touches.toLocaleString();
+            document.getElementById('cascade-convos').textContent = conversations.toLocaleString();
+            document.getElementById('close-rate-display').textContent = Math.round(closeRate * 100);
+            document.getElementById('cascade-deals').textContent = deals.toLocaleString();
+            document.getElementById('acv-display').textContent = acv;
+            document.getElementById('cascade-revenue').textContent = (lostRevenue / 1000).toLocaleString();
+            document.getElementById('opportunity-cost').textContent = '$' + lostRevenue.toLocaleString();
+
+            // Update total impact
+            document.getElementById('total-impact').textContent = '$' + totalImpact.toLocaleString();
+            document.getElementById('summary-hours').textContent = totalHours.toLocaleString() + ' hours';
+            document.getElementById('summary-deals').textContent = deals + ' real deals';
+
+            // Update risk warning
+            document.getElementById('risk-warning').innerHTML =
+                'Risk Factor: <span class="text-google-yellow font-semibold">' + riskFactor + '</span>';
+        }
+
+        [sdrSlider, hoursSlider, rateSlider, acvSlider].forEach(s => s.addEventListener('input', update));
+
+        // Initial calculation
+        update();
+    </script>
+</body>
+
+</html>
