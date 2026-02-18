@@ -587,7 +587,62 @@ footer p { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.
       primaryColor: '#C4622D',
       secondaryColor: '#141412',
       backgroundColor: '#1C1A17',
-      fontColor: '#F5F0E8'
+      fontColor: '#F5F0E8',
+      customCSS: `
+        .chat-window {
+          background: #1C1A17 !important;
+          border: 1px solid rgba(245,240,232,0.07) !important;
+          border-radius: 16px !important;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.6) !important;
+        }
+        .chat-header {
+          background: #141412 !important;
+          border-bottom: 1px solid rgba(245,240,232,0.07) !important;
+        }
+        .chat-header h3, .chat-header p {
+          color: #F5F0E8 !important;
+        }
+        .chat-messages {
+          background: #141412 !important;
+        }
+        .chat-message.bot {
+          background: #232018 !important;
+          color: #F5F0E8 !important;
+          border: 1px solid rgba(245,240,232,0.07) !important;
+        }
+        .chat-message.user {
+          background: #C4622D !important;
+          color: white !important;
+        }
+        .chat-input-container {
+          background: #1C1A17 !important;
+          border-top: 1px solid rgba(245,240,232,0.07) !important;
+        }
+        .chat-input {
+          background: #141412 !important;
+          color: #F5F0E8 !important;
+          border: 1px solid rgba(245,240,232,0.07) !important;
+        }
+        .chat-input::placeholder {
+          color: #635D57 !important;
+        }
+        .send-button {
+          background: #C4622D !important;
+          color: white !important;
+        }
+        .send-button:hover {
+          background: #D4733E !important;
+        }
+        .toggle-button {
+          background: #C4622D !important;
+          border-radius: 50% !important;
+          box-shadow: 0 4px 20px rgba(196,98,45,0.4) !important;
+        }
+        .toggle-button:hover {
+          background: #D4733E !important;
+          box-shadow: 0 6px 24px rgba(196,98,45,0.5) !important;
+        }
+      `
     },
     i18n: {
       en: {
@@ -602,93 +657,6 @@ footer p { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.
 </script>
 
 <div id="n8n-chat-widget" style="position: fixed; bottom: 24px; right: 24px; z-index: 100;"></div>
-
-<!-- Custom Chat Widget Styles -->
-<style>
-  /* Chat toggle button - make it round and ember color */
-  .n8n-chat-toggle-button {
-    background-color: #C4622D !important;
-    border-radius: 50% !important;
-    width: 56px !important;
-    height: 56px !important;
-    box-shadow: 0 4px 20px rgba(196,98,45,0.4) !important;
-  }
-  
-  .n8n-chat-toggle-button:hover {
-    background-color: #D4733E !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 24px rgba(196,98,45,0.5) !important;
-  }
-  
-  /* Chat window container */
-  .n8n-chat-window {
-    background-color: #1C1A17 !important;
-    border: 1px solid rgba(245,240,232,0.07) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6) !important;
-  }
-  
-  /* Chat header */
-  .n8n-chat-header {
-    background-color: #141412 !important;
-    border-bottom: 1px solid rgba(245,240,232,0.07) !important;
-  }
-  
-  .n8n-chat-header * {
-    color: #F5F0E8 !important;
-  }
-  
-  /* Messages container */
-  .n8n-chat-messages {
-    background-color: #141412 !important;
-  }
-  
-  /* Bot message bubbles */
-  .n8n-chat-message-bot,
-  .chat-message-bot {
-    background-color: #232018 !important;
-    color: #F5F0E8 !important;
-    border: 1px solid rgba(245,240,232,0.07) !important;
-  }
-  
-  /* User message bubbles */
-  .n8n-chat-message-user,
-  .chat-message-user {
-    background-color: #C4622D !important;
-    color: white !important;
-  }
-  
-  /* Input area */
-  .n8n-chat-input-container,
-  .chat-input-container {
-    background-color: #1C1A17 !important;
-    border-top: 1px solid rgba(245,240,232,0.07) !important;
-  }
-  
-  .n8n-chat-input,
-  .chat-input {
-    background-color: #141412 !important;
-    color: #F5F0E8 !important;
-    border: 1px solid rgba(245,240,232,0.07) !important;
-  }
-  
-  .n8n-chat-input::placeholder,
-  .chat-input::placeholder {
-    color: #635D57 !important;
-  }
-  
-  /* Send button */
-  .n8n-chat-send-button,
-  .chat-send-button {
-    background-color: #C4622D !important;
-    color: white !important;
-  }
-  
-  .n8n-chat-send-button:hover,
-  .chat-send-button:hover {
-    background-color: #D4733E !important;
-  }
-</style>
 
 <script>
   // Personalization from URL params
