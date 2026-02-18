@@ -477,9 +477,9 @@ const questions = [
     validate: v => v.length > 0
   },
   {
-    id: 'payment',
-    bot: ["Last step — add your card for billing.", "You'll only be charged £2.50 per review captured. Nothing upfront, no monthly fees."],
-    type: 'stripe-card',
+    id: 'confirm',
+    bot: ["Perfect! That's everything we need.", "Riccardo will be in touch within 24 hours to get your system live."],
+    type: 'text',
     validate: () => true
   }
 ];
@@ -804,7 +804,7 @@ function shakeInput() {
 async function finishOnboarding() {
   // Send to webhook
   try {
-    await fetch('https://n8n.srv1334356.hstgr.cloud/webhook/review-demo-trigger/', {
+    await fetch('https://n8n.srv1334356.hstgr.cloud/webhook/onboarding/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
