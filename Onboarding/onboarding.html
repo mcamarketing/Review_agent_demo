@@ -514,8 +514,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Stripe init error:', e);
   }
 
-  // Start conversation
-  setTimeout(() => askQuestion(0), 800);
+  // Start conversation immediately
+  askQuestion(0);
 
   // Input handling
   const input = document.getElementById('user-input');
