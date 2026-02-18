@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rekindle Pro — Let's Get You Set Up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@200,0..1&display=swap" rel="stylesheet">
+<script src="https://js.stripe.com/v3/"></script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #141412;
+  --surface: #1C1A17;
+  --surface-2: #232018;
+  --cream: #F5F0E8;
+  --cream-60: rgba(245,240,232,0.6);
+  --cream-40: rgba(245,240,232,0.4);
+  --ember: #C4622D;
+  --ember-h: #D4733E;
+  --border: rgba(245,240,232,0.07);
+  --border-focus: rgba(196,98,45,0.5);
+  --muted: #635D57;
+  --error: #ef4444;
+  --success: #4ade80;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--cream);
+  font-family: 'Manrope', sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+.noise {
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 100; mix-blend-mode: overlay;
+}
+
+.blob {
+  position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+}
+.blob-1 { width: 60vw; height: 60vw; background: radial-gradient(circle, rgba(196,98,45,0.08) 0%, transparent 70%); top: -25%; right: -20%; }
+
+.video-container {
+  position: relative;
+  margin: 20px 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.video-wrapper {
+  position: relative;
+  padding: 56.25% 0 0 0;
+}
+
+.video-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  height: 64px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 24px;
+  background: rgba(20,20,18,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.25rem; font-weight: 400; font-style: italic;
+  color: var(--cream); text-decoration: none;
+}
+.logo-icon {
+  width: 26px; height: 26px; background: var(--ember);
+  border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 12px rgba(196,98,45,0.4);
+}
+.logo-icon .material-symbols-outlined { font-size: 0.9rem; color: white; font-variation-settings: 'FILL' 1; }
+
+/* MAIN CHAT INTERFACE */
+.chat-container {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 100px 24px 180px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* MESSAGES */
+.message {
+  display: flex;
+  gap: 12px;
+  max-width: 85%;
+  animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.message.bot { align-self: flex-start; }
+.message.user { align-self: flex-end; flex-direction: row-reverse; }
+
+.avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar.bot {
+  background: var(--ember);
+  box-shadow: 0 0 16px rgba(196,98,45,0.35);
+}
+.avatar.bot .material-symbols-outlined { font-size: 1.1rem; color: white; font-variation-settings: 'FILL' 1; }
+
+.avatar.user {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.avatar.user .material-symbols-outlined { font-size: 1.1rem; color: var(--cream-60); }
+
+.bubble {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px 20px;
+  font-size: 0.95rem;
+  font-weight: 300;
+  line-height: 1.65;
+  color: var(--cream);
+}
+
+.message.user .bubble {
+  background: var(--ember);
+  border-color: var(--ember);
+  color: white;
+}
+
+.bubble p { margin-bottom: 12px; }
+.bubble p:last-child { margin-bottom: 0; }
+.bubble strong { font-weight: 500; }
+
+.typing {
+  display: flex; gap: 4px; padding: 8px 4px;
+}
+.typing span {
+  width: 6px; height: 6px; background: var(--muted);
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+.typing span:nth-child(1) { animation-delay: -0.32s; }
+.typing span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+/* INPUT AREA */
+.input-area {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(to top, var(--bg) 60%, transparent);
+  padding: 24px;
+  z-index: 40;
+}
+
+.input-wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.input-field {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 60px 16px 20px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1rem;
+  font-weight: 300;
+  color: var(--cream);
+  outline: none;
+  transition: all 0.25s ease;
+  resize: none;
+  min-height: 56px;
+  max-height: 120px;
+}
+
+.input-field:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(196,98,45,0.1);
+}
+
+.input-field::placeholder { color: var(--muted); }
+
+.send-btn {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 40px; height: 40px;
+  background: var(--ember);
+  border: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.send-btn:hover { background: var(--ember-h); transform: scale(1.05); }
+.send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.send-btn .material-symbols-outlined { font-size: 1.2rem; color: white; font-variation-settings: 'FILL' 1; }
+
+/* OPTIONS / QUICK REPLIES */
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+  animation: slideIn 0.4s ease forwards;
+}
+
+.option-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--cream);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.option-btn:hover {
+  border-color: var(--ember);
+  color: var(--ember);
+  background: rgba(196,98,45,0.08);
+}
+
+/* PROGRESS BAR */
+.progress-bar {
+  position: fixed; top: 64px; left: 0; right: 0;
+  height: 2px;
+  background: var(--border);
+  z-index: 45;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--ember);
+  width: 0%;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 10px rgba(196,98,45,0.5);
+}
+
+/* SUCCESS STATE */
+.success-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  text-align: center;
+  gap: 24px;
+}
+
+.success-icon {
+  width: 80px; height: 80px;
+  background: rgba(74,222,128,0.1);
+  border: 1px solid rgba(74,222,128,0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.success-icon .material-symbols-outlined { font-size: 2.5rem; color: var(--success); font-variation-settings:'FILL' 1; }
+
+.success-title { font-family: 'Cormorant Garamond', serif; font-size: 3rem; font-weight: 400; color: var(--cream); }
+.success-title em { font-style: italic; color: var(--ember); }
+.success-sub { font-size: 1rem; font-weight: 300; color: var(--cream-60); line-height: 1.7; max-width: 400px; }
+
+.check-list { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.check-list li { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--cream-60); }
+.check-list li .material-symbols-outlined { font-size: 1.1rem; color: var(--success); font-variation-settings:'FILL' 1; }
+
+/* CARD INPUT */
+.card-input-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.card-hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pop {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .chat-container { padding: 90px 16px 160px; }
+  .message { max-width: 92%; }
+  .bubble { padding: 14px 16px; font-size: 0.9rem; }
+  .success-title { font-size: 2.2rem; }
+}
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="blob blob-1"></div>
+
+<nav>
+  <a class="logo" href="https://reviews.rekindlepro.com">
+    <div class="logo-icon"><span class="material-symbols-outlined">local_fire_department</span></div>
+    Rekindle Pro
+  </a>
+</nav>
+
+<div class="progress-bar">
+  <div class="progress-fill" id="progress"></div>
+</div>
+
+<!-- CHAT INTERFACE -->
+<div class="chat-container" id="chat">
+  <!-- Video -->
+  <div class="video-container">
+    <div class="video-wrapper">
+      <iframe src="https://player.vimeo.com/video/1165853028?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479&amp;autoplay=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" style="position:absolute;top:0;left:0;width:100%;height:100%;" title="The_Reputation_Filter"></iframe>
+    </div>
+  </div>
+  <!-- Messages will be added here -->
+</div>
+
+<!-- INPUT AREA -->
+<div class="input-area" id="input-area">
+  <div class="input-wrap">
+    <textarea class="input-field" id="user-input" placeholder="Type your answer..." rows="1"></textarea>
+    <button class="send-btn" id="send-btn" onclick="handleUserInput()">
+      <span class="material-symbols-outlined">arrow_upward</span>
+    </button>
+  </div>
+</div>
+
+<!-- SUCCESS SCREEN -->
+<div class="success-screen" id="success-screen">
+  <div class="success-icon">
+    <span class="material-symbols-outlined">check</span>
+  </div>
+  <h1 class="success-title">You're all set, <em id="success-name">friend</em> 🔥</h1>
+  <p class="success-sub">We've got everything we need. Your SMS review system will be live within 24 hours.</p>
+  <ul class="check-list">
+    <li><span class="material-symbols-outlined">check_circle</span>Personalised SMS configured</li>
+    <li><span class="material-symbols-outlined">check_circle</span>Payment method secured</li>
+    <li><span class="material-symbols-outlined">check_circle</span>Riccardo will WhatsApp you shortly</li>
+  </ul>
+  <a href="https://wa.me/447903573675" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; padding: 14px 28px; background: #25D366; color: white; text-decoration: none; border-radius: 999px; font-family: 'DM Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.25s ease;">
+    <span class="material-symbols-outlined" style="font-size: 1.1rem;">chat</span>
+    Message Riccardo on WhatsApp
+  </a>
+</div>
+
+<script>
+// ── STATE ───────────────────────────────────────────────
+let currentStep = 0;
+let formData = {};
+let isWaiting = false;
+let stripe, cardElement;
+
+// ── QUESTIONS FLOW ──────────────────────────────────────
+const questions = [
+  {
+    id: 'greeting',
+    bot: ["Hey there! 👋", "I'm Riccardo's assistant. Let's get your review automation set up — takes about 2 minutes.", "What's your first name?"],
+    type: 'text',
+    validate: v => v.length >= 2
+  },
+  {
+    id: 'business_name',
+    bot: ["Nice to meet you, {name}!", "What's your business called?"],
+    type: 'text',
+    validate: v => v.length >= 2
+  },
+  {
+    id: 'industry',
+    bot: ["What type of business is {business_name}?"],
+    type: 'options',
+    options: ['Restaurant', 'Café', 'Hotel', 'Spa/Wellness', 'Retail Shop', 'Bar/Pub', 'Other'],
+    validate: v => v.length > 0
+  },
+  {
+    id: 'email',
+    bot: ["What's the best email to reach you?"],
+    type: 'text',
+    validate: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+  },
+  {
+    id: 'phone',
+    bot: ["And your mobile number?"],
+    type: 'text',
+    validate: v => v.length >= 8
+  },
+  {
+    id: 'pos_system',
+    bot: ["What system do you use to take bookings or payments?"],
+    type: 'options',
+    options: ['Square', 'Toast', 'Clover', 'Resy', 'OpenTable', 'SevenRooms', 'Goodtill', 'None / Manual', 'Other'],
+    validate: v => v.length > 0
+  },
+  {
+    id: 'timing',
+    bot: ["When should we send the SMS to your customers?"],
+    type: 'options',
+    options: ['Immediately after visit', '30 minutes after', '1 hour after', '2 hours after', '3 hours after', 'Next day morning'],
+    validate: v => v.length > 0
+  },
+  {
+    id: 'review_links',
+    bot: ["Where should we send happy customers?"],
+    type: 'multi-text',
+    fields: [
+      { id: 'google_link', label: 'Google Reviews link', placeholder: 'https://g.page/r/...' },
+      { id: 'tripadvisor_link', label: 'TripAdvisor link (optional)', placeholder: 'https://tripadvisor.com/...' }
+    ],
+    validate: v => v.google_link && v.google_link.includes('http')
+  },
+  {
+    id: 'custom_message',
+    bot: ["Want to customise the SMS message?", "Leave it blank and we'll use our proven template that gets 40%+ response rates."],
+    type: 'text-optional',
+    placeholder: "Or type your custom message here...",
+    hint: "Max 160 characters. We'll auto-fill {name} and {business}.",
+    validate: () => true
+  },
+  {
+    id: 'volume',
+    bot: ["Roughly how many customers do you serve per day?"],
+    type: 'options',
+    options: ['1–20', '21–50', '51–100', '100+'],
+    validate: v => v.length > 0
+  },
+  {
+    id: 'payment',
+    bot: ["Last step — add your card for billing.", "You'll only be charged £2.50 per review captured. Nothing upfront, no monthly fees."],
+    type: 'stripe-card',
+    validate: () => true
+  }
+];
+
+// ── INIT ────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Init Stripe
+  stripe = Stripe('pk_test_YOUR_STRIPE_KEY');
+  const elements = stripe.elements({
+    appearance: {
+      theme: 'night',
+      variables: {
+        colorPrimary: '#C4622D',
+        colorBackground: '#1C1A17',
+        colorText: '#F5F0E8',
+        fontFamily: 'Manrope, sans-serif'
+      }
+    }
+  });
+  cardElement = elements.create('card', {
+    style: {
+      base: {
+        fontSize: '16px',
+        color: '#F5F0E8',
+        '::placeholder': { color: '#635D57' }
+      }
+    }
+  });
+
+  // Start conversation
+  setTimeout(() => askQuestion(0), 500);
+
+  // Input handling
+  const input = document.getElementById('user-input');
+  input.addEventListener('keypress', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleUserInput();
+    }
+  });
+  input.addEventListener('input', autoResize);
+});
+
+// ── CHAT FUNCTIONS ──────────────────────────────────────
+function addMessage(text, sender = 'bot') {
+  const chat = document.getElementById('chat');
+  const msgDiv = document.createElement('div');
+  msgDiv.className = `message ${sender}`;
+  
+  const avatar = document.createElement('div');
+  avatar.className = `avatar ${sender}`;
+  avatar.innerHTML = `<span class="material-symbols-outlined">${sender === 'bot' ? 'local_fire_department' : 'person'}</span>`;
+  
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  
+  if (Array.isArray(text)) {
+    text.forEach((line, i) => {
+      const p = document.createElement('p');
+      p.textContent = line;
+      if (i === text.length - 1) p.style.marginBottom = '0';
+      bubble.appendChild(p);
+    });
+  } else {
+    bubble.textContent = text;
+  }
+  
+  msgDiv.appendChild(avatar);
+  msgDiv.appendChild(bubble);
+  chat.appendChild(msgDiv);
+  
+  scrollToBottom();
+}
+
+function addTyping() {
+  const chat = document.getElementById('chat');
+  const typing = document.createElement('div');
+  typing.className = 'message bot';
+  typing.id = 'typing-indicator';
+  typing.innerHTML = `
+    <div class="avatar bot"><span class="material-symbols-outlined">local_fire_department</span></div>
+    <div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>
+  `;
+  chat.appendChild(typing);
+  scrollToBottom();
+}
+
+function removeTyping() {
+  const typing = document.getElementById('typing-indicator');
+  if (typing) typing.remove();
+}
+
+function askQuestion(index) {
+  if (index >= questions.length) {
+    finishOnboarding();
+    return;
+  }
+  
+  currentStep = index;
+  const q = questions[index];
+  
+  // Update progress
+  const progress = ((index / questions.length) * 100).toFixed(0);
+  document.getElementById('progress').style.width = progress + '%';
+  
+  // Show typing then message
+  addTyping();
+  
+  setTimeout(() => {
+    removeTyping();
+    
+    // Personalise message
+    let message = q.bot.map(line => {
+      return line
+        .replace('{name}', formData.name || 'there')
+        .replace('{business_name}', formData.business_name || 'your business');
+    });
+    
+    addMessage(message, 'bot');
+    
+    // Show options or set up input
+    if (q.type === 'options') {
+      setTimeout(() => showOptions(q.options), 300);
+      hideInput();
+    } else if (q.type === 'stripe-card') {
+      setTimeout(() => showCardInput(), 300);
+      hideInput();
+    } else if (q.type === 'multi-text') {
+      setTimeout(() => showMultiText(q.fields), 300);
+      hideInput();
+    } else {
+      showInput(q.placeholder, q.hint);
+    }
+  }, 800 + (q.bot.length * 200));
+}
+
+function showOptions(options) {
+  const chat = document.getElementById('chat');
+  const optsDiv = document.createElement('div');
+  optsDiv.className = 'options';
+  
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt;
+    btn.onclick = () => handleOptionSelect(opt);
+    optsDiv.appendChild(btn);
+  });
+  
+  chat.appendChild(optsDiv);
+  scrollToBottom();
+}
+
+function showCardInput() {
+  const chat = document.getElementById('chat');
+  const cardDiv = document.createElement('div');
+  cardDiv.className = 'message bot';
+  cardDiv.style.animationDelay = '0.1s';
+  cardDiv.innerHTML = `
+    <div class="avatar bot"><span class="material-symbols-outlined">local_fire_department</span></div>
+    <div class="bubble" style="min-width: 300px;">
+      <div class="card-input-wrap" id="card-wrap"></div>
+      <p class="card-hint">🔒 Secured by Stripe. You won't be charged until reviews come in.</p>
+      <button class="option-btn" style="margin-top: 12px; background: var(--ember); border-color: var(--ember); color: white;" onclick="submitCard()">
+        Complete setup
+      </button>
+    </div>
+  `;
+  chat.appendChild(cardDiv);
+  
+  setTimeout(() => {
+    cardElement.mount('#card-wrap');
+  }, 100);
+  
+  scrollToBottom();
+}
+
+function showMultiText(fields) {
+  const chat = document.getElementById('chat');
+  const formDiv = document.createElement('div');
+  formDiv.className = 'message bot';
+  formDiv.innerHTML = `
+    <div class="avatar bot"><span class="material-symbols-outlined">local_fire_department</span></div>
+    <div class="bubble" style="min-width: 320px;">
+      ${fields.map(f => `
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 6px;">${f.label}</label>
+          <input type="text" id="field-${f.id}" placeholder="${f.placeholder}" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--cream); font-family: inherit; font-size: 0.9rem; outline: none;">
+        </div>
+      `).join('')}
+      <button class="option-btn" style="background: var(--ember); border-color: var(--ember); color: white;" onclick="submitMultiText()">Continue</button>
+    </div>
+  `;
+  chat.appendChild(formDiv);
+  scrollToBottom();
+}
+
+// ── INPUT HANDLING ──────────────────────────────────────
+function handleUserInput() {
+  const input = document.getElementById('user-input');
+  const value = input.value.trim();
+  
+  if (!value || isWaiting) return;
+  
+  const q = questions[currentStep];
+  
+  if (!q.validate(value)) {
+    shakeInput();
+    return;
+  }
+  
+  // Save and continue
+  saveAnswer(value);
+  addMessage(value, 'user');
+  input.value = '';
+  autoResize();
+  
+  setTimeout(() => askQuestion(currentStep + 1), 400);
+}
+
+function handleOptionSelect(value) {
+  if (isWaiting) return;
+  
+  // Remove options
+  document.querySelectorAll('.options').forEach(el => el.remove());
+  
+  saveAnswer(value);
+  addMessage(value, 'user');
+  
+  setTimeout(() => askQuestion(currentStep + 1), 400);
+}
+
+function submitMultiText() {
+  const q = questions[currentStep];
+  const values = {};
+  
+  q.fields.forEach(f => {
+    values[f.id] = document.getElementById(`field-${f.id}`).value.trim();
+  });
+  
+  if (!q.validate(values)) {
+    shakeInput();
+    return;
+  }
+  
+  // Remove the form
+  event.target.closest('.message').remove();
+  
+  // Save answers
+  Object.assign(formData, values);
+  addMessage("✓ Review links saved", 'user');
+  
+  setTimeout(() => askQuestion(currentStep + 1), 400);
+}
+
+async function submitCard() {
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = 'Processing...';
+  
+  try {
+    const { paymentMethod, error } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardElement,
+      billing_details: {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone
+      }
+    });
+    
+    if (error) {
+      alert(error.message);
+      btn.disabled = false;
+      btn.textContent = 'Complete setup';
+      return;
+    }
+    
+    formData.stripe_payment_method_id = paymentMethod.id;
+    addMessage("✓ Card added securely", 'user');
+    
+    setTimeout(() => finishOnboarding(), 400);
+    
+  } catch (err) {
+    alert('Something went wrong. Please try again.');
+    btn.disabled = false;
+    btn.textContent = 'Complete setup';
+  }
+}
+
+// ── HELPERS ─────────────────────────────────────────────
+function saveAnswer(value) {
+  const q = questions[currentStep];
+  
+  if (q.id === 'greeting') {
+    formData.name = value;
+  } else if (q.id === 'business_name') {
+    formData.business_name = value;
+  } else if (q.id === 'industry') {
+    formData.industry = value;
+  } else if (q.id === 'email') {
+    formData.email = value;
+  } else if (q.id === 'phone') {
+    formData.phone = value;
+  } else if (q.id === 'pos_system') {
+    formData.pos_system = value;
+  } else if (q.id === 'timing') {
+    formData.timing = value;
+  } else if (q.id === 'custom_message') {
+    formData.custom_message = value;
+  } else if (q.id === 'volume') {
+    formData.volume = value;
+  }
+}
+
+function showInput(placeholder, hint) {
+  const inputArea = document.getElementById('input-area');
+  const input = document.getElementById('user-input');
+  
+  inputArea.style.display = 'block';
+  input.placeholder = placeholder || 'Type your answer...';
+  input.focus();
+}
+
+function hideInput() {
+  document.getElementById('input-area').style.display = 'none';
+}
+
+function autoResize() {
+  const input = document.getElementById('user-input');
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+}
+
+function scrollToBottom() {
+  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+
+function shakeInput() {
+  const input = document.querySelector('.input-wrap');
+  input.style.animation = 'shake 0.4s ease';
+  setTimeout(() => input.style.animation = '', 400);
+}
+
+async function finishOnboarding() {
+  // Send to webhook
+  try {
+    await fetch('https://n8n.srv1334356.hstgr.cloud/webhook/onboarding', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
+  } catch (e) {
+    console.log('Webhook error (non-critical):', e);
+  }
+  
+  // Show success
+  document.getElementById('chat').style.display = 'none';
+  document.getElementById('input-area').style.display = 'none';
+  document.querySelector('.progress-bar').style.display = 'none';
+  
+  const successScreen = document.getElementById('success-screen');
+  successScreen.style.display = 'flex';
+  document.getElementById('success-name').textContent = formData.name || 'friend';
+}
+</script>
+<script src="https://player.vimeo.com/api/player.js"></script>
+
+<style>
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+</style>
+</body>
+</html>

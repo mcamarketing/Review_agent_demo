@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Live Demo — Experience the Review Journey</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@200,0..1&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #141412;
+      --surface: #1C1A17;
+      --surface-2: #232018;
+      --cream: #F5F0E8;
+      --cream-60: rgba(245,240,232,0.6);
+      --cream-40: rgba(245,240,232,0.4);
+      --ember: #C4622D;
+      --ember-h: #D4733E;
+      --border: rgba(245,240,232,0.07);
+      --muted: #635D57;
+      --success: #4ade80;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'Manrope', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .noise {
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 100; mix-blend-mode: overlay;
+    }
+
+    .blob {
+      position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+    }
+    .blob-1 { width: 60vw; height: 60vw; background: radial-gradient(circle, rgba(196,98,45,0.08) 0%, transparent 70%); top: -25%; right: -20%; }
+    .blob-2 { width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(196,98,45,0.05) 0%, transparent 70%); bottom: -15%; left: -10%; }
+
+    .container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 1000px;
+      animation: slideIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 32px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.25rem;
+      font-weight: 400;
+      font-style: italic;
+      color: var(--cream);
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 26px;
+      height: 26px;
+      background: var(--ember);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px rgba(196,98,45,0.4);
+    }
+
+    .logo-icon .material-symbols-outlined { font-size: 0.9rem; color: white; font-variation-settings: 'FILL' 1; }
+
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      color: var(--cream);
+      text-align: center;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--ember);
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      font-weight: 300;
+      color: var(--cream-60);
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+
+    /* Form Styles */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .card { padding: 24px; }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input[type="text"],
+    input[type="url"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-family: 'Manrope', sans-serif;
+      font-size: 0.95rem;
+      color: var(--cream);
+      outline: none;
+      transition: all 0.25s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="url"]:focus {
+      border-color: var(--ember);
+      box-shadow: 0 0 0 3px rgba(196,98,45,0.1);
+    }
+
+    input::placeholder {
+      color: var(--muted);
+    }
+
+    /* Video Section */
+    .video-instruction {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 32px;
+      margin: 32px 0;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .video-instruction { grid-template-columns: 1fr; }
+    }
+
+    .video-wrapper {
+      position: relative;
+      padding: 56.25% 0 0 0;
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--bg);
+      border: 1px solid var(--border);
+    }
+
+    .video-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .instruction-box {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .instruction-text {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: var(--cream-60);
+    }
+
+    .instruction-text strong {
+      color: var(--cream);
+      font-weight: 500;
+    }
+
+    .instruction-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      background: var(--bg);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .step-number {
+      width: 28px;
+      height: 28px;
+      background: var(--ember);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .step-text {
+      font-size: 0.9rem;
+      color: var(--cream-60);
+      line-height: 1.5;
+    }
+
+    /* CTA Button */
+    .cta-section {
+      text-align: center;
+      margin-top: 32px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 36px;
+      background: var(--ember);
+      color: white;
+      font-family: 'Manrope', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 20px rgba(196,98,45,0.3);
+      text-decoration: none;
+    }
+
+    .btn-primary:hover {
+      background: var(--ember-h);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(196,98,45,0.4);
+    }
+
+    .btn-primary .material-symbols-outlined {
+      font-size: 1.2rem;
+      font-variation-settings: 'FILL' 1;
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      background: transparent;
+      color: var(--cream);
+      font-family: 'Manrope', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 400;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      margin-top: 16px;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--ember);
+      color: var(--ember);
+      background: rgba(196,98,45,0.08);
+    }
+
+    /* Success State */
+    .success-state {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .success-state.active {
+      display: block;
+      animation: slideIn 0.5s ease;
+    }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: rgba(74,222,128,0.1);
+      border: 1px solid rgba(74,222,128,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+    }
+
+    .success-icon .material-symbols-outlined {
+      font-size: 2.5rem;
+      color: var(--success);
+      font-variation-settings: 'FILL' 1;
+    }
+
+    .success-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 400;
+      color: var(--cream);
+      margin-bottom: 12px;
+    }
+
+    .success-text {
+      font-size: 1rem;
+      color: var(--cream-60);
+      margin-bottom: 32px;
+    }
+
+    /* Legal */
+    .legal {
+      text-align: center;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .legal a {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .legal a:hover {
+      color: var(--ember);
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+    }
+
+    .pulse {
+      animation: pulse 2s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="noise"></div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="container">
+    <a class="logo" href="https://reviews.rekindlepro.com">
+      <div class="logo-icon"><span class="material-symbols-outlined">local_fire_department</span></div>
+      Rekindle Pro
+    </a>
+
+    <h1>Experience the <em>Review Journey</em></h1>
+    <p class="subtitle">Live demo — see exactly what your customers experience</p>
+
+    <div class="card" id="demo-form">
+      <!-- Form -->
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="firstName">First Name</label>
+          <input type="text" id="firstName" placeholder="Enter your first name" value="Jamie">
+        </div>
+        <div class="form-group">
+          <label for="companyName">Company Name</label>
+          <input type="text" id="companyName" placeholder="Enter your company" value="Table and Candle">
+        </div>
+        <div class="form-group full-width">
+          <label for="reviewLink">Google Review Link (Demo)</label>
+          <input type="url" id="reviewLink" value="https://search.google.com/local/writereview?placeid=ChIJ26QAr_kddkgRlmr2MFauAKE" readonly>
+        </div>
+      </div>
+
+      <!-- Video + Instructions -->
+      <div class="video-instruction">
+        <div class="video-wrapper">
+          <iframe src="https://player.vimeo.com/video/1165853028?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479&amp;autoplay=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" title="The_Reputation_Filter"></iframe>
+        </div>
+        
+        <div class="instruction-box">
+          <div class="instruction-text">
+            <strong>Try it yourself:</strong> Click the button to leave a review exactly like your customers will. Once submitted, return to this tab to continue your demo.
+          </div>
+          
+          <div class="instruction-step">
+            <div class="step-number">1</div>
+            <div class="step-text">Click "Leave Review" — opens Google in new tab</div>
+          </div>
+          
+          <div class="instruction-step">
+            <div class="step-number">2</div>
+            <div class="step-text">Submit your review on Google</div>
+          </div>
+          
+          <div class="instruction-step">
+            <div class="step-number">3</div>
+            <div class="step-text">Return here and click "I've left the review"</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA Buttons -->
+      <div class="cta-section">
+        <a href="https://search.google.com/local/writereview?placeid=ChIJ26QAr_kddkgRlmr2MFauAKE" target="_blank" class="btn-primary pulse" id="leaveReviewBtn">
+          <span class="material-symbols-outlined">open_in_new</span>
+          Leave a Review
+        </a>
+        
+        <br>
+        
+        <button class="btn-secondary" id="reviewCompleteBtn" style="display: none;">
+          <span class="material-symbols-outlined">check_circle</span>
+          I've left the review — Continue Demo
+        </button>
+      </div>
+
+
+    </div>
+
+    <!-- Success State -->
+    <div class="success-state" id="successState">
+      <div class="success-icon">
+        <span class="material-symbols-outlined">check</span>
+      </div>
+      <h2 class="success-title">Review Submitted!</h2>
+      <p class="success-text">You've experienced the full customer journey. This is exactly what your customers will see.</p>
+      
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-top: 24px; text-align: left;">
+        <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; margin-bottom: 16px; color: var(--cream);">What happens next?</h3>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+          <li style="display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: var(--cream-60);">
+            <span class="material-symbols-outlined" style="color: var(--ember);">sms</span>
+            Your customer receives a personalized SMS
+          </li>
+          <li style="display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: var(--cream-60);">
+            <span class="material-symbols-outlined" style="color: var(--ember);">rate_review</span>
+            They leave a review (just like you did)
+          </li>
+          <li style="display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: var(--cream-60);">
+            <span class="material-symbols-outlined" style="color: var(--ember);">trending_up</span>
+            Your Google rating improves automatically
+          </li>
+          <li style="display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: var(--cream-60);">
+            <span class="material-symbols-outlined" style="color: var(--ember);">payments</span>
+            You only pay £2.50 per review captured
+          </li>
+        </ul>
+      </div>
+
+      <div style="margin-top: 32px;">
+        <a href="https://reviews.rekindlepro.com/onboarding" class="btn-primary">
+          <span class="material-symbols-outlined">rocket_launch</span>
+          Get Started — Set Up Your Business
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://player.vimeo.com/api/player.js"></script>
+  <script>
+    // Analytics tracking
+    function trackEvent(eventName, data = {}) {
+      console.log('📊 Analytics:', eventName, data);
+      // Send to your analytics platform here
+      // Example: gtag('event', eventName, data);
+    }
+
+    // Track form engagement
+    document.getElementById('firstName').addEventListener('focus', () => {
+      trackEvent('form_field_focus', { field: 'firstName' });
+    });
+
+    document.getElementById('companyName').addEventListener('focus', () => {
+      trackEvent('form_field_focus', { field: 'companyName' });
+    });
+
+    // Track "Leave Review" button click
+    document.getElementById('leaveReviewBtn').addEventListener('click', function(e) {
+      const firstName = document.getElementById('firstName').value || 'Anonymous';
+      const companyName = document.getElementById('companyName').value || 'Unknown';
+      
+      trackEvent('leave_review_clicked', {
+        firstName: firstName,
+        companyName: companyName
+      });
+
+      // Show the "I've left review" button after 3 seconds
+      setTimeout(() => {
+        document.getElementById('reviewCompleteBtn').style.display = 'inline-flex';
+      }, 3000);
+    });
+
+    // Track "I've left the review" button
+    document.getElementById('reviewCompleteBtn').addEventListener('click', function() {
+      trackEvent('review_completed_returned');
+      
+      // Hide form, show success
+      document.getElementById('demo-form').style.display = 'none';
+      document.getElementById('successState').classList.add('active');
+      
+      // Scroll to success
+      document.getElementById('successState').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    // Auto-populate form from URL params if present
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('name')) {
+      document.getElementById('firstName').value = urlParams.get('name');
+    }
+    if (urlParams.get('company')) {
+      document.getElementById('companyName').value = urlParams.get('company');
+    }
+  </script>
+</body>
+</html>
