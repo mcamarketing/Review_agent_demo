@@ -487,31 +487,35 @@ const questions = [
 
 // ── INIT ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Init Stripe
-  stripe = Stripe('pk_live_51MTZhHGumalAn0ccDCsDaRXiQLY4Lj5FfqWFaKnmYx2TjTmRthwqQ8uxZSuErl4A7dAVvBpqDkTlWfYXYzJ2ea6F00Flk57kkB');
-  const elements = stripe.elements({
-    appearance: {
-      theme: 'night',
-      variables: {
-        colorPrimary: '#C4622D',
-        colorBackground: '#1C1A17',
-        colorText: '#F5F0E8',
-        fontFamily: 'Manrope, sans-serif'
+  try {
+    // Init Stripe
+    stripe = Stripe('pk_live_51MTZhHGumalAn0ccDCsDaRXiQLY4Lj5FfqWFaKnmYx2TjTmRthwqQ8uxZSuErl4A7dAVvBpqDkTlWfYXYzJ2ea6F00Flk57kkB');
+    const elements = stripe.elements({
+      appearance: {
+        theme: 'night',
+        variables: {
+          colorPrimary: '#C4622D',
+          colorBackground: '#1C1A17',
+          colorText: '#F5F0E8',
+          fontFamily: 'Manrope, sans-serif'
+        }
       }
-    }
-  });
-  cardElement = elements.create('card', {
-    style: {
-      base: {
-        fontSize: '16px',
-        color: '#F5F0E8',
-        '::placeholder': { color: '#635D57' }
+    });
+    cardElement = elements.create('card', {
+      style: {
+        base: {
+          fontSize: '16px',
+          color: '#F5F0E8',
+          '::placeholder': { color: '#635D57' }
+        }
       }
-    }
-  });
+    });
+  } catch(e) {
+    console.log('Stripe init error:', e);
+  }
 
   // Start conversation
-  setTimeout(() => askQuestion(0), 500);
+  setTimeout(() => askQuestion(0), 800);
 
   // Input handling
   const input = document.getElementById('user-input');
