@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rekindle Pro — SMS Review Automation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Mono:wght@300;400&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@200,0..1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #141412;
+  --surface: #1C1A17;
+  --surface-2: #232018;
+  --cream: #F5F0E8;
+  --cream-60: rgba(245,240,232,0.6);
+  --cream-20: rgba(245,240,232,0.08);
+  --ember: #C4622D;
+  --ember-h: #D4733E;
+  --ember-glow: rgba(196,98,45,0.15);
+  --border: rgba(245,240,232,0.07);
+  --muted: #635D57;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--cream);
+  font-family: 'Manrope', sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* NOISE */
+.noise {
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 200; mix-blend-mode: overlay; opacity: 0.5;
+}
+
+/* GLOW BLOBS */
+.blob {
+  position: fixed; border-radius: 50%;
+  pointer-events: none; z-index: 0;
+}
+.blob-1 { width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(196,98,45,0.07) 0%, transparent 70%); top: -15%; left: -15%; }
+.blob-2 { width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(196,98,45,0.05) 0%, transparent 70%); bottom: -10%; right: -10%; }
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  height: 72px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 clamp(20px, 5vw, 72px);
+  background: rgba(20,20,18,0.88);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.45rem; font-weight: 400; font-style: italic;
+  color: var(--cream); text-decoration: none;
+}
+.logo-icon {
+  width: 32px; height: 32px; background: var(--ember);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 18px rgba(196,98,45,0.45);
+}
+.logo-icon .material-symbols-outlined { font-size: 1.1rem; color: white; font-variation-settings: 'FILL' 1; }
+
+.nav-pill {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--muted); border: 1px solid var(--border);
+  padding: 6px 16px; border-radius: 999px;
+}
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  padding: 72px clamp(20px, 5vw, 72px) 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+  position: relative; z-index: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-right { display: none; }
+}
+
+.hero-left { padding: 80px 0; max-width: 680px; }
+
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--ember);
+  background: rgba(196,98,45,0.1); border: 1px solid rgba(196,98,45,0.2);
+  padding: 6px 14px; border-radius: 999px;
+  margin-bottom: 32px;
+  opacity: 0; animation: up 0.7s ease forwards 0.1s;
+}
+.eyebrow::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--ember); animation: pulse 2s infinite; }
+
+h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(3.4rem, 6.5vw, 6.8rem);
+  font-weight: 400; line-height: 0.92; letter-spacing: -0.02em;
+  color: var(--cream); margin-bottom: 28px;
+  opacity: 0; animation: up 0.85s ease forwards 0.25s;
+}
+h1 em { font-style: italic; color: var(--ember); text-shadow: 0 0 30px rgba(196,98,45,0.25); }
+
+.hero-sub {
+  font-size: 1.05rem; font-weight: 300; line-height: 1.8;
+  color: var(--cream-60); max-width: 480px; margin-bottom: 44px;
+  opacity: 0; animation: up 0.85s ease forwards 0.4s;
+}
+
+.cta-row {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  opacity: 0; animation: up 0.85s ease forwards 0.55s;
+}
+
+.btn-cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 15px 30px; background: var(--ember); color: white;
+  font-family: 'DM Mono', monospace; font-size: 0.7rem;
+  letter-spacing: 0.14em; text-transform: uppercase; text-decoration: none;
+  border-radius: 6px; border: none; cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 8px 24px rgba(196,98,45,0.3);
+}
+.btn-cta:hover { background: var(--ember-h); transform: translateY(-2px); box-shadow: 0 14px 32px rgba(196,98,45,0.4); }
+.btn-cta .material-symbols-outlined { font-size: 1rem; }
+
+.cta-note { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--muted); }
+
+/* PHONE MOCKUP */
+.hero-right {
+  display: flex; align-items: center; justify-content: center;
+  position: relative; padding: 80px 0;
+  opacity: 0; animation: up 1s ease forwards 0.7s;
+}
+
+.phone-aura {
+  position: absolute; width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(196,98,45,0.18) 0%, transparent 70%);
+  border-radius: 50%; animation: breathe 4s ease-in-out infinite;
+}
+
+.phone {
+  position: relative; z-index: 2;
+  width: 240px; border-radius: 36px;
+  background: #0A0A09;
+  border: 6px solid #2A2825;
+  box-shadow: 0 0 0 1px #111, 0 30px 60px rgba(0,0,0,0.6);
+  overflow: hidden;
+  animation: float 6s ease-in-out infinite;
+}
+
+.phone-screen {
+  background: #111;
+  padding: 20px 16px 24px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.phone-notch {
+  width: 80px; height: 5px; background: #222;
+  border-radius: 3px; margin: 0 auto 16px;
+}
+
+.phone-contact {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.65rem; font-weight: 600; text-align: center;
+  color: rgba(255,255,255,0.35); letter-spacing: 0.05em; margin-bottom: 4px;
+}
+
+.sms-bubble {
+  background: #1E1E1E; border-radius: 16px 16px 16px 4px;
+  padding: 12px 14px; max-width: 88%;
+}
+.sms-bubble p { font-size: 0.78rem; line-height: 1.5; color: rgba(255,255,255,0.85); font-family: 'Manrope', sans-serif; font-weight: 300; }
+
+.sms-reply {
+  align-self: flex-end;
+  background: var(--ember);
+  border-radius: 16px 16px 4px 16px;
+  padding: 10px 16px;
+}
+.sms-reply p { font-size: 0.82rem; font-weight: 600; color: white; font-family: 'Manrope', sans-serif; }
+
+.phone-time { font-size: 0.58rem; color: rgba(255,255,255,0.25); font-family: 'DM Mono', monospace; align-self: flex-end; }
+
+/* FLOATING BADGES */
+.badge {
+  position: absolute; z-index: 10;
+  background: rgba(28,26,23,0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.badge-1 { top: 20%; right: 0; animation: float 4s ease-in-out infinite; }
+.badge-2 { bottom: 22%; left: -10%; animation: float 5s ease-in-out 1s infinite; }
+
+.badge-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+.badge-icon.green { background: rgba(74,222,128,0.15); }
+.badge-icon.orange { background: rgba(196,98,45,0.15); }
+.badge-icon .material-symbols-outlined { font-size: 1rem; font-variation-settings: 'FILL' 1; }
+.badge-icon.green .material-symbols-outlined { color: #4ade80; }
+.badge-icon.orange .material-symbols-outlined { color: var(--ember); }
+
+.badge-text p:first-child { font-size: 0.72rem; font-weight: 600; color: var(--cream); }
+.badge-text p:last-child { font-family: 'DM Mono', monospace; font-size: 0.58rem; color: var(--muted); margin-top: 1px; }
+
+/* SECTIONS */
+.section {
+  padding: clamp(64px, 9vw, 112px) clamp(20px, 5vw, 72px);
+  position: relative; z-index: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--ember);
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 44px;
+}
+.section-tag::before { content:''; width:28px; height:1px; background:var(--ember); flex-shrink:0; }
+
+/* VIDEO */
+.video-section { background: var(--surface); }
+.video-wrap { max-width: 960px; }
+.vimeo-ratio { padding: 56.25% 0 0 0; position: relative; }
+.vimeo-ratio iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:none; border-radius:8px; }
+
+/* STEPS */
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  max-width: 960px; overflow: hidden;
+  border-radius: 12px; border: 1px solid var(--border);
+  gap: 1px; background: var(--border);
+}
+.step {
+  background: var(--bg); padding: 36px 28px;
+  transition: background 0.3s ease; cursor: default;
+}
+.step:hover { background: var(--surface); }
+
+.step-num { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.2em; color:var(--ember); margin-bottom:18px; }
+.step-icon { font-family:'Material Symbols Outlined'; font-size:1.6rem; color:rgba(245,240,232,0.3); margin-bottom:14px; display:block; font-variation-settings:'FILL' 0,'wght' 200; }
+.step h3 { font-family:'Cormorant Garamond',serif; font-size:1.45rem; font-weight:400; color:var(--cream); margin-bottom:8px; }
+.step p { font-size:0.85rem; font-weight:300; color:var(--cream-60); line-height:1.65; }
+
+/* PRICING + FEATURES */
+.pf-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 56px; max-width: 960px; align-items: start;
+}
+@media (max-width: 760px) { .pf-grid { grid-template-columns: 1fr; } }
+
+.pf-section { background: var(--surface); }
+
+.pricing-card {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 16px; padding: 40px; position: relative; overflow: hidden;
+}
+.pricing-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, transparent, var(--ember) 50%, transparent);
+  opacity: 0.7;
+}
+
+.pricing-eyebrow {
+  font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase;
+  color:var(--ember); display:flex; align-items:center; gap:8px; margin-bottom:20px;
+}
+.pricing-eyebrow::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--ember); }
+
+.price-num { font-family:'Cormorant Garamond',serif; font-size:5.5rem; font-weight:300; line-height:1; color:var(--cream); }
+.price-unit { font-size:0.95rem; font-weight:300; color:var(--cream-60); margin-left:6px; }
+.price-note { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.1em; color:var(--muted); margin-top:8px; margin-bottom:24px; }
+
+.divider { height:1px; background:var(--border); margin:20px 0; }
+
+.check-list { list-style:none; display:flex; flex-direction:column; gap:13px; }
+.check-list li { display:flex; align-items:center; gap:12px; font-size:0.92rem; font-weight:300; color:var(--cream); }
+.check-list li .material-symbols-outlined { font-size:1.05rem; color:var(--ember); font-variation-settings:'FILL' 1; flex-shrink:0; }
+
+.features-right h2 {
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(2rem,3.5vw,3rem); font-weight:400; line-height:1.1;
+  color:var(--cream); margin-bottom:36px;
+}
+.features-right h2 em { font-style:italic; color:var(--cream-60); }
+
+.features-mini { display:grid; grid-template-columns:1fr 1fr; gap:28px; }
+.feature-mini { display:flex; flex-direction:column; gap:8px; }
+.feature-mini .material-symbols-outlined { font-size:1.4rem; color:var(--ember); font-variation-settings:'FILL' 0,'wght' 200; }
+.feature-mini h4 { font-family:'Cormorant Garamond',serif; font-size:1.15rem; font-weight:500; color:var(--cream); }
+.feature-mini p { font-size:0.8rem; font-weight:300; color:var(--cream-60); line-height:1.65; }
+
+/* SIGN */
+.sign-section { background: var(--bg); }
+.sign-header { max-width: 520px; margin-bottom: 48px; }
+.sign-header h2 { font-family:'Cormorant Garamond',serif; font-size:clamp(2.8rem,5vw,4.5rem); font-weight:400; line-height:1.05; color:var(--cream); margin-bottom:12px; }
+.sign-header h2 em { font-style:italic; color:var(--ember); }
+.sign-header p { font-size:0.95rem; font-weight:300; color:var(--cream-60); line-height:1.7; }
+
+.signable-frame {
+  max-width: 900px; border:1px solid var(--border);
+  border-radius:10px; overflow:hidden; background:var(--surface);
+}
+
+/* FOOTER */
+footer {
+  padding: 36px clamp(20px, 5vw, 72px);
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 16px; position:relative; z-index:1;
+}
+.footer-links { display:flex; gap:20px; }
+.footer-links a { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color 0.2s; }
+.footer-links a:hover { color:var(--ember); }
+footer p { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.1em; color:var(--muted); }
+
+/* REVEAL */
+.reveal { opacity:0; transform:translateY(16px); transition:opacity 0.65s ease, transform 0.65s ease; }
+.reveal.in { opacity:1; transform:none; }
+
+/* ANIMS */
+@keyframes up { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:none; } }
+@keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-16px); } }
+@keyframes breathe { 0%,100% { transform:scale(1); opacity:0.8; } 50% { transform:scale(1.08); opacity:1; } }
+@keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.8); } }
+
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--surface-2); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:var(--ember); }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" href="#">
+    <div class="logo-icon"><span class="material-symbols-outlined">local_fire_department</span></div>
+    Rekindle Pro
+  </a>
+  <div class="nav-pill">SMS Review Automation</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="eyebrow">You just experienced it firsthand</div>
+    <h1>Now imagine every<br><em>customer</em><br>gets this.</h1>
+    <p class="hero-sub">That SMS you just received? That's exactly what your customers get after every visit — automatically. Good reviews captured. Bad ones handled before they go online.</p>
+    <div class="cta-row">
+      <a href="#sign" class="btn-cta">
+        Start for £0 today
+        <span class="material-symbols-outlined">arrow_downward</span>
+      </a>
+      <span class="cta-note">No upfront fees · Live in 24hrs</span>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="phone-aura"></div>
+
+    <!-- Phone -->
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="phone-notch"></div>
+        <div class="phone-contact">RekindlePro</div>
+        <div class="sms-bubble">
+          <p>Hi Jamie, thanks for visiting Table &amp; Candles. How was everything? Reply GOOD or BAD 🙂</p>
+        </div>
+        <div class="phone-time">09:41</div>
+        <div class="sms-reply">
+          <p>GOOD</p>
+        </div>
+        <div class="phone-time">09:42</div>
+        <div class="sms-bubble">
+          <p>Amazing! Leave a quick review here 👉 rekindlepro.com/reviews</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Badge 1 -->
+    <div class="badge badge-1">
+      <div class="badge-icon green"><span class="material-symbols-outlined">star</span></div>
+      <div class="badge-text">
+        <p>New 5-Star Review</p>
+        <p>Just now · Google</p>
+      </div>
+    </div>
+
+    <!-- Badge 2 -->
+    <div class="badge badge-2">
+      <div class="badge-icon orange"><span class="material-symbols-outlined">sms</span></div>
+      <div class="badge-text">
+        <p>SMS Delivered</p>
+        <p>98% open rate</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VIDEO -->
+<section class="section video-section">
+  <p class="section-tag reveal">See how it works</p>
+  <div class="video-wrap reveal">
+    <div class="vimeo-ratio">
+      <iframe src="https://player.vimeo.com/video/1165853028?badge=0&autopause=0&player_id=0&app_id=58479&autoplay=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" title="The_Reputation_Filter"></iframe>
+    </div>
+  </div>
+</section>
+<script src="https://player.vimeo.com/api/player.js"></script>
+
+<!-- HOW IT WORKS -->
+<section class="section">
+  <p class="section-tag reveal">How it works</p>
+  <div class="steps-grid reveal">
+    <div class="step">
+      <p class="step-num">01 —</p>
+      <span class="step-icon material-symbols-outlined">storefront</span>
+      <h3>Customer visits</h3>
+      <p>After their visit, a personalised SMS lands in their pocket within minutes.</p>
+    </div>
+    <div class="step">
+      <p class="step-num">02 —</p>
+      <span class="step-icon material-symbols-outlined">chat_bubble_outline</span>
+      <h3>They reply</h3>
+      <p>One word. GOOD or BAD. That's all they need to do.</p>
+    </div>
+    <div class="step">
+      <p class="step-num">03 —</p>
+      <span class="step-icon material-symbols-outlined">reviews</span>
+      <h3>Reviews captured</h3>
+      <p>Happy customers go straight to your review page. Unhappy ones trigger a recovery message.</p>
+    </div>
+    <div class="step">
+      <p class="step-num">04 —</p>
+      <span class="step-icon material-symbols-outlined">trending_up</span>
+      <h3>You grow</h3>
+      <p>More 5-star reviews. Fewer bad ones going public. Completely on autopilot.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING + FEATURES -->
+<section class="section pf-section">
+  <p class="section-tag reveal">Pricing & what's included</p>
+  <div class="pf-grid">
+    <div class="pricing-card reveal">
+      <div class="pricing-eyebrow">Fair Pricing</div>
+      <div>
+        <span class="price-num">£2.50</span>
+        <span class="price-unit">/ review captured</span>
+      </div>
+      <p class="price-note">Only pay for results. Nothing if no reviews come in.</p>
+      <div class="divider"></div>
+      <ul class="check-list">
+        <li><span class="material-symbols-outlined">check_circle</span>No monthly subscription fees</li>
+        <li><span class="material-symbols-outlined">check_circle</span>Cancel anytime, instantly</li>
+        <li><span class="material-symbols-outlined">check_circle</span>Unlimited SMS messages included</li>
+        <li><span class="material-symbols-outlined">check_circle</span>Full setup done for you in 24 hours</li>
+      </ul>
+    </div>
+
+    <div class="features-right reveal">
+      <h2>Everything you need,<br><em>nothing you don't.</em></h2>
+      <div class="features-mini">
+        <div class="feature-mini">
+          <span class="material-symbols-outlined">smartphone</span>
+          <h4>No App Required</h4>
+          <p>Works on every phone. No downloads, no logins, no friction.</p>
+        </div>
+        <div class="feature-mini">
+          <span class="material-symbols-outlined">bolt</span>
+          <h4>Instant Feedback</h4>
+          <p>Catch unhappy customers before they write a public review.</p>
+        </div>
+        <div class="feature-mini">
+          <span class="material-symbols-outlined">security</span>
+          <h4>GDPR Compliant</h4>
+          <p>Fully secure. Your customer data stays yours.</p>
+        </div>
+        <div class="feature-mini">
+          <span class="material-symbols-outlined">bar_chart</span>
+          <h4>Weekly Reports</h4>
+          <p>Simple analytics to your inbox every Monday morning.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SIGN -->
+<section class="section sign-section" id="sign">
+  <div class="sign-header reveal">
+    <h2>Ready to <em>get started?</em></h2>
+    <p>Sign below and you'll be live within 24 hours. £2.50 per review captured — nothing else.</p>
+  </div>
+  <div class="signable-frame reveal">
+    <iframe src='https://sign.signable.app/#/widget/KmR4tcwUy4' frameborder='0' style='border:0;width:100%;height:100vh;' scrolling='yes'></iframe>
+  </div>
+</section>
+
+<footer>
+  <a class="logo" href="#" style="opacity:0.45;font-size:1.2rem;">
+    <div class="logo-icon" style="width:24px;height:24px;"><span class="material-symbols-outlined" style="font-size:0.85rem;">local_fire_department</span></div>
+    Rekindle Pro
+  </a>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="https://wa.me/447903573675" target="_blank">WhatsApp</a>
+  </div>
+  <p>© 2025 Rekindle Pro</p>
+</footer>
+
+<!-- Floating WhatsApp Button -->
+<a href="https://wa.me/447903573675" target="_blank" class="whatsapp-float" aria-label="Chat on WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
+
+<style>
+.whatsapp-float {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  background: #25D366;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+  z-index: 100;
+  transition: all 0.3s ease;
+  animation: pulse-whatsapp 2s infinite;
+}
+.whatsapp-float:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5);
+}
+.whatsapp-float svg {
+  width: 28px;
+  height: 28px;
+  color: white;
+}
+@keyframes pulse-whatsapp {
+  0%, 100% { box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4); }
+  50% { box-shadow: 0 4px 20px rgba(37, 211, 102, 0.6); }
+}
+@media (max-width: 600px) {
+  .whatsapp-float {
+    bottom: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+  }
+  .whatsapp-float svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+</style>
+
+<script>
+  // Personalization from URL params
+  const params = new URLSearchParams(window.location.search);
+  const clientName = params.get('name') || 'Restaurant Owner';
+  const companyName = params.get('company') || 'Your Restaurant';
+  
+  // Update personalized content
+  document.addEventListener('DOMContentLoaded', () => {
+    // Update hero eyebrow
+    const eyebrow = document.querySelector('.eyebrow');
+    if (eyebrow && clientName !== 'Restaurant Owner') {
+      eyebrow.innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:var(--ember);animation:pulse 2s infinite;margin-right:4px;"></span>Hi ${clientName}, you just experienced this`;
+    }
+    
+    // Update phone mockup with company name
+    const phoneContact = document.querySelector('.phone-contact');
+    if (phoneContact && companyName !== 'Your Restaurant') {
+      phoneContact.textContent = companyName;
+    }
+    
+    // Update SMS bubbles with company name
+    const smsBubbles = document.querySelectorAll('.sms-bubble p');
+    if (smsBubbles.length > 0 && companyName !== 'Your Restaurant') {
+      smsBubbles[0].innerHTML = `Hi Jamie, thanks for visiting ${companyName}. How was everything? Reply GOOD or BAD 🙂`;
+    }
+    
+    // Update sign section header
+    const signHeader = document.querySelector('.sign-header h2');
+    if (signHeader && clientName !== 'Restaurant Owner') {
+      signHeader.innerHTML = `Ready to get started,<br><em>${clientName}?</em>`;
+    }
+  });
+
+  // Scroll reveal
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('in'), i * 60);
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>

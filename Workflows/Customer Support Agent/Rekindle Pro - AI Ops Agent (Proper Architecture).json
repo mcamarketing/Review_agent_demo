@@ -1,0 +1,311 @@
+{
+  "name": "Rekindle Pro - AI Ops Agent (Proper Architecture)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "client-support",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "a49835a6-d56d-4371-863d-bc5cbfafc716",
+      "name": "Inbound SMS Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -2592,
+        -144
+      ],
+      "webhookId": "98c48a32-7526-486c-86b0-2b86cce63db1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM clients WHERE phone = '{{ $json.body.from }}' LIMIT 1;",
+        "additionalFields": {}
+      },
+      "id": "7449a476-37bc-4ce3-a375-eeff735a2866",
+      "name": "Lookup Client",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        -2384,
+        -144
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "iNd3pXEEaSrJVoEW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.length }}",
+              "operation": "larger"
+            }
+          ]
+        }
+      },
+      "id": "ebf9a58f-b741-4b52-abe1-1655f10a9f77",
+      "name": "Client Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -2192,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are the internal AI operations agent for Rekindle Pro. You speak to business owner clients via SMS. Use tools when performing system actions like pausing or resuming campaigns. Never pretend an action was completed without using a tool."
+        }
+      },
+      "id": "91bbdca7-e8cd-4e9d-9c71-051214aaa715",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1888,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-3.3-70b-instruct:free",
+        "options": {}
+      },
+      "id": "5eca9ad4-edba-4e29-bf13-ff2161bfaa1b",
+      "name": "OpenRouter Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -2032,
+        64
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "id": "so0ofQLkRjye9Ka1",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "474daa1c-0cc3-4e94-a677-956824b04501",
+      "name": "Postgres Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -1888,
+        64
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "iNd3pXEEaSrJVoEW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "pause_campaign",
+        "description": "Pause the client's campaign."
+      },
+      "id": "a71d4c8b-cc0f-4548-8695-8d51cd7fe3d7",
+      "name": "Pause Campaign Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        -1680,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "name": "resume_campaign",
+        "description": "Resume the client's campaign."
+      },
+      "id": "b1752582-1285-4886-bbaa-caa436857b46",
+      "name": "Resume Campaign Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        -1488,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.clicksend.com/v3/sms/send",
+        "authentication": "basicAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "6086b66e-4a19-4ac4-83f6-14b6253934fd",
+      "name": "Send SMS Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -1584,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE clients SET campaign_status = 'paused' WHERE phone = '{{ $json.phone }}';",
+        "additionalFields": {}
+      },
+      "id": "443d8e2a-cca9-49c5-954c-bb05027468e9",
+      "name": "Pause DB Update",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        -1680,
+        208
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "iNd3pXEEaSrJVoEW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE clients SET campaign_status = 'active' WHERE phone = '{{ $json.phone }}';",
+        "additionalFields": {}
+      },
+      "id": "f31ff53f-f1cd-4106-be78-3d936ae9c841",
+      "name": "Resume DB Update",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        -1488,
+        208
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "iNd3pXEEaSrJVoEW",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Inbound SMS Webhook": {
+      "main": [
+        [
+          {
+            "node": "Lookup Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Client": {
+      "main": [
+        [
+          {
+            "node": "Client Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Client Exists?": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send SMS Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pause Campaign Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resume Campaign Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7c958843-7e37-4ef1-9833-85be396125d5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5d68f354ce263acaea313bcca5f0ea49269215099fcef8e2f52b20c197473ff4"
+  },
+  "id": "H6sBvxFg1sRHOKBQ",
+  "tags": []
+}

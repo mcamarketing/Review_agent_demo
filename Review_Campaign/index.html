@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Leave Your Review — Rekindle Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@200,0..1&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #141412;
+      --surface: #1C1A17;
+      --surface-2: #232018;
+      --cream: #F5F0E8;
+      --cream-60: rgba(245,240,232,0.6);
+      --cream-40: rgba(245,240,232,0.4);
+      --ember: #C4622D;
+      --ember-h: #D4733E;
+      --border: rgba(245,240,232,0.07);
+      --border-focus: rgba(196,98,45,0.5);
+      --muted: #635D57;
+      --success: #4ade80;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'Manrope', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .noise {
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 100; mix-blend-mode: overlay;
+    }
+
+    .blob {
+      position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+    }
+    .blob-1 { width: 60vw; height: 60vw; background: radial-gradient(circle, rgba(196,98,45,0.08) 0%, transparent 70%); top: -25%; right: -20%; }
+    .blob-2 { width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(196,98,45,0.05) 0%, transparent 70%); bottom: -15%; left: -10%; }
+
+    .card {
+      position: relative;
+      z-index: 10;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 48px 40px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      animation: slideIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 32px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.25rem;
+      font-weight: 400;
+      font-style: italic;
+      color: var(--cream);
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 26px;
+      height: 26px;
+      background: var(--ember);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px rgba(196,98,45,0.4);
+    }
+
+    .logo-icon .material-symbols-outlined { font-size: 0.9rem; color: white; font-variation-settings: 'FILL' 1; }
+
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.5rem;
+      font-weight: 400;
+      color: var(--cream);
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--ember);
+    }
+
+    p {
+      font-size: 0.95rem;
+      font-weight: 300;
+      color: var(--cream-60);
+      line-height: 1.6;
+      margin: 8px 0;
+    }
+
+    .divider {
+      width: 40px;
+      height: 1px;
+      background: var(--border);
+      margin: 24px auto;
+    }
+
+    button {
+      padding: 16px 32px;
+      font-size: 0.9rem;
+      font-family: 'Manrope', sans-serif;
+      font-weight: 500;
+      background: var(--ember);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(196,98,45,0.3);
+    }
+
+    button:hover {
+      background: var(--ember-h);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(196,98,45,0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button .material-symbols-outlined {
+      font-size: 1.1rem;
+      font-variation-settings: 'FILL' 1;
+    }
+
+    .countdown-wrap {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .countdown {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 300;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-top: 0;
+    }
+
+    .timer-display {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3rem;
+      font-weight: 300;
+      color: var(--ember);
+      margin-top: 8px;
+      line-height: 1;
+    }
+
+    .timer-display span {
+      font-size: 1rem;
+      color: var(--cream-40);
+      margin-left: 4px;
+    }
+
+    .video-container {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      width: 100%;
+    }
+
+    .video-wrapper {
+      position: relative;
+      padding: 56.25% 0 0 0;
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--bg);
+      border: 1px solid var(--border);
+    }
+
+    .video-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .video-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 300;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 12px;
+      text-align: left;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      .card { padding: 36px 24px; margin: 16px; }
+      h1 { font-size: 2rem; }
+      .timer-display { font-size: 2.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="noise"></div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="card">
+    <a class="logo" href="https://reviews.rekindlepro.com">
+      <div class="logo-icon"><span class="material-symbols-outlined">local_fire_department</span></div>
+      Rekindle Pro
+    </a>
+
+    <h1>Quick favor — <em>leave a review!</em></h1>
+    <p>Click below to leave your Google review.<br>Your demo will load automatically.</p>
+
+    <div class="divider"></div>
+
+    <button id="reviewBtn">
+      <span class="material-symbols-outlined">rate_review</span>
+      Leave Review
+    </button>
+
+    <div class="video-container">
+      <p class="video-label">Watch how it works</p>
+      <div class="video-wrapper">
+        <iframe src="https://player.vimeo.com/video/1165853028?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479&amp;autoplay=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" title="The_Reputation_Filter"></iframe>
+      </div>
+    </div>
+
+    <div class="countdown-wrap">
+      <p class="countdown">Redirecting to demo in</p>
+      <div class="timer-display"><span id="timer">20</span><span>s</span></div>
+    </div>
+  </div>
+
+  <script>
+    const googleReviewLink = "https://g.page/r/XXXX/review?rc"; // replace with actual Google review link
+    const demoLink = "https://reviews.rekindlepro.com"; // redirect to main site
+    const timerElement = document.getElementById("timer");
+    let countdown = 20;
+
+    // Open Google review in NEW tab
+    document.getElementById("reviewBtn").addEventListener("click", () => {
+      window.open(googleReviewLink, "_blank");
+    });
+
+    // Auto-open Google review after 1s
+    setTimeout(() => {
+      window.open(googleReviewLink, "_blank");
+    }, 1000);
+
+    // Countdown timer → auto-redirect bridge page to demo
+    const interval = setInterval(() => {
+      countdown--;
+      timerElement.textContent = countdown;
+      if (countdown <= 0) {
+        clearInterval(interval);
+        window.location.href = demoLink;
+      }
+    }, 1000);
+  </script>
+  <script src="https://player.vimeo.com/api/player.js"></script>
+</body>
+</html>
