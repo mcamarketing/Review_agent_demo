@@ -145,6 +145,35 @@ h1 em { font-style: italic; color: var(--ember); text-shadow: 0 0 30px rgba(196,
 
 .cta-note { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--muted); }
 
+/* Simple Toggle */
+.agree-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  opacity: 0;
+  animation: up 0.85s ease forwards 0.65s;
+}
+
+.agree-wrap input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ember);
+  cursor: pointer;
+}
+
+.agree-wrap label {
+  font-size: 0.85rem;
+  color: var(--cream-60);
+  cursor: pointer;
+}
+
+.agree-wrap a {
+  color: var(--cream);
+  text-decoration: underline;
+  text-decoration-color: var(--ember);
+}
+
 /* PHONE MOCKUP */
 .hero-right {
   display: flex; align-items: center; justify-content: center;
@@ -381,6 +410,11 @@ footer p { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.
         <span class="material-symbols-outlined">arrow_downward</span>
       </a>
       <span class="cta-note">No upfront fees · Live in 24hrs</span>
+    </div>
+    
+    <div class="agree-wrap">
+      <input type="checkbox" id="agreeCheck" checked>
+      <label for="agreeCheck">I agree to the <a href="#" onclick="alert('Terms of Service'); return false;">Terms</a></label>
     </div>
   </div>
 
