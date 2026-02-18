@@ -487,8 +487,8 @@ const questions = [
 
 // ── INIT ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Init Stripe
-  stripe = Stripe('pk_test_YOUR_STRIPE_KEY');
+  // Stripe disabled for now
+  // stripe = Stripe('pk_test_YOUR_STRIPE_KEY');
   const elements = stripe.elements({
     appearance: {
       theme: 'night',
@@ -828,7 +828,7 @@ function shakeInput() {
 async function finishOnboarding() {
   // Send to webhook
   try {
-    await fetch('https://n8n.srv1334356.hstgr.cloud/webhook/onboarding', {
+    await fetch('https://n8n.srv1334356.hstgr.cloud/webhook/onboarding/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
