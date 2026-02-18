@@ -403,6 +403,7 @@ nav {
 let currentStep = 0;
 let formData = {};
 let isWaiting = false;
+let stripe, cardElement;
 
 // ── QUESTIONS FLOW ──────────────────────────────────────
 const questions = [
@@ -477,15 +478,38 @@ const questions = [
     validate: v => v.length > 0
   },
   {
-    id: 'confirm',
-    bot: ["Perfect! That's everything we need.", "Riccardo will be in touch within 24 hours to get your system live."],
-    type: 'text',
+    id: 'payment',
+    bot: ["Last step — add your card for billing.", "You'll only be charged £2.50 per review captured. Nothing upfront, no monthly fees."],
+    type: 'stripe-card',
     validate: () => true
   }
 ];
 
 // ── INIT ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // Init Stripe
+  stripe = Stripe('pk_live_51MTZhHGumalAn0ccDCsDaRXiQLY4Lj5FfqWFaKnmYx2TjTmRthwqQ8uxZSuErl4A7dAVvBpqDkTlWfYXYzJ2ea6F00Flk57kkB');
+  const elements = stripe.elements({
+    appearance: {
+      theme: 'night',
+      variables: {
+        colorPrimary: '#C4622D',
+        colorBackground: '#1C1A17',
+        colorText: '#F5F0E8',
+        fontFamily: 'Manrope, sans-serif'
+      }
+    }
+  });
+  cardElement = elements.create('card', {
+    style: {
+      base: {
+        fontSize: '16px',
+        color: '#F5F0E8',
+        '::placeholder': { color: '#635D57' }
+      }
+    }
+  });
+
   // Start conversation
   setTimeout(() => askQuestion(0), 500);
 
