@@ -403,7 +403,6 @@ nav {
 let currentStep = 0;
 let formData = {};
 let isWaiting = false;
-let stripe, cardElement;
 
 // ── QUESTIONS FLOW ──────────────────────────────────────
 const questions = [
@@ -487,29 +486,6 @@ const questions = [
 
 // ── INIT ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Stripe disabled for now
-  // stripe = Stripe('pk_test_YOUR_STRIPE_KEY');
-  const elements = stripe.elements({
-    appearance: {
-      theme: 'night',
-      variables: {
-        colorPrimary: '#C4622D',
-        colorBackground: '#1C1A17',
-        colorText: '#F5F0E8',
-        fontFamily: 'Manrope, sans-serif'
-      }
-    }
-  });
-  cardElement = elements.create('card', {
-    style: {
-      base: {
-        fontSize: '16px',
-        color: '#F5F0E8',
-        '::placeholder': { color: '#635D57' }
-      }
-    }
-  });
-
   // Start conversation
   setTimeout(() => askQuestion(0), 500);
 
