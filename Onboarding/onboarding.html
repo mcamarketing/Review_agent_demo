@@ -828,7 +828,7 @@ function shakeInput() {
 async function finishOnboarding() {
   // Send to webhook
   try {
-    await fetch('https://n8n.srv1334356.hstgr.cloud/webhook/onboarding/', {
+    await fetch('https://n8n.srv1334356.hstgr.cloud/webhook/review-demo-trigger/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
