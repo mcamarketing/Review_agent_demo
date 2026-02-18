@@ -583,6 +583,12 @@ footer p { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.
     target: '#n8n-chat-widget',
     mode: 'window',
     showWelcomeScreen: false,
+    theme: {
+      primaryColor: '#C4622D',
+      secondaryColor: '#141412',
+      backgroundColor: '#1C1A17',
+      fontColor: '#F5F0E8'
+    },
     i18n: {
       en: {
         title: 'Rekindle Pro Demo',
@@ -599,26 +605,88 @@ footer p { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.
 
 <!-- Custom Chat Widget Styles -->
 <style>
-  :root {
-    --chat--color-primary: #C4622D;
-    --chat--color-primary-shade-50: #D4733E;
-    --chat--color-primary-shade-100: #A34D22;
-    --chat--color-secondary: #141412;
-    --chat--color-secondary-shade-50: #1C1A17;
-    --chat--color-white: #F5F0E8;
-    --chat--color-light: #232018;
-    --chat--color-light-shade-50: #2A2825;
-    --chat--color-light-shade-100: #33302A;
-    --chat--color-medium: #635D57;
-    --chat--color-dark: #141412;
-    --chat--color-disabled: #635D57;
-    --chat--color-error: #ef4444;
-    --chat--border-radius: 16px;
-    --chat--font-family: 'Manrope', sans-serif;
-    --chat--message--bot--background: #232018;
-    --chat--message--bot--color: #F5F0E8;
-    --chat--message--user--background: #C4622D;
-    --chat--message--user--color: white;
+  /* Chat toggle button - make it round and ember color */
+  .n8n-chat-toggle-button {
+    background-color: #C4622D !important;
+    border-radius: 50% !important;
+    width: 56px !important;
+    height: 56px !important;
+    box-shadow: 0 4px 20px rgba(196,98,45,0.4) !important;
+  }
+  
+  .n8n-chat-toggle-button:hover {
+    background-color: #D4733E !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 24px rgba(196,98,45,0.5) !important;
+  }
+  
+  /* Chat window container */
+  .n8n-chat-window {
+    background-color: #1C1A17 !important;
+    border: 1px solid rgba(245,240,232,0.07) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6) !important;
+  }
+  
+  /* Chat header */
+  .n8n-chat-header {
+    background-color: #141412 !important;
+    border-bottom: 1px solid rgba(245,240,232,0.07) !important;
+  }
+  
+  .n8n-chat-header * {
+    color: #F5F0E8 !important;
+  }
+  
+  /* Messages container */
+  .n8n-chat-messages {
+    background-color: #141412 !important;
+  }
+  
+  /* Bot message bubbles */
+  .n8n-chat-message-bot,
+  .chat-message-bot {
+    background-color: #232018 !important;
+    color: #F5F0E8 !important;
+    border: 1px solid rgba(245,240,232,0.07) !important;
+  }
+  
+  /* User message bubbles */
+  .n8n-chat-message-user,
+  .chat-message-user {
+    background-color: #C4622D !important;
+    color: white !important;
+  }
+  
+  /* Input area */
+  .n8n-chat-input-container,
+  .chat-input-container {
+    background-color: #1C1A17 !important;
+    border-top: 1px solid rgba(245,240,232,0.07) !important;
+  }
+  
+  .n8n-chat-input,
+  .chat-input {
+    background-color: #141412 !important;
+    color: #F5F0E8 !important;
+    border: 1px solid rgba(245,240,232,0.07) !important;
+  }
+  
+  .n8n-chat-input::placeholder,
+  .chat-input::placeholder {
+    color: #635D57 !important;
+  }
+  
+  /* Send button */
+  .n8n-chat-send-button,
+  .chat-send-button {
+    background-color: #C4622D !important;
+    color: white !important;
+  }
+  
+  .n8n-chat-send-button:hover,
+  .chat-send-button:hover {
+    background-color: #D4733E !important;
   }
 </style>
 
