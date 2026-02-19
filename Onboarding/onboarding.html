@@ -386,15 +386,16 @@ nav {
     <span class="material-symbols-outlined">check</span>
   </div>
   <h1 class="success-title">You're all set, <em id="success-name">friend</em> 🔥</h1>
-  <p class="success-sub">We've got everything we need. Your SMS review system will be live within 24 hours.</p>
+  <p class="success-sub">Our AI agent will contact you shortly via SMS to help get you set up.</p>
   <ul class="check-list">
-    <li><span class="material-symbols-outlined">check_circle</span>Personalised SMS configured</li>
-    <li><span class="material-symbols-outlined">check_circle</span>Payment method secured</li>
-    <li><span class="material-symbols-outlined">check_circle</span>Riccardo will WhatsApp you shortly</li>
+    <li><span class="material-symbols-outlined">check_circle</span>Your details received</li>
+    <li><span class="material-symbols-outlined">check_circle</span>AI agent preparing your setup</li>
+    <li><span class="material-symbols-outlined">check_circle</span>You'll receive an SMS shortly</li>
   </ul>
-  <a href="https://wa.me/447903573675" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; padding: 14px 28px; background: #25D366; color: white; text-decoration: none; border-radius: 999px; font-family: 'DM Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.25s ease;">
-    <span class="material-symbols-outlined" style="font-size: 1.1rem;">chat</span>
-    Message Riccardo on WhatsApp
+  <p style="margin-top: 24px; color: var(--cream-60); font-size: 0.85rem;">Need help? Contact our support team.</p>
+  <a href="tel:+447903573675" style="display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 14px 28px; background: var(--ember); color: white; text-decoration: none; border-radius: 999px; font-family: 'DM Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.25s ease;">
+    <span class="material-symbols-outlined" style="font-size: 1.1rem;">support_agent</span>
+    Call Support: +44 7903 573675
   </a>
 </div>
 
@@ -409,7 +410,7 @@ let stripe, cardElement;
 const questions = [
   {
     id: 'greeting',
-    bot: ["Hey there! 👋", "I'm Riccardo's assistant. Let's get your review automation set up — takes about 2 minutes.", "What's your first name?"],
+    bot: ["Hey there! 👋", "I'm the Rekindle Pro assistant. Let's get your review automation set up — takes about 2 minutes.", "What's your first name?"],
     type: 'text',
     validate: v => v.length >= 2
   },
@@ -830,12 +831,16 @@ function shakeInput() {
 }
 
 async function finishOnboarding() {
-  // Send to webhook
+  // Send to AI agent webhook
   try {
-    await fetch('https://n8n.srv1334356.hstgr.cloud/webhook/onboarding/', {
+    await fetch('https://n8n.srv1334356.hstgr.cloud/webhook/ai-onboarding/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
+      body: JSON.stringify({
+        ...formData,
+        timestamp: new Date().toISOString(),
+        source: 'onboarding'
+      })
     });
   } catch (e) {
     console.log('Webhook error (non-critical):', e);
