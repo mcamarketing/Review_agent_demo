@@ -478,11 +478,11 @@
                     class="flex items-center gap-2.5 group focus:outline-none focus:ring-4 focus:ring-google-blue/30 rounded-lg p-1"
                     href="index.html">
                     <div
-                        class="w-9 h-9 bg-gradient-to-tr from-[#C4622D] to-[#D4733E] rounded-lg flex items-center justify-center text-white shadow-lg shadow-[#C4622D]/20 transition-all duration-300 group-hover:scale-105 will-change-transform">
+                        class="w-9 h-9 bg-gradient-to-tr from-google-blue to-blue-700 rounded-lg flex items-center justify-center text-white shadow-lg shadow-google-blue/20 transition-all duration-300 group-hover:scale-105 group-hover:shadow-glow will-change-transform">
                         <span aria-hidden="true" class="material-symbols-outlined text-[22px]">local_fire_department</span>
                     </div>
                     <span
-                        class="text-xl font-bold text-gray-900 tracking-tight group-hover:text-[#C4622D] transition-colors">Rekindle Pro</span>
+                        class="text-xl font-bold text-gray-900 tracking-tight group-hover:text-google-blue transition-colors">Rekindle Pro</span>
                 </a>
                 <div class="hidden lg:flex items-center gap-8" role="menubar">
                     <a class="text-[15px] font-semibold text-google-subtext hover:text-gray-900 transition-colors relative group py-2 focus:outline-none focus:text-google-blue"
@@ -605,10 +605,13 @@
                         class="material-symbols-outlined text-xl relative z-10 group-hover:translate-x-1 transition-transform will-change-transform">auto_awesome</span>
                 </button>
                 <button
-                    class="group bg-[#C4622D] hover:bg-[#D4733E] text-white border border-[#C4622D] text-lg font-bold px-8 py-4 rounded-xl shadow-[0_10px_30px_-10px_rgba(196,98,45,0.5)] hover:shadow-[0_20px_40px_-15px_rgba(196,98,45,0.6)] hover:-translate-y-1 transition-all duration-300 flex items-center gap-3 backdrop-blur-sm focus:outline-none focus:ring-4 focus:ring-[#C4622D]/50 transform-gpu will-change-transform"
+                    class="group bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 hover:border-gray-400 text-lg font-bold px-8 py-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-3 backdrop-blur-sm focus:outline-none focus:ring-4 focus:ring-gray-300 transform-gpu will-change-transform"
                     onclick="document.getElementById('demo-modal').classList.remove('hidden'); document.getElementById('demo-modal').style.display='flex';">
-                    <span aria-hidden="true" class="material-symbols-outlined text-xl">sms</span>
-                    <span class="relative z-10">Try Review Agent Demo</span>
+                    <div
+                        class="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center group-hover:scale-110 transition-transform will-change-transform">
+                        <span aria-hidden="true" class="material-symbols-outlined text-sm">sms</span>
+                    </div>
+                    Try Review Agent Demo
                 </button>
             </div>
             <div class="relative w-full max-w-7xl mx-auto animate-divine-bloom delay-400 perspective-1000 group/dashboard"
@@ -833,7 +836,7 @@
     <section class="py-32 bg-gray-50 relative overflow-hidden border-t border-gray-200">
         <div class="max-w-7xl mx-auto px-6 relative z-10">
             <div class="text-center max-w-3xl mx-auto mb-16 scroll-reveal">
-                <div class="text-[#C4622D] font-extrabold tracking-widest text-xs uppercase mb-4">What We Fix</div>
+                <div class="text-google-blue font-extrabold tracking-widest text-xs uppercase mb-4">What We Fix</div>
                 <h2 class="text-4xl md:text-5xl font-medium text-gray-900 mb-6 tracking-tight">
                     Turn missed opportunities into revenue</h2>
                 <p class="text-xl text-google-subtext font-inter font-normal">
@@ -842,13 +845,13 @@
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Review Automation -->
-                <div class="bg-white p-8 rounded-3xl border border-gray-200 hover:border-[#C4622D]/30 hover:shadow-xl transition-all duration-300">
-                    <div class="w-14 h-14 rounded-2xl bg-[#C4622D]/10 flex items-center justify-center mb-6">
-                        <span class="material-symbols-outlined text-3xl text-[#C4622D]">star</span>
+                <div class="bg-white p-8 rounded-3xl border border-gray-200 hover:border-google-blue/30 hover:shadow-xl transition-all duration-300">
+                    <div class="w-14 h-14 rounded-2xl bg-google-blue/10 flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-3xl text-google-blue">star</span>
                     </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-3">Review Automation</h3>
                     <p class="text-google-subtext mb-4">Automated SMS requests after every customer visit. Capture good reviews, fix bad ones privately.</p>
-                    <a href="#" onclick="document.getElementById('demo-modal').classList.remove('hidden'); document.getElementById('demo-modal').style.display='flex';" class="text-[#C4622D] font-bold text-sm hover:underline">Try Demo →</a>
+                    <a href="#" onclick="document.getElementById('demo-modal').classList.remove('hidden'); document.getElementById('demo-modal').style.display='flex';" class="text-google-blue font-bold text-sm hover:underline">Try Demo →</a>
                 </div>
                 <!-- Lead Reactivation -->
                 <div class="bg-white p-8 rounded-3xl border border-gray-200 hover:border-google-blue/30 hover:shadow-xl transition-all duration-300">
@@ -1468,7 +1471,7 @@
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Phone Number</label>
                     <input type="tel" name="phone" required placeholder="+447000000000" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-google-blue">
                 </div>
-                <button type="submit" class="w-full bg-[#C4622D] hover:bg-[#D4733E] text-white font-bold py-4 rounded-xl transition-colors">Send Me the Demo SMS</button>
+                <button type="submit" class="w-full bg-google-blue hover:bg-google-blueHover text-white font-bold py-4 rounded-xl transition-colors">Send Me the Demo SMS</button>
             </form>
             <p class="text-xs text-gray-400 text-center mt-4">We'll send you an SMS. Reply GOOD or BAD to see the automation.</p>
         </div>
