@@ -1,0 +1,163 @@
+{
+  "name": "05 - AI Audit Request",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-audit-request",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wf5-node-01",
+      "name": "Audit Request Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "ai-audit-request"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {"mode": "id", "value": "REPLACE_WITH_YOUR_SHEET_ID"},
+        "sheetName": {"mode": "name", "value": "AuditLeads"},
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "name": "={{ $json.name }}",
+            "business_name": "={{ $json.business_name }}",
+            "industry": "={{ $json.industry }}",
+            "email": "={{ $json.email }}",
+            "phone": "={{ $json.phone || '' }}",
+            "current_reviews": "={{ $json.current_reviews || 'Unknown' }}",
+            "main_challenge": "={{ $json.main_challenge || '' }}",
+            "submitted_at": "={{ $now.toISO() }}",
+            "status": "new"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "wf5-node-02",
+      "name": "Save Lead to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [460, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Google Sheets account"}
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "x-api-key", "value": "REPLACE_WITH_YOUR_ANTHROPIC_API_KEY"},
+            {"name": "anthropic-version", "value": "2023-06-01"},
+            {"name": "content-type", "value": "application/json"}
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 800,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"You are a business analyst for Rekindle Pro, an SMS review automation and lead reactivation service. Write a concise, personalised business gap assessment report for this prospect.\\n\\nBusiness: {{ $('Audit Request Webhook').item.json.business_name }}\\nOwner: {{ $('Audit Request Webhook').item.json.name }}\\nIndustry: {{ $('Audit Request Webhook').item.json.industry }}\\nCurrent online reviews: {{ $('Audit Request Webhook').item.json.current_reviews || 'unknown' }}\\nMain challenge: {{ $('Audit Request Webhook').item.json.main_challenge || 'not specified' }}\\n\\nStructure your response as:\\n1. What revenue they are likely losing right now (be specific with estimates)\\n2. Their biggest gap (reviews, reactivation, or both)\\n3. What Rekindle Pro would do for them specifically\\n4. One clear next step\\n\\nTone: confident, direct, no fluff. Max 250 words. Do not use bullet points for section headers — write in short paragraphs.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "wf5-node-03",
+      "name": "Generate AI Audit Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "audit_text",
+              "value": "={{ $json.content[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "wf5-node-04",
+      "name": "Extract Report Text",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Audit Request Webhook').item.json.email }}",
+        "subject": "=Your Free Business Audit — {{ $('Audit Request Webhook').item.json.business_name }}",
+        "emailType": "html",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1a1a1a;\">\n  <h2 style=\"color: #C4622D; margin-bottom: 8px;\">Your Rekindle Pro Audit</h2>\n  <p style=\"color: #666; margin-bottom: 24px; font-size: 14px;\">Prepared for {{ $('Audit Request Webhook').item.json.name }} · {{ $('Audit Request Webhook').item.json.business_name }}</p>\n  \n  <div style=\"background: #f9f6f2; border-left: 4px solid #C4622D; padding: 20px; border-radius: 4px; margin-bottom: 24px; white-space: pre-wrap; line-height: 1.7;\">{{ $json.audit_text }}</div>\n  \n  <div style=\"background: #1a1a1a; padding: 20px; border-radius: 8px; text-align: center;\">\n    <p style=\"color: #fff; margin: 0 0 12px 0; font-size: 16px;\">Ready to start capturing reviews?</p>\n    <a href=\"https://rekindlepro.com/onboarding\" style=\"background: #C4622D; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;\">Get Started — £2.50 per review</a>\n  </div>\n  \n  <p style=\"color: #999; font-size: 12px; margin-top: 20px; text-align: center;\">Rekindle Pro · Questions? Reply to this email.</p>\n</div>"
+      },
+      "id": "wf5-node-05",
+      "name": "Email Audit to Prospect",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1120, 200],
+      "credentials": {
+        "gmailOAuth2": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Gmail account"}
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "REPLACE_WITH_YOUR_TEAM_EMAIL",
+        "subject": "=🔍 New Audit Lead: {{ $('Audit Request Webhook').item.json.business_name }} ({{ $('Audit Request Webhook').item.json.industry }})",
+        "emailType": "text",
+        "message": "=New audit request!\n\nName: {{ $('Audit Request Webhook').item.json.name }}\nBusiness: {{ $('Audit Request Webhook').item.json.business_name }}\nIndustry: {{ $('Audit Request Webhook').item.json.industry }}\nEmail: {{ $('Audit Request Webhook').item.json.email }}\nPhone: {{ $('Audit Request Webhook').item.json.phone || 'Not provided' }}\nCurrent reviews: {{ $('Audit Request Webhook').item.json.current_reviews || 'Unknown' }}\nMain challenge: {{ $('Audit Request Webhook').item.json.main_challenge || 'Not specified' }}\n\nAudit report sent to their inbox. Follow up within 24 hours.\n\n--- AI Report ---\n{{ $('Extract Report Text').item.json.audit_text }}"
+      },
+      "id": "wf5-node-06",
+      "name": "Notify Team of New Lead",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1120, 420],
+      "credentials": {
+        "gmailOAuth2": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Gmail account"}
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"success\": true, \"message\": \"Audit report sent to your inbox\"}"
+      },
+      "id": "wf5-node-07",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1340, 300]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Audit Request Webhook": {
+      "main": [[{"node": "Save Lead to Sheets", "type": "main", "index": 0}]]
+    },
+    "Save Lead to Sheets": {
+      "main": [[{"node": "Generate AI Audit Report", "type": "main", "index": 0}]]
+    },
+    "Generate AI Audit Report": {
+      "main": [[{"node": "Extract Report Text", "type": "main", "index": 0}]]
+    },
+    "Extract Report Text": {
+      "main": [[
+        {"node": "Email Audit to Prospect", "type": "main", "index": 0},
+        {"node": "Notify Team of New Lead", "type": "main", "index": 0}
+      ]]
+    },
+    "Email Audit to Prospect": {
+      "main": [[{"node": "Respond OK", "type": "main", "index": 0}]]
+    }
+  },
+  "active": true,
+  "settings": {"executionOrder": "v1"},
+  "meta": {"templateCredsSetupCompleted": false},
+  "id": "rekindlepro-wf5-ai-audit",
+  "tags": [{"name": "rekindle-pro"}]
+}

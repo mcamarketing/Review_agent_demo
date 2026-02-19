@@ -1,0 +1,163 @@
+{
+  "name": "WF-4: Send Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "minutes", "minutesInterval": 15 }] }
+      },
+      "id": "wf4-01",
+      "name": "Schedule: Every 15 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-800, 400]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT m.*, l.phone, l.email, l.first_name, l.client_id,\n       COALESCE(camp.settings->>'send_window_start', '09:00') as send_start,\n       COALESCE(camp.settings->>'send_window_end', '18:00') as send_end,\n       COALESCE((camp.settings->>'timezone'), 'UTC') as timezone,\n       COALESCE((camp.settings->>'throttle_per_hour')::int, 30) as throttle\nFROM messages m\nJOIN leads l ON l.id = m.lead_id\nJOIN campaigns camp ON camp.id = m.campaign_id\nWHERE m.status = 'queued'\n  AND camp.status = 'approved'\n  AND l.status NOT IN ('opted_out', 'undelivered')\nORDER BY m.created_at ASC\nLIMIT 30;",
+        "options": {}
+      },
+      "id": "wf4-02",
+      "name": "DB: Fetch Queued Messages",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [-560, 400],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if current time is within send window\nconst msg = $input.item.json;\nconst now = new Date();\nconst tz = msg.timezone || 'UTC';\nconst timeStr = now.toLocaleTimeString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false });\nconst [h, m] = timeStr.split(':').map(Number);\nconst currentMins = h * 60 + m;\n\nconst [startH, startM] = (msg.send_start || '09:00').split(':').map(Number);\nconst [endH, endM] = (msg.send_end || '18:00').split(':').map(Number);\nconst startMins = startH * 60 + startM;\nconst endMins = endH * 60 + endM;\n\n// Also block quiet hours 21:00-08:00\nconst isQuietHours = h >= 21 || h < 8;\nconst isInWindow = currentMins >= startMins && currentMins <= endMins;\n\nreturn [{ json: { ...msg, should_send: isInWindow && !isQuietHours } }];"
+      },
+      "id": "wf4-03",
+      "name": "Code: Check Send Window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-340, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{ $json.should_send }}", "value2": true }]
+        }
+      },
+      "id": "wf4-04",
+      "name": "IF: Within Send Window",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [-120, 400]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id FROM opt_outs WHERE phone = '{{ $json.phone }}' OR email = '{{ $json.email }}' LIMIT 1;",
+        "options": {}
+      },
+      "id": "wf4-05",
+      "name": "DB: Final Opt-Out Check",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [100, 300],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [{ "value1": "={{ $json.length }}", "value2": 0, "operation": "equal" }]
+        }
+      },
+      "id": "wf4-06",
+      "name": "IF: Not Opted Out",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [320, 300]
+    },
+    {
+      "parameters": {
+        "from": "REPLACE_WITH_TWILIO_NUMBER",
+        "to": "={{ $('DB: Fetch Queued Messages').item.json.phone }}",
+        "message": "={{ $('DB: Fetch Queued Messages').item.json.body }}",
+        "options": {}
+      },
+      "id": "wf4-07",
+      "name": "Twilio: Send SMS",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [540, 200],
+      "credentials": {
+        "twilio": { "id": "REPLACE_WITH_TWILIO_CREDENTIAL_ID", "name": "Twilio account" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE messages\nSET status = 'sent', sent_at = NOW(), provider_message_id = '{{ $json.sid }}'\nWHERE id = '{{ $('DB: Fetch Queued Messages').item.json.id }}';",
+        "options": {}
+      },
+      "id": "wf4-08",
+      "name": "DB: Mark Message Sent",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [760, 200],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE leads SET status = 'sent' WHERE id = '{{ $('DB: Fetch Queued Messages').item.json.lead_id }}';",
+        "options": {}
+      },
+      "id": "wf4-09",
+      "name": "DB: Update Lead Status Sent",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [980, 200],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Queue follow-up if this is step 1 and campaign has follow-ups enabled\nconst msg = $('DB: Fetch Queued Messages').item.json;\nconst settings = JSON.parse(msg.settings || '{}');\nconst followUpDays = settings.follow_up_days || [4, 8];\n\nif (msg.sequence_step === 1 && followUpDays.length > 0) {\n  return [{ json: {\n    lead_id: msg.lead_id,\n    campaign_id: msg.campaign_id,\n    sequence_step: 2,\n    send_after: new Date(Date.now() + followUpDays[0] * 86400000).toISOString()\n  } }];\n}\nif (msg.sequence_step === 2 && followUpDays.length > 1) {\n  return [{ json: {\n    lead_id: msg.lead_id,\n    campaign_id: msg.campaign_id,\n    sequence_step: 3,\n    send_after: new Date(Date.now() + followUpDays[1] * 86400000).toISOString()\n  } }];\n}\nreturn [];"
+      },
+      "id": "wf4-10",
+      "name": "Code: Calculate Follow-up",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 200]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO follow_up_queue (lead_id, campaign_id, sequence_step, send_after)\nVALUES ('{{ $json.lead_id }}', '{{ $json.campaign_id }}', {{ $json.sequence_step }}, '{{ $json.send_after }}')\nON CONFLICT DO NOTHING;",
+        "options": {}
+      },
+      "id": "wf4-11",
+      "name": "DB: Queue Follow-Up",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1420, 200],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule: Every 15 Minutes": { "main": [[{ "node": "DB: Fetch Queued Messages", "type": "main", "index": 0 }]] },
+    "DB: Fetch Queued Messages": { "main": [[{ "node": "Code: Check Send Window", "type": "main", "index": 0 }]] },
+    "Code: Check Send Window": { "main": [[{ "node": "IF: Within Send Window", "type": "main", "index": 0 }]] },
+    "IF: Within Send Window": { "main": [[{ "node": "DB: Final Opt-Out Check", "type": "main", "index": 0 }]] },
+    "DB: Final Opt-Out Check": { "main": [[{ "node": "IF: Not Opted Out", "type": "main", "index": 0 }]] },
+    "IF: Not Opted Out": { "main": [[{ "node": "Twilio: Send SMS", "type": "main", "index": 0 }]] },
+    "Twilio: Send SMS": { "main": [[{ "node": "DB: Mark Message Sent", "type": "main", "index": 0 }]] },
+    "DB: Mark Message Sent": { "main": [[{ "node": "DB: Update Lead Status Sent", "type": "main", "index": 0 }]] },
+    "DB: Update Lead Status Sent": { "main": [[{ "node": "Code: Calculate Follow-up", "type": "main", "index": 0 }]] },
+    "Code: Calculate Follow-up": { "main": [[{ "node": "DB: Queue Follow-Up", "type": "main", "index": 0 }]] }
+  },
+  "meta": { "instanceId": "lead-reactivation-engine-v1" }
+}

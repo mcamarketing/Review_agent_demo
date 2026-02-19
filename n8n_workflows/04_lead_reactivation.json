@@ -1,0 +1,149 @@
+{
+  "name": "04 - Lead Reactivation Campaign",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "send-reactivation-sms",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wf4-node-01",
+      "name": "Reactivation Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "send-reactivation-sms"
+    },
+    {
+      "parameters": {
+        "operation": "getRows",
+        "documentId": {"mode": "id", "value": "REPLACE_WITH_YOUR_SHEET_ID"},
+        "sheetName": {"mode": "name", "value": "Clients"},
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "email",
+              "lookupValue": "={{ $json.client_email }}"
+            }
+          ]
+        },
+        "options": {"returnAllMatches": false}
+      },
+      "id": "wf4-node-02",
+      "name": "Get Client Details",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [460, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Google Sheets account"}
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "f1", "name": "client_email", "value": "={{ $json.email }}", "type": "string"},
+            {"id": "f2", "name": "business_name", "value": "={{ $json.business_name }}", "type": "string"},
+            {"id": "f3", "name": "customer_name", "value": "={{ $('Reactivation Webhook').item.json.customer_name }}", "type": "string"},
+            {"id": "f4", "name": "customer_phone", "value": "={{ $('Reactivation Webhook').item.json.customer_phone }}", "type": "string"},
+            {"id": "f5", "name": "last_visit_date", "value": "={{ $('Reactivation Webhook').item.json.last_visit_date || 'a while' }}", "type": "string"},
+            {"id": "f6", "name": "offer", "value": "={{ $('Reactivation Webhook').item.json.offer || '' }}", "type": "string"},
+            {"id": "f7", "name": "sent_at", "value": "={{ $now.toISO() }}", "type": "string"},
+            {
+              "id": "f8",
+              "name": "sms_body",
+              "value": "={{ 'Hi ' + $('Reactivation Webhook').item.json.customer_name + '! It\\'s been a while since we\\'ve seen you at ' + $json.business_name + ' — we miss you! ' + ($('Reactivation Webhook').item.json.offer ? $('Reactivation Webhook').item.json.offer + ' ' : '') + 'Book again: ' + ($json.google_link || 'rekindlepro.com') + '\\n\\nReply STOP to opt out.' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "wf4-node-03",
+      "name": "Format Reactivation SMS",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "from": "REPLACE_WITH_YOUR_TWILIO_NUMBER",
+        "to": "={{ $json.customer_phone }}",
+        "message": "={{ $json.sms_body }}"
+      },
+      "id": "wf4-node-04",
+      "name": "Send Reactivation SMS",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "credentials": {
+        "twilioApi": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Twilio account"}
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {"mode": "id", "value": "REPLACE_WITH_YOUR_SHEET_ID"},
+        "sheetName": {"mode": "name", "value": "ReactivationLog"},
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "client_email": "={{ $('Format Reactivation SMS').item.json.client_email }}",
+            "business_name": "={{ $('Format Reactivation SMS').item.json.business_name }}",
+            "customer_name": "={{ $('Format Reactivation SMS').item.json.customer_name }}",
+            "customer_phone": "={{ $('Format Reactivation SMS').item.json.customer_phone }}",
+            "last_visit_date": "={{ $('Format Reactivation SMS').item.json.last_visit_date }}",
+            "sent_at": "={{ $('Format Reactivation SMS').item.json.sent_at }}",
+            "status": "sent"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "wf4-node-05",
+      "name": "Log to ReactivationLog Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1120, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Google Sheets account"}
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"success\": true, \"message\": \"Reactivation SMS sent\"}"
+      },
+      "id": "wf4-node-06",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1340, 300]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Reactivation Webhook": {
+      "main": [[{"node": "Get Client Details", "type": "main", "index": 0}]]
+    },
+    "Get Client Details": {
+      "main": [[{"node": "Format Reactivation SMS", "type": "main", "index": 0}]]
+    },
+    "Format Reactivation SMS": {
+      "main": [[{"node": "Send Reactivation SMS", "type": "main", "index": 0}]]
+    },
+    "Send Reactivation SMS": {
+      "main": [[{"node": "Log to ReactivationLog Sheet", "type": "main", "index": 0}]]
+    },
+    "Log to ReactivationLog Sheet": {
+      "main": [[{"node": "Respond OK", "type": "main", "index": 0}]]
+    }
+  },
+  "active": true,
+  "settings": {"executionOrder": "v1"},
+  "meta": {"templateCredsSetupCompleted": false},
+  "id": "rekindlepro-wf4-reactivation",
+  "tags": [{"name": "rekindle-pro"}]
+}

@@ -1,0 +1,913 @@
+{
+  "updatedAt": "2026-02-19T00:47:55.433Z",
+  "createdAt": "2026-02-17T17:35:18.443Z",
+  "id": "5NMYAFx8ynXLJ4iW",
+  "name": "Review Agent",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "review-demo-trigger",
+        "options": {}
+      },
+      "id": "5127da19-573d-47e2-83f8-85d51f5af30c",
+      "name": "Webhook: Form",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        160
+      ],
+      "webhookId": "24740bd6-2c4b-418c-b68f-49110cf41931"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.clicksend.com/v3/sms/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickSendApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messages\": [\n    {\n      \"source\": \"n8n\",\n      \"from\": \"+447903573667\",\n      \"body\": \"Hey {{ $json.body.first_name }}, it's Riccardo 👋 Before our demo — why not experience it yourself? Reply GOOD or BAD\",\n      \"to\": \"={{ $json.body.phone.startsWith('+') ? $json.body.phone : '+44' + $json.body.phone.slice(1) }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "96ada0d8-54d9-4589-a332-571458f6467a",
+      "name": "HTTP: Send Outreach",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -112,
+        160
+      ],
+      "credentials": {
+        "clickSendApi": {
+          "id": "9CcnKL7uI6GrC0rJ",
+          "name": "ClickSend account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO sms_logs (client_id, customer_phone, direction, body)\nVALUES (\n  (SELECT id FROM clients LIMIT 1),\n  '{{ $json.body.phone }}',\n  'outbound',\n  'Demo outreach sent'\n);",
+        "options": {}
+      },
+      "id": "90367c75-a501-4882-b225-0c2723a41c2d",
+      "name": "DB: Log Outbound SMS",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        112,
+        160
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "iNd3pXEEaSrJVoEW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clicksend-inbound",
+        "options": {}
+      },
+      "id": "7409349b-002b-4a7b-b8d7-22e49fe0a65b",
+      "name": "Webhook: Inbound SMS",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        480
+      ],
+      "webhookId": "1297aaf2-66a4-466f-8bcd-76e214cfd8cb"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO sms_logs (client_id, customer_phone, direction, body)\nVALUES (\n  (SELECT id FROM clients LIMIT 1),\n  '{{ $json.body.sms }}',\n  'inbound',\n  '{{ $json.body.body }}'\n);",
+        "options": {}
+      },
+      "id": "94707c10-a0fb-4299-9ba3-6f2f7f3653db",
+      "name": "DB: Log Inbound SMS",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -112,
+        480
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "iNd3pXEEaSrJVoEW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "=={{ $('Webhook: Inbound SMS').item.json.body.body.toUpperCase() }}",
+              "operation": "contains",
+              "value2": "GOOD"
+            }
+          ]
+        }
+      },
+      "id": "d4c65268-9dd1-4217-ba97-aa9c6c2e27a6",
+      "name": "IF: Positive?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        112,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO reviews (client_id, customer_phone, billed)\nVALUES (\n  (SELECT id FROM clients LIMIT 1),\n  '{{ $(\"Webhook: Inbound SMS\").item.json.body.sms }}',\n  false\n);",
+        "options": {}
+      },
+      "id": "2924c6e8-b707-458f-a610-bb8d3a8a4dae",
+      "name": "DB: Log Review",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        336,
+        384
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "iNd3pXEEaSrJVoEW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.clicksend.com/v3/sms/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickSendApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messages\": [\n    {\n      \"source\": \"n8n\",\n      \"from\": \"+447903573667\",\n      \"body\": \"Amazing! Leave a quick review here 👉 reviews.rekindlepro.com\",\n      \"to\": \"={{ $('Webhook: Inbound SMS').item.json.body.sms }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "f2fde76d-cda5-4732-81e0-f9acebcbba59",
+      "name": "HTTP: Review Link",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        560,
+        384
+      ],
+      "credentials": {
+        "clickSendApi": {
+          "id": "9CcnKL7uI6GrC0rJ",
+          "name": "ClickSend account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO sms_logs (client_id, customer_phone, direction, body)\nVALUES (\n  (SELECT id FROM clients LIMIT 1),\n  '{{ $(\"Webhook: Inbound SMS\").item.json.body.sms }}',\n  'outbound',\n  'Recovery message sent'\n);",
+        "options": {}
+      },
+      "id": "8ae8599f-299b-480d-8f6e-4e1ea0eb7b5d",
+      "name": "DB: Log Recovery",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        336,
+        576
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "iNd3pXEEaSrJVoEW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.clicksend.com/v3/sms/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickSendApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messages\": [\n    {\n      \"source\": \"n8n\",\n      \"from\": \"+447903573667\",\n      \"body\": \"Sorry to hear that. Our manager will call you shortly.\",\n      \"to\": \"={{ $('Webhook: Inbound SMS').item.json.body.sms }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "42a11e82-fa4e-4ed7-8b2f-e8ef10cd1c7e",
+      "name": "HTTP: Recovery",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        560,
+        576
+      ],
+      "credentials": {
+        "clickSendApi": {
+          "id": "9CcnKL7uI6GrC0rJ",
+          "name": "ClickSend account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onboarding",
+        "options": {}
+      },
+      "id": "0f7651bc-869c-422f-a2f3-a5c88b93c3db",
+      "name": "Webhook: Onboarding",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        800
+      ],
+      "webhookId": "onboarding-webhook-uuid"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO clients (business_name, owner_name, email, phone, review_link, stripe_customer_id, status)\nVALUES (\n  '{{ $json.body.business_name }}',\n  '{{ $json.body.owner_name }}',\n  '{{ $json.body.email }}',\n  '{{ $json.body.phone }}',\n  '{{ $json.body.review_link }}',\n  '{{ $json.body.stripe_customer_id }}',\n  'active'\n)\nRETURNING id;",
+        "options": {}
+      },
+      "id": "c67c0ead-d15d-48a5-994b-402e22c1d4f9",
+      "name": "DB: Insert Client",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -112,
+        800
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "iNd3pXEEaSrJVoEW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.clicksend.com/v3/sms/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickSendApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messages\": [\n    {\n      \"source\": \"n8n\",\n      \"from\": \"+447903573675\",\n      \"body\": \"Welcome to Rekindle Pro, {{ $json.body.owner_name }}! 🔥 You're all set. We'll have your system live within 24 hours. Any questions? Reply here.\",\n      \"to\": \"={{ $json.body.phone.startsWith('+') ? $json.body.phone : '+44' + $json.body.phone.slice(1) }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "c1b503c8-09e5-4d31-a31c-f5d0c076ceff",
+      "name": "HTTP: Welcome SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        112,
+        800
+      ],
+      "credentials": {
+        "clickSendApi": {
+          "id": "9CcnKL7uI6GrC0rJ",
+          "name": "ClickSend account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.clicksend.com/v3/sms/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickSendApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messages\": [\n    {\n      \"source\": \"n8n\",\n      \"from\": \"+447903573675\",\n      \"body\": \"🔥 New client signed up!\\nName: {{ $json.body.owner_name }}\\nBusiness: {{ $json.body.business_name }}\\nPhone: {{ $json.body.phone }}\\nEmail: {{ $json.body.email }}\\nReview link: {{ $json.body.review_link }}\\n\\nSet them up within 24hrs.\",\n      \"to\": \"+447903573667\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "7b4cdea2-06e6-4506-b5e3-3479f98fddd3",
+      "name": "HTTP: Notify Riccardo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        336,
+        800
+      ],
+      "credentials": {
+        "clickSendApi": {
+          "id": "9CcnKL7uI6GrC0rJ",
+          "name": "ClickSend account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook: Form": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Send Outreach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Send Outreach": {
+      "main": [
+        [
+          {
+            "node": "DB: Log Outbound SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Inbound SMS": {
+      "main": [
+        [
+          {
+            "node": "DB: Log Inbound SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB: Log Inbound SMS": {
+      "main": [
+        [
+          {
+            "node": "IF: Positive?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Positive?": {
+      "main": [
+        [
+          {
+            "node": "DB: Log Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DB: Log Recovery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB: Log Review": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Review Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB: Log Recovery": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Recovery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Onboarding": {
+      "main": [
+        [
+          {
+            "node": "DB: Insert Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB: Insert Client": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Welcome SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Welcome SMS": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Notify Riccardo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "d9468ef4-c59f-49a8-89ee-3bc6ef23a7b9",
+  "activeVersionId": "d9468ef4-c59f-49a8-89ee-3bc6ef23a7b9",
+  "versionCounter": 163,
+  "triggerCount": 3,
+  "shared": [
+    {
+      "updatedAt": "2026-02-17T17:35:18.449Z",
+      "createdAt": "2026-02-17T17:35:18.449Z",
+      "role": "workflow:owner",
+      "workflowId": "5NMYAFx8ynXLJ4iW",
+      "projectId": "1WaRElym6fBkKJ0F",
+      "project": {
+        "updatedAt": "2026-02-17T16:13:07.071Z",
+        "createdAt": "2026-02-17T16:02:28.441Z",
+        "id": "1WaRElym6fBkKJ0F",
+        "name": "Riccardo Minniti <minniti.riccardo@rekindlepro.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "79fbc936-e238-497e-9813-8539377db831"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-02-19T00:48:16.000Z",
+    "createdAt": "2026-02-19T00:47:55.435Z",
+    "versionId": "d9468ef4-c59f-49a8-89ee-3bc6ef23a7b9",
+    "workflowId": "5NMYAFx8ynXLJ4iW",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "review-demo-trigger",
+          "options": {}
+        },
+        "id": "5127da19-573d-47e2-83f8-85d51f5af30c",
+        "name": "Webhook: Form",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          -336,
+          160
+        ],
+        "webhookId": "24740bd6-2c4b-418c-b68f-49110cf41931"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://rest.clicksend.com/v3/sms/send",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "clickSendApi",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"messages\": [\n    {\n      \"source\": \"n8n\",\n      \"from\": \"+447903573667\",\n      \"body\": \"Hey {{ $json.body.first_name }}, it's Riccardo 👋 Before our demo — why not experience it yourself? Reply GOOD or BAD\",\n      \"to\": \"={{ $json.body.phone.startsWith('+') ? $json.body.phone : '+44' + $json.body.phone.slice(1) }}\"\n    }\n  ]\n}",
+          "options": {}
+        },
+        "id": "96ada0d8-54d9-4589-a332-571458f6467a",
+        "name": "HTTP: Send Outreach",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          -112,
+          160
+        ],
+        "credentials": {
+          "clickSendApi": {
+            "id": "9CcnKL7uI6GrC0rJ",
+            "name": "ClickSend account 2"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO sms_logs (client_id, customer_phone, direction, body)\nVALUES (\n  (SELECT id FROM clients LIMIT 1),\n  '{{ $json.body.phone }}',\n  'outbound',\n  'Demo outreach sent'\n);",
+          "options": {}
+        },
+        "id": "90367c75-a501-4882-b225-0c2723a41c2d",
+        "name": "DB: Log Outbound SMS",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          112,
+          160
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "iNd3pXEEaSrJVoEW",
+            "name": "Postgres account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "clicksend-inbound",
+          "options": {}
+        },
+        "id": "7409349b-002b-4a7b-b8d7-22e49fe0a65b",
+        "name": "Webhook: Inbound SMS",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          -336,
+          480
+        ],
+        "webhookId": "1297aaf2-66a4-466f-8bcd-76e214cfd8cb"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO sms_logs (client_id, customer_phone, direction, body)\nVALUES (\n  (SELECT id FROM clients LIMIT 1),\n  '{{ $json.body.sms }}',\n  'inbound',\n  '{{ $json.body.body }}'\n);",
+          "options": {}
+        },
+        "id": "94707c10-a0fb-4299-9ba3-6f2f7f3653db",
+        "name": "DB: Log Inbound SMS",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          -112,
+          480
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "iNd3pXEEaSrJVoEW",
+            "name": "Postgres account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "=={{ $('Webhook: Inbound SMS').item.json.body.body.toUpperCase() }}",
+                "operation": "contains",
+                "value2": "GOOD"
+              }
+            ]
+          }
+        },
+        "id": "d4c65268-9dd1-4217-ba97-aa9c6c2e27a6",
+        "name": "IF: Positive?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          112,
+          480
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO reviews (client_id, customer_phone, billed)\nVALUES (\n  (SELECT id FROM clients LIMIT 1),\n  '{{ $(\"Webhook: Inbound SMS\").item.json.body.sms }}',\n  false\n);",
+          "options": {}
+        },
+        "id": "2924c6e8-b707-458f-a610-bb8d3a8a4dae",
+        "name": "DB: Log Review",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          336,
+          384
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "iNd3pXEEaSrJVoEW",
+            "name": "Postgres account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://rest.clicksend.com/v3/sms/send",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "clickSendApi",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"messages\": [\n    {\n      \"source\": \"n8n\",\n      \"from\": \"+447903573667\",\n      \"body\": \"Amazing! Leave a quick review here 👉 reviews.rekindlepro.com\",\n      \"to\": \"={{ $('Webhook: Inbound SMS').item.json.body.sms }}\"\n    }\n  ]\n}",
+          "options": {}
+        },
+        "id": "f2fde76d-cda5-4732-81e0-f9acebcbba59",
+        "name": "HTTP: Review Link",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          560,
+          384
+        ],
+        "credentials": {
+          "clickSendApi": {
+            "id": "9CcnKL7uI6GrC0rJ",
+            "name": "ClickSend account 2"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO sms_logs (client_id, customer_phone, direction, body)\nVALUES (\n  (SELECT id FROM clients LIMIT 1),\n  '{{ $(\"Webhook: Inbound SMS\").item.json.body.sms }}',\n  'outbound',\n  'Recovery message sent'\n);",
+          "options": {}
+        },
+        "id": "8ae8599f-299b-480d-8f6e-4e1ea0eb7b5d",
+        "name": "DB: Log Recovery",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          336,
+          576
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "iNd3pXEEaSrJVoEW",
+            "name": "Postgres account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://rest.clicksend.com/v3/sms/send",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "clickSendApi",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"messages\": [\n    {\n      \"source\": \"n8n\",\n      \"from\": \"+447903573667\",\n      \"body\": \"Sorry to hear that. Our manager will call you shortly.\",\n      \"to\": \"={{ $('Webhook: Inbound SMS').item.json.body.sms }}\"\n    }\n  ]\n}",
+          "options": {}
+        },
+        "id": "42a11e82-fa4e-4ed7-8b2f-e8ef10cd1c7e",
+        "name": "HTTP: Recovery",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          560,
+          576
+        ],
+        "credentials": {
+          "clickSendApi": {
+            "id": "9CcnKL7uI6GrC0rJ",
+            "name": "ClickSend account 2"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "onboarding",
+          "options": {}
+        },
+        "id": "0f7651bc-869c-422f-a2f3-a5c88b93c3db",
+        "name": "Webhook: Onboarding",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          -336,
+          800
+        ],
+        "webhookId": "onboarding-webhook-uuid"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO clients (business_name, owner_name, email, phone, review_link, stripe_customer_id, status)\nVALUES (\n  '{{ $json.body.business_name }}',\n  '{{ $json.body.owner_name }}',\n  '{{ $json.body.email }}',\n  '{{ $json.body.phone }}',\n  '{{ $json.body.review_link }}',\n  '{{ $json.body.stripe_customer_id }}',\n  'active'\n)\nRETURNING id;",
+          "options": {}
+        },
+        "id": "c67c0ead-d15d-48a5-994b-402e22c1d4f9",
+        "name": "DB: Insert Client",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          -112,
+          800
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "iNd3pXEEaSrJVoEW",
+            "name": "Postgres account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://rest.clicksend.com/v3/sms/send",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "clickSendApi",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"messages\": [\n    {\n      \"source\": \"n8n\",\n      \"from\": \"+447903573675\",\n      \"body\": \"Welcome to Rekindle Pro, {{ $json.body.owner_name }}! 🔥 You're all set. We'll have your system live within 24 hours. Any questions? Reply here.\",\n      \"to\": \"={{ $json.body.phone.startsWith('+') ? $json.body.phone : '+44' + $json.body.phone.slice(1) }}\"\n    }\n  ]\n}",
+          "options": {}
+        },
+        "id": "c1b503c8-09e5-4d31-a31c-f5d0c076ceff",
+        "name": "HTTP: Welcome SMS",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          112,
+          800
+        ],
+        "credentials": {
+          "clickSendApi": {
+            "id": "9CcnKL7uI6GrC0rJ",
+            "name": "ClickSend account 2"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://rest.clicksend.com/v3/sms/send",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "clickSendApi",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"messages\": [\n    {\n      \"source\": \"n8n\",\n      \"from\": \"+447903573675\",\n      \"body\": \"🔥 New client signed up!\\nName: {{ $json.body.owner_name }}\\nBusiness: {{ $json.body.business_name }}\\nPhone: {{ $json.body.phone }}\\nEmail: {{ $json.body.email }}\\nReview link: {{ $json.body.review_link }}\\n\\nSet them up within 24hrs.\",\n      \"to\": \"+447903573667\"\n    }\n  ]\n}",
+          "options": {}
+        },
+        "id": "7b4cdea2-06e6-4506-b5e3-3479f98fddd3",
+        "name": "HTTP: Notify Riccardo",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          336,
+          800
+        ],
+        "credentials": {
+          "clickSendApi": {
+            "id": "9CcnKL7uI6GrC0rJ",
+            "name": "ClickSend account 2"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook: Form": {
+        "main": [
+          [
+            {
+              "node": "HTTP: Send Outreach",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP: Send Outreach": {
+        "main": [
+          [
+            {
+              "node": "DB: Log Outbound SMS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook: Inbound SMS": {
+        "main": [
+          [
+            {
+              "node": "DB: Log Inbound SMS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Log Inbound SMS": {
+        "main": [
+          [
+            {
+              "node": "IF: Positive?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: Positive?": {
+        "main": [
+          [
+            {
+              "node": "DB: Log Review",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "DB: Log Recovery",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Log Review": {
+        "main": [
+          [
+            {
+              "node": "HTTP: Review Link",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Log Recovery": {
+        "main": [
+          [
+            {
+              "node": "HTTP: Recovery",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook: Onboarding": {
+        "main": [
+          [
+            {
+              "node": "DB: Insert Client",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Insert Client": {
+        "main": [
+          [
+            {
+              "node": "HTTP: Welcome SMS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP: Welcome SMS": {
+        "main": [
+          [
+            {
+              "node": "HTTP: Notify Riccardo",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Riccardo Minniti",
+    "name": "Version d9468ef4",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-02-19T00:48:16.471Z",
+        "id": 36,
+        "workflowId": "5NMYAFx8ynXLJ4iW",
+        "versionId": "d9468ef4-c59f-49a8-89ee-3bc6ef23a7b9",
+        "event": "activated",
+        "userId": "79fbc936-e238-497e-9813-8539377db831"
+      }
+    ]
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "name": "01 - Client Onboarding",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-onboarding",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wf1-node-01",
+      "name": "Onboarding Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "ai-onboarding"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "f1", "name": "name", "value": "={{ $json.name }}", "type": "string"},
+            {"id": "f2", "name": "business_name", "value": "={{ $json.business_name }}", "type": "string"},
+            {"id": "f3", "name": "email", "value": "={{ $json.email }}", "type": "string"},
+            {"id": "f4", "name": "phone", "value": "={{ $json.phone }}", "type": "string"},
+            {"id": "f5", "name": "industry", "value": "={{ $json.industry }}", "type": "string"},
+            {"id": "f6", "name": "pos_system", "value": "={{ $json.pos_system }}", "type": "string"},
+            {"id": "f7", "name": "google_link", "value": "={{ $json.google_link }}", "type": "string"},
+            {"id": "f8", "name": "tripadvisor_link", "value": "={{ $json.tripadvisor_link || '' }}", "type": "string"},
+            {"id": "f9", "name": "timing", "value": "={{ $json.timing }}", "type": "string"},
+            {"id": "f10", "name": "custom_message", "value": "={{ $json.custom_message || '' }}", "type": "string"},
+            {"id": "f11", "name": "volume", "value": "={{ $json.volume }}", "type": "string"},
+            {"id": "f12", "name": "stripe_payment_method_id", "value": "={{ $json.stripe_payment_method_id }}", "type": "string"},
+            {"id": "f13", "name": "stripe_customer_id", "value": "", "type": "string"},
+            {"id": "f14", "name": "signup_date", "value": "={{ $now.toISO() }}", "type": "string"},
+            {"id": "f15", "name": "status", "value": "active", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "wf1-node-02",
+      "name": "Format Client Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {"mode": "id", "value": "REPLACE_WITH_YOUR_SHEET_ID"},
+        "sheetName": {"mode": "name", "value": "Clients"},
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "wf1-node-03",
+      "name": "Save Client to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [680, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Google Sheets account"}
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.stripe.com/v1/customers",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {"name": "email", "value": "={{ $('Format Client Data').item.json.email }}"},
+            {"name": "name", "value": "={{ $('Format Client Data').item.json.business_name }}"},
+            {"name": "payment_method", "value": "={{ $('Format Client Data').item.json.stripe_payment_method_id }}"},
+            {"name": "invoice_settings[default_payment_method]", "value": "={{ $('Format Client Data').item.json.stripe_payment_method_id }}"},
+            {"name": "metadata[source]", "value": "rekindle_pro"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "wf1-node-04",
+      "name": "Create Stripe Customer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300],
+      "credentials": {
+        "httpBasicAuth": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Stripe API"}
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {"mode": "id", "value": "REPLACE_WITH_YOUR_SHEET_ID"},
+        "sheetName": {"mode": "name", "value": "Clients"},
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email": "={{ $('Format Client Data').item.json.email }}",
+            "stripe_customer_id": "={{ $json.id }}"
+          },
+          "matchingColumns": ["email"],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "wf1-node-05",
+      "name": "Update Stripe Customer ID",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1120, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Google Sheets account"}
+      }
+    },
+    {
+      "parameters": {
+        "from": "REPLACE_WITH_YOUR_TWILIO_NUMBER",
+        "to": "={{ $('Format Client Data').item.json.phone }}",
+        "message": "=Hi {{ $('Format Client Data').item.json.name }}! Welcome to Rekindle Pro 🎉\n\nYour review automation for {{ $('Format Client Data').item.json.business_name }} is being set up now. We'll be live within 24 hours.\n\nQuestions? Just reply to this message."
+      },
+      "id": "wf1-node-06",
+      "name": "Send Welcome SMS",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1340, 200],
+      "credentials": {
+        "twilioApi": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Twilio account"}
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "REPLACE_WITH_YOUR_TEAM_EMAIL",
+        "subject": "=🚀 New Signup: {{ $('Format Client Data').item.json.business_name }}",
+        "emailType": "text",
+        "message": "=New client signed up!\n\nName: {{ $('Format Client Data').item.json.name }}\nBusiness: {{ $('Format Client Data').item.json.business_name }}\nIndustry: {{ $('Format Client Data').item.json.industry }}\nPhone: {{ $('Format Client Data').item.json.phone }}\nEmail: {{ $('Format Client Data').item.json.email }}\nPOS: {{ $('Format Client Data').item.json.pos_system }}\nDaily Volume: {{ $('Format Client Data').item.json.volume }} customers/day\nGoogle Link: {{ $('Format Client Data').item.json.google_link }}\nSMS Timing: {{ $('Format Client Data').item.json.timing }}\nStripe PM: {{ $('Format Client Data').item.json.stripe_payment_method_id }}\n\n⚠️ ACTION NEEDED: Set up their SMS campaign in the admin panel."
+      },
+      "id": "wf1-node-07",
+      "name": "Notify Team",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1340, 420],
+      "credentials": {
+        "gmailOAuth2": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Gmail account"}
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"success\": true, \"message\": \"Welcome to Rekindle Pro!\"}"
+      },
+      "id": "wf1-node-08",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1560, 300]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Onboarding Webhook": {
+      "main": [[{"node": "Format Client Data", "type": "main", "index": 0}]]
+    },
+    "Format Client Data": {
+      "main": [[{"node": "Save Client to Sheets", "type": "main", "index": 0}]]
+    },
+    "Save Client to Sheets": {
+      "main": [[{"node": "Create Stripe Customer", "type": "main", "index": 0}]]
+    },
+    "Create Stripe Customer": {
+      "main": [[{"node": "Update Stripe Customer ID", "type": "main", "index": 0}]]
+    },
+    "Update Stripe Customer ID": {
+      "main": [[
+        {"node": "Send Welcome SMS", "type": "main", "index": 0},
+        {"node": "Notify Team", "type": "main", "index": 0}
+      ]]
+    },
+    "Send Welcome SMS": {
+      "main": [[{"node": "Respond OK", "type": "main", "index": 0}]]
+    }
+  },
+  "active": true,
+  "settings": {"executionOrder": "v1"},
+  "meta": {"templateCredsSetupCompleted": false},
+  "id": "rekindlepro-wf1-onboarding",
+  "tags": [{"name": "rekindle-pro"}]
+}

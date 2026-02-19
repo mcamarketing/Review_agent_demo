@@ -1,0 +1,198 @@
+{
+  "name": "WF-5: Inbound Reply Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "inbound-sms",
+        "options": {}
+      },
+      "id": "wf5-01",
+      "name": "Webhook: Inbound SMS",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-800, 400],
+      "webhookId": "prod-inbound-sms-webhook"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT m.*, l.id as lead_id, l.client_id, l.campaign_id, l.first_name\nFROM messages m\nJOIN leads l ON l.id = m.lead_id\nWHERE l.phone = '{{ $json.body.From }}'\n  AND m.direction = 'outbound'\nORDER BY m.created_at DESC\nLIMIT 1;",
+        "options": {}
+      },
+      "id": "wf5-02",
+      "name": "DB: Find Lead from Phone",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [-560, 400],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [{ "value1": "={{ $json.lead_id ? 1 : 0 }}", "value2": 1, "operation": "equal" }]
+        }
+      },
+      "id": "wf5-03",
+      "name": "IF: Lead Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [-340, 400]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO messages (lead_id, campaign_id, direction, sequence_step, channel, body, status)\nVALUES (\n  '{{ $json.lead_id }}',\n  '{{ $json.campaign_id }}',\n  'inbound',\n  0,\n  'sms',\n  '{{ $('Webhook: Inbound SMS').item.json.body.Body.replace(/'/g, \"''\") }}',\n  'received'\n);",
+        "options": {}
+      },
+      "id": "wf5-04",
+      "name": "DB: Log Inbound Message",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [-120, 300],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "REPLACE_WITH_ANTHROPIC_API_KEY" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: 'claude-opus-4-6',\n  max_tokens: 100,\n  system: 'Classify the sentiment of this SMS reply. Respond with ONLY one of: positive, negative, neutral, opt_out. Nothing else.',\n  messages: [{\n    role: 'user',\n    content: `SMS reply: \"${$('Webhook: Inbound SMS').item.json.body.Body}\"\n\nClassify as:\n- opt_out: contains STOP, UNSUBSCRIBE, REMOVE, CANCEL, END, QUIT\n- positive: interest in booking, asking questions, saying yes\n- negative: not interested, angry, go away\n- neutral: unclear, just acknowledging\n\nRespond with one word only.`\n  }]\n}) }}",
+        "options": {}
+      },
+      "id": "wf5-05",
+      "name": "Claude: Classify Sentiment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [100, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeResponse = $input.item.json;\nconst sentiment = claudeResponse.content[0].text.trim().toLowerCase().replace(/[^a-z_]/g, '');\nconst validSentiments = ['positive', 'negative', 'neutral', 'opt_out'];\nconst finalSentiment = validSentiments.includes(sentiment) ? sentiment : 'neutral';\n\nconst lead = $('DB: Find Lead from Phone').item.json;\nreturn [{ json: { ...lead, reply_sentiment: finalSentiment } }];"
+      },
+      "id": "wf5-06",
+      "name": "Code: Parse Sentiment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [320, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [{ "value1": "={{ $json.reply_sentiment }}", "value2": "opt_out", "operation": "equal" }]
+        }
+      },
+      "id": "wf5-07",
+      "name": "IF: Opt-Out",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [540, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO opt_outs (phone, reason)\nVALUES ('{{ $('Webhook: Inbound SMS').item.json.body.From }}', 'STOP reply')\nON CONFLICT DO NOTHING;\n\nUPDATE leads SET status = 'opted_out' WHERE id = '{{ $json.lead_id }}';\n\nUPDATE follow_up_queue SET status = 'cancelled'\nWHERE lead_id = '{{ $json.lead_id }}' AND status = 'pending';",
+        "options": {}
+      },
+      "id": "wf5-08",
+      "name": "DB: Process Opt-Out",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [760, 200],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [{ "value1": "={{ $json.reply_sentiment }}", "value2": "positive", "operation": "equal" }]
+        }
+      },
+      "id": "wf5-09",
+      "name": "IF: Positive Reply",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [760, 380]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE leads SET status = 'reactivated' WHERE id = '{{ $json.lead_id }}';\n\nUPDATE follow_up_queue SET status = 'cancelled'\nWHERE lead_id = '{{ $json.lead_id }}' AND status = 'pending';",
+        "options": {}
+      },
+      "id": "wf5-10",
+      "name": "DB: Mark Reactivated + Cancel Follow-ups",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [980, 300],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE messages SET reply_sentiment = '{{ $('Code: Parse Sentiment').item.json.reply_sentiment }}', status = 'replied'\nWHERE lead_id = '{{ $('DB: Find Lead from Phone').item.json.lead_id }}'\n  AND direction = 'outbound'\nORDER BY created_at DESC\nLIMIT 1;",
+        "options": {}
+      },
+      "id": "wf5-11",
+      "name": "DB: Update Message Sentiment",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1200, 400],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response></Response>",
+        "options": { "responseHeaders": { "entries": [{ "name": "Content-Type", "value": "application/xml" }] } }
+      },
+      "id": "wf5-12",
+      "name": "Respond: Twilio ACK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1420, 400]
+    }
+  ],
+  "connections": {
+    "Webhook: Inbound SMS": { "main": [[{ "node": "DB: Find Lead from Phone", "type": "main", "index": 0 }]] },
+    "DB: Find Lead from Phone": { "main": [[{ "node": "IF: Lead Found", "type": "main", "index": 0 }]] },
+    "IF: Lead Found": { "main": [[{ "node": "DB: Log Inbound Message", "type": "main", "index": 0 }]] },
+    "DB: Log Inbound Message": { "main": [[{ "node": "Claude: Classify Sentiment", "type": "main", "index": 0 }]] },
+    "Claude: Classify Sentiment": { "main": [[{ "node": "Code: Parse Sentiment", "type": "main", "index": 0 }]] },
+    "Code: Parse Sentiment": { "main": [[{ "node": "IF: Opt-Out", "type": "main", "index": 0 }]] },
+    "IF: Opt-Out": {
+      "main": [
+        [{ "node": "DB: Process Opt-Out", "type": "main", "index": 0 }],
+        [{ "node": "IF: Positive Reply", "type": "main", "index": 0 }]
+      ]
+    },
+    "IF: Positive Reply": {
+      "main": [
+        [{ "node": "DB: Mark Reactivated + Cancel Follow-ups", "type": "main", "index": 0 }],
+        [{ "node": "DB: Update Message Sentiment", "type": "main", "index": 0 }]
+      ]
+    },
+    "DB: Mark Reactivated + Cancel Follow-ups": { "main": [[{ "node": "DB: Update Message Sentiment", "type": "main", "index": 0 }]] },
+    "DB: Process Opt-Out": { "main": [[{ "node": "DB: Update Message Sentiment", "type": "main", "index": 0 }]] },
+    "DB: Update Message Sentiment": { "main": [[{ "node": "Respond: Twilio ACK", "type": "main", "index": 0 }]] }
+  },
+  "meta": { "instanceId": "lead-reactivation-engine-v1" }
+}

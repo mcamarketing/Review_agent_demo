@@ -1,0 +1,317 @@
+{
+  "name": "03 - Inbound SMS + Per-Review Billing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sms-inbound",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wf3-node-01",
+      "name": "Twilio Inbound Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "sms-inbound"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "f1", "name": "customer_phone", "value": "={{ $json.From }}", "type": "string"},
+            {"id": "f2", "name": "body_lower", "value": "={{ $json.Body.toLowerCase().trim() }}", "type": "string"},
+            {"id": "f3", "name": "original_body", "value": "={{ $json.Body }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "wf3-node-02",
+      "name": "Normalize SMS Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "operation": "getRows",
+        "documentId": {"mode": "id", "value": "REPLACE_WITH_YOUR_SHEET_ID"},
+        "sheetName": {"mode": "name", "value": "SentSMS"},
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "customer_phone",
+              "lookupValue": "={{ $json.customer_phone }}"
+            },
+            {
+              "lookupColumn": "status",
+              "lookupValue": "sent"
+            }
+          ]
+        },
+        "options": {"returnAllMatches": false}
+      },
+      "id": "wf3-node-03",
+      "name": "Find Customer in SentSMS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [680, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Google Sheets account"}
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst normalizedBody = $('Normalize SMS Data').item.json.body_lower;\nconst customerPhone = $('Normalize SMS Data').item.json.customer_phone;\nconst originalBody = $('Normalize SMS Data').item.json.original_body;\n\n// No matching sent SMS found — ignore this reply\nif (!items || items.length === 0 || !items[0].json.customer_phone) {\n  return [{ json: { action: 'ignore', customer_phone: customerPhone, reason: 'No matching sent SMS found' } }];\n}\n\nconst row = items[0].json;\n\n// Detect response type\nconst positiveKeywords = ['done', 'left', 'review', 'rated', 'stars', 'google', 'posted', 'gave', 'submitted', 'written', 'added', 'yes', 'sure', 'absolutely', 'great', 'thanks', 'thank'];\nconst optoutKeywords = ['stop', 'unsubscribe', 'opt out', 'optout', 'remove', 'cancel', 'no thanks', 'not interested'];\n\nlet action = 'other';\nif (optoutKeywords.some(kw => normalizedBody.includes(kw))) {\n  action = 'optout';\n} else if (positiveKeywords.some(kw => normalizedBody.includes(kw))) {\n  action = 'positive';\n}\n\nreturn [{\n  json: {\n    action,\n    customer_phone: customerPhone,\n    customer_name: row.customer_name,\n    client_email: row.client_email,\n    business_name: row.business_name,\n    stripe_customer_id: row.stripe_customer_id,\n    stripe_payment_method_id: row.stripe_payment_method_id,\n    original_body: originalBody\n  }\n}];"
+      },
+      "id": "wf3-node-04",
+      "name": "Detect Response Type",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": false, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "positive",
+              "operator": {"type": "string", "operation": "equals"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "wf3-node-05",
+      "name": "Is Positive Review?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.stripe.com/v1/payment_intents",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {"name": "amount", "value": "250"},
+            {"name": "currency", "value": "gbp"},
+            {"name": "customer", "value": "={{ $json.stripe_customer_id }}"},
+            {"name": "payment_method", "value": "={{ $json.stripe_payment_method_id }}"},
+            {"name": "off_session", "value": "true"},
+            {"name": "confirm", "value": "true"},
+            {"name": "description", "value": "={{ 'Review captured for ' + $json.business_name }}"},
+            {"name": "metadata[client_email]", "value": "={{ $json.client_email }}"},
+            {"name": "metadata[customer_phone]", "value": "={{ $json.customer_phone }}"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "wf3-node-06",
+      "name": "Charge £2.50 via Stripe",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 160],
+      "credentials": {
+        "httpBasicAuth": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Stripe API"}
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {"mode": "id", "value": "REPLACE_WITH_YOUR_SHEET_ID"},
+        "sheetName": {"mode": "name", "value": "Billing"},
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $now.toISO() }}",
+            "client_email": "={{ $('Detect Response Type').item.json.client_email }}",
+            "business_name": "={{ $('Detect Response Type').item.json.business_name }}",
+            "customer_phone": "={{ $('Detect Response Type').item.json.customer_phone }}",
+            "stripe_pi_id": "={{ $json.id }}",
+            "amount_gbp": "2.50",
+            "status": "={{ $json.status }}"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "wf3-node-07",
+      "name": "Log to Billing Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1560, 160],
+      "credentials": {
+        "googleSheetsOAuth2Api": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Google Sheets account"}
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {"mode": "id", "value": "REPLACE_WITH_YOUR_SHEET_ID"},
+        "sheetName": {"mode": "name", "value": "SentSMS"},
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "customer_phone": "={{ $('Detect Response Type').item.json.customer_phone }}",
+            "status": "review_captured"
+          },
+          "matchingColumns": ["customer_phone"],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "wf3-node-08",
+      "name": "Mark Review Captured",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1780, 160],
+      "credentials": {
+        "googleSheetsOAuth2Api": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Google Sheets account"}
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "REPLACE_WITH_YOUR_TEAM_EMAIL",
+        "subject": "=💰 £2.50 earned — Review captured for {{ $('Detect Response Type').item.json.business_name }}",
+        "emailType": "text",
+        "message": "=Review confirmed!\n\nBusiness: {{ $('Detect Response Type').item.json.business_name }}\nClient: {{ $('Detect Response Type').item.json.client_email }}\nCustomer: {{ $('Detect Response Type').item.json.customer_phone }}\nReply: {{ $('Detect Response Type').item.json.original_body }}\n\nStripe charged: £2.50\nPayment Intent: {{ $('Charge £2.50 via Stripe').item.json.id }}"
+      },
+      "id": "wf3-node-09",
+      "name": "Email Team - Revenue Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [2000, 160],
+      "credentials": {
+        "gmailOAuth2": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Gmail account"}
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": false, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "optout",
+              "operator": {"type": "string", "operation": "equals"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "wf3-node-10",
+      "name": "Is Opt-Out?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1340, 440]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {"mode": "id", "value": "REPLACE_WITH_YOUR_SHEET_ID"},
+        "sheetName": {"mode": "name", "value": "SentSMS"},
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "customer_phone": "={{ $json.customer_phone }}",
+            "status": "opted_out"
+          },
+          "matchingColumns": ["customer_phone"],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "wf3-node-11",
+      "name": "Mark Opted Out",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1560, 360],
+      "credentials": {
+        "googleSheetsOAuth2Api": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Google Sheets account"}
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "REPLACE_WITH_YOUR_TEAM_EMAIL",
+        "subject": "=❓ Unhandled SMS reply — {{ $json.business_name }}",
+        "emailType": "text",
+        "message": "=A customer replied but we couldn't categorize it.\n\nBusiness: {{ $json.business_name }}\nCustomer: {{ $json.customer_phone }}\nReply: {{ $json.original_body }}\n\nPlease follow up manually."
+      },
+      "id": "wf3-node-12",
+      "name": "Email Team - Needs Follow Up",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1560, 540],
+      "credentials": {
+        "gmailOAuth2": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Gmail account"}
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response></Response>"
+      },
+      "id": "wf3-node-13",
+      "name": "Respond TwiML",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2220, 160]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Twilio Inbound Webhook": {
+      "main": [[{"node": "Normalize SMS Data", "type": "main", "index": 0}]]
+    },
+    "Normalize SMS Data": {
+      "main": [[{"node": "Find Customer in SentSMS", "type": "main", "index": 0}]]
+    },
+    "Find Customer in SentSMS": {
+      "main": [[{"node": "Detect Response Type", "type": "main", "index": 0}]]
+    },
+    "Detect Response Type": {
+      "main": [[{"node": "Is Positive Review?", "type": "main", "index": 0}]]
+    },
+    "Is Positive Review?": {
+      "main": [
+        [{"node": "Charge £2.50 via Stripe", "type": "main", "index": 0}],
+        [{"node": "Is Opt-Out?", "type": "main", "index": 0}]
+      ]
+    },
+    "Charge £2.50 via Stripe": {
+      "main": [[{"node": "Log to Billing Sheet", "type": "main", "index": 0}]]
+    },
+    "Log to Billing Sheet": {
+      "main": [[{"node": "Mark Review Captured", "type": "main", "index": 0}]]
+    },
+    "Mark Review Captured": {
+      "main": [[{"node": "Email Team - Revenue Alert", "type": "main", "index": 0}]]
+    },
+    "Email Team - Revenue Alert": {
+      "main": [[{"node": "Respond TwiML", "type": "main", "index": 0}]]
+    },
+    "Is Opt-Out?": {
+      "main": [
+        [{"node": "Mark Opted Out", "type": "main", "index": 0}],
+        [{"node": "Email Team - Needs Follow Up", "type": "main", "index": 0}]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {"executionOrder": "v1"},
+  "meta": {"templateCredsSetupCompleted": false},
+  "id": "rekindlepro-wf3-inbound-billing",
+  "tags": [{"name": "rekindle-pro"}]
+}

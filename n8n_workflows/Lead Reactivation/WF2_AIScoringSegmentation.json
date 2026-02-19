@@ -1,0 +1,115 @@
+{
+  "name": "WF-2: AI Scoring & Segmentation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "trigger-scoring",
+        "options": {}
+      },
+      "id": "wf2-01",
+      "name": "Webhook: Trigger Scoring",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-800, 400],
+      "webhookId": "prod-trigger-scoring-webhook"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT l.*, c.business_name, c.industry\nFROM leads l\nJOIN clients c ON c.id = l.client_id\nWHERE l.campaign_id = '{{ $json.body.campaign_id }}'\n  AND l.status = 'pending'\nORDER BY l.created_at ASC;",
+        "options": {}
+      },
+      "id": "wf2-02",
+      "name": "DB: Fetch Unscored Leads",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [-560, 400],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate days_since_contact for context\nconst lead = $input.item.json;\nconst lastContact = lead.last_contact_date ? new Date(lead.last_contact_date) : null;\nconst daysSince = lastContact ? Math.floor((Date.now() - lastContact.getTime()) / 86400000) : null;\n\nreturn [{ json: { ...lead, days_since_contact: daysSince } }];"
+      },
+      "id": "wf2-03",
+      "name": "Code: Enrich Lead Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-340, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "REPLACE_WITH_ANTHROPIC_API_KEY" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: 'claude-opus-4-6',\n  max_tokens: 400,\n  system: 'You are a sales analyst specialising in lead reactivation. You classify dead leads by warmth and reactivation potential. Always respond with valid JSON only — no markdown, no explanation outside the JSON.',\n  messages: [{\n    role: 'user',\n    content: `Score this dead lead for reactivation potential.\n\nLead data:\n- Name: ${$json.first_name} ${$json.last_name || ''}\n- Days since last contact: ${$json.days_since_contact ?? 'unknown'}\n- Last interaction type: ${$json.last_interaction_type ?? 'unknown'}\n- Notes from CRM: ${$json.source_notes ?? 'none'}\n\nBusiness context:\n- Business: ${$json.business_name}\n- Industry: ${$json.industry ?? 'unknown'}\n\nClassify this lead into exactly one segment:\n- warm_ghost: Had genuine interest, went quiet recently (<90 days), no objection raised\n- cold_prospect: Minimal engagement, >90 days old, no clear interest signal\n- past_customer: Previously bought/booked, then stopped\n- price_objection: Explicitly mentioned cost or budget as barrier\n- timing_objection: Said 'not now', 'later', 'next quarter' type responses\n- competitor_lost: Went with a competitor or mentioned one\n\nReturn ONLY this JSON:\n{\n  \"segment\": \"<one of the 6 segments above>\",\n  \"score\": <integer 0-100 representing reactivation likelihood>,\n  \"reasoning\": \"<2 sentence explanation>\"\n}`\n  }]\n}) }}",
+        "options": {}
+      },
+      "id": "wf2-04",
+      "name": "Claude: Score & Segment Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-120, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Claude response and extract JSON\nconst claudeResponse = $input.item.json;\nconst rawText = claudeResponse.content[0].text;\n\nlet parsed;\ntry {\n  parsed = JSON.parse(rawText.replace(/```json|```/g, '').trim());\n} catch(e) {\n  // Fallback if Claude didn't return clean JSON\n  parsed = { segment: 'cold_prospect', score: 20, reasoning: 'Could not parse AI response.' };\n}\n\nconst lead = $('Code: Enrich Lead Context').item.json;\nreturn [{ json: {\n  lead_id: lead.id,\n  segment: parsed.segment,\n  score: parsed.score,\n  ai_reasoning: parsed.reasoning\n} }];"
+      },
+      "id": "wf2-05",
+      "name": "Code: Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [100, 400]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE leads\nSET segment = '{{ $json.segment }}',\n    score = {{ $json.score }},\n    ai_reasoning = '{{ $json.ai_reasoning.replace(/'/g, \"''\") }}',\n    status = 'scored'\nWHERE id = '{{ $json.lead_id }}';",
+        "options": {}
+      },
+      "id": "wf2-06",
+      "name": "DB: Write Score to Lead",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [320, 400],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE campaigns\nSET status = 'pending_approval'\nWHERE id = '{{ $('Webhook: Trigger Scoring').item.json.body.campaign_id }}'\n  AND NOT EXISTS (\n    SELECT 1 FROM leads\n    WHERE campaign_id = '{{ $('Webhook: Trigger Scoring').item.json.body.campaign_id }}'\n      AND status = 'pending'\n  );",
+        "options": {}
+      },
+      "id": "wf2-07",
+      "name": "DB: Mark Campaign Pending Approval",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [540, 400],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook: Trigger Scoring": { "main": [[{ "node": "DB: Fetch Unscored Leads", "type": "main", "index": 0 }]] },
+    "DB: Fetch Unscored Leads": { "main": [[{ "node": "Code: Enrich Lead Context", "type": "main", "index": 0 }]] },
+    "Code: Enrich Lead Context": { "main": [[{ "node": "Claude: Score & Segment Lead", "type": "main", "index": 0 }]] },
+    "Claude: Score & Segment Lead": { "main": [[{ "node": "Code: Parse Claude Response", "type": "main", "index": 0 }]] },
+    "Code: Parse Claude Response": { "main": [[{ "node": "DB: Write Score to Lead", "type": "main", "index": 0 }]] },
+    "DB: Write Score to Lead": { "main": [[{ "node": "DB: Mark Campaign Pending Approval", "type": "main", "index": 0 }]] }
+  },
+  "meta": { "instanceId": "lead-reactivation-engine-v1" }
+}

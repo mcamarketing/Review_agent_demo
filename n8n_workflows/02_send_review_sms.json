@@ -1,0 +1,153 @@
+{
+  "name": "02 - Send Review Request SMS",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "send-review-sms",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wf2-node-01",
+      "name": "Send SMS Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "send-review-sms"
+    },
+    {
+      "parameters": {
+        "operation": "getRows",
+        "documentId": {"mode": "id", "value": "REPLACE_WITH_YOUR_SHEET_ID"},
+        "sheetName": {"mode": "name", "value": "Clients"},
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "email",
+              "lookupValue": "={{ $json.client_email }}"
+            }
+          ]
+        },
+        "options": {"returnAllMatches": false}
+      },
+      "id": "wf2-node-02",
+      "name": "Get Client Details",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [460, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Google Sheets account"}
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "f1", "name": "client_email", "value": "={{ $json.email }}", "type": "string"},
+            {"id": "f2", "name": "stripe_customer_id", "value": "={{ $json.stripe_customer_id }}", "type": "string"},
+            {"id": "f3", "name": "stripe_payment_method_id", "value": "={{ $json.stripe_payment_method_id }}", "type": "string"},
+            {"id": "f4", "name": "business_name", "value": "={{ $json.business_name }}", "type": "string"},
+            {"id": "f5", "name": "google_link", "value": "={{ $json.google_link }}", "type": "string"},
+            {"id": "f6", "name": "customer_name", "value": "={{ $('Send SMS Webhook').item.json.customer_name }}", "type": "string"},
+            {"id": "f7", "name": "customer_phone", "value": "={{ $('Send SMS Webhook').item.json.customer_phone }}", "type": "string"},
+            {"id": "f8", "name": "sent_at", "value": "={{ $now.toISO() }}", "type": "string"},
+            {"id": "f9", "name": "status", "value": "sent", "type": "string"},
+            {
+              "id": "f10",
+              "name": "sms_body",
+              "value": "={{ $json.custom_message ? $json.custom_message.replace('{name}', $('Send SMS Webhook').item.json.customer_name).replace('{business}', $json.business_name).replace('{link}', $json.google_link) : 'Hi ' + $('Send SMS Webhook').item.json.customer_name + '! Thanks for visiting ' + $json.business_name + '. We\\'d love your feedback — it only takes 30 seconds: ' + $json.google_link + '\\n\\nReply STOP to opt out.' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "wf2-node-03",
+      "name": "Format SMS & Log Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "from": "REPLACE_WITH_YOUR_TWILIO_NUMBER",
+        "to": "={{ $json.customer_phone }}",
+        "message": "={{ $json.sms_body }}"
+      },
+      "id": "wf2-node-04",
+      "name": "Send Review SMS",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "credentials": {
+        "twilioApi": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Twilio account"}
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {"mode": "id", "value": "REPLACE_WITH_YOUR_SHEET_ID"},
+        "sheetName": {"mode": "name", "value": "SentSMS"},
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "client_email": "={{ $('Format SMS & Log Data').item.json.client_email }}",
+            "stripe_customer_id": "={{ $('Format SMS & Log Data').item.json.stripe_customer_id }}",
+            "stripe_payment_method_id": "={{ $('Format SMS & Log Data').item.json.stripe_payment_method_id }}",
+            "business_name": "={{ $('Format SMS & Log Data').item.json.business_name }}",
+            "customer_name": "={{ $('Format SMS & Log Data').item.json.customer_name }}",
+            "customer_phone": "={{ $('Format SMS & Log Data').item.json.customer_phone }}",
+            "google_link": "={{ $('Format SMS & Log Data').item.json.google_link }}",
+            "sent_at": "={{ $('Format SMS & Log Data').item.json.sent_at }}",
+            "status": "sent"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "wf2-node-05",
+      "name": "Log to SentSMS Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1120, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {"id": "REPLACE_WITH_CREDENTIAL_ID", "name": "Google Sheets account"}
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"success\": true, \"message\": \"SMS sent\"}"
+      },
+      "id": "wf2-node-06",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1340, 300]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Send SMS Webhook": {
+      "main": [[{"node": "Get Client Details", "type": "main", "index": 0}]]
+    },
+    "Get Client Details": {
+      "main": [[{"node": "Format SMS & Log Data", "type": "main", "index": 0}]]
+    },
+    "Format SMS & Log Data": {
+      "main": [[{"node": "Send Review SMS", "type": "main", "index": 0}]]
+    },
+    "Send Review SMS": {
+      "main": [[{"node": "Log to SentSMS Sheet", "type": "main", "index": 0}]]
+    },
+    "Log to SentSMS Sheet": {
+      "main": [[{"node": "Respond OK", "type": "main", "index": 0}]]
+    }
+  },
+  "active": true,
+  "settings": {"executionOrder": "v1"},
+  "meta": {"templateCredsSetupCompleted": false},
+  "id": "rekindlepro-wf2-send-sms",
+  "tags": [{"name": "rekindle-pro"}]
+}

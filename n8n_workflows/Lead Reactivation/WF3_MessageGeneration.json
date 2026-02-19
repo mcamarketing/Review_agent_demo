@@ -1,0 +1,117 @@
+{
+  "name": "WF-3: Message Generation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "approve-campaign",
+        "options": {}
+      },
+      "id": "wf3-01",
+      "name": "Webhook: Approve Campaign",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-800, 400],
+      "webhookId": "prod-approve-campaign-webhook"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT l.*, c.business_name, c.industry, c.review_link, camp.channel, camp.settings\nFROM leads l\nJOIN clients c ON c.id = l.client_id\nJOIN campaigns camp ON camp.id = l.campaign_id\nWHERE l.campaign_id = '{{ $json.body.campaign_id }}'\n  AND l.status = 'scored'\nORDER BY l.score DESC;",
+        "options": {}
+      },
+      "id": "wf3-02",
+      "name": "DB: Fetch Scored Leads",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [-560, 400],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "REPLACE_WITH_ANTHROPIC_API_KEY" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: 'claude-opus-4-6',\n  max_tokens: 300,\n  system: 'You are a copywriter specialising in SMS reactivation messages for local service businesses. Write natural, non-spammy messages. Max 160 characters for SMS. Always include opt-out. Return only the message text, nothing else.',\n  messages: [{\n    role: 'user',\n    content: `Write a personalised reactivation SMS for this lead.\n\nLead: ${$json.first_name}, segment: ${$json.segment}, score: ${$json.score}/100\nNotes: ${$json.source_notes ?? 'none'}\nBusiness: ${$json.business_name} (${$json.industry ?? 'service business'})\nOffer: ${JSON.parse($json.settings || '{}').offer ?? 'none'}\nReview link: ${$json.review_link ?? 'none'}\nTone: ${JSON.parse($json.settings || '{}').tone ?? 'friendly'}\n\nSegment guidance:\n- warm_ghost: casual re-engagement, mention you missed them\n- cold_prospect: introduce value, soft ask\n- past_customer: appreciation angle, loyalty feel\n- price_objection: lead with value not price, mention offer if available\n- timing_objection: 'just checking in' angle, low pressure\n- competitor_lost: no mention of competitor, focus on what makes you great\n\nWrite the SMS message now. Must end with: Reply STOP to opt out.`\n  }]\n}) }}",
+        "options": {}
+      },
+      "id": "wf3-03",
+      "name": "Claude: Generate Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-340, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeResponse = $input.item.json;\nconst messageText = claudeResponse.content[0].text.trim();\nconst lead = $('DB: Fetch Scored Leads').item.json;\n\nreturn [{ json: {\n  lead_id: lead.id,\n  campaign_id: lead.campaign_id,\n  direction: 'outbound',\n  sequence_step: 1,\n  channel: lead.channel || 'sms',\n  body: messageText,\n  status: 'queued'\n} }];"
+      },
+      "id": "wf3-04",
+      "name": "Code: Format Message Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-120, 400]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO messages (lead_id, campaign_id, direction, sequence_step, channel, body, status)\nVALUES (\n  '{{ $json.lead_id }}',\n  '{{ $json.campaign_id }}',\n  'outbound',\n  1,\n  '{{ $json.channel }}',\n  '{{ $json.body.replace(/'/g, \"''\") }}',\n  'queued'\n);",
+        "options": {}
+      },
+      "id": "wf3-05",
+      "name": "DB: Queue Message",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [100, 400],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE campaigns SET status = 'approved', approved_at = NOW() WHERE id = '{{ $('Webhook: Approve Campaign').item.json.body.campaign_id }}';",
+        "options": {}
+      },
+      "id": "wf3-06",
+      "name": "DB: Mark Campaign Approved",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [320, 400],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, campaign_id: $('Webhook: Approve Campaign').item.json.body.campaign_id, messages_queued: true }) }}",
+        "options": {}
+      },
+      "id": "wf3-07",
+      "name": "Respond: Campaign Approved",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [540, 400]
+    }
+  ],
+  "connections": {
+    "Webhook: Approve Campaign": { "main": [[{ "node": "DB: Fetch Scored Leads", "type": "main", "index": 0 }]] },
+    "DB: Fetch Scored Leads": { "main": [[{ "node": "Claude: Generate Message", "type": "main", "index": 0 }]] },
+    "Claude: Generate Message": { "main": [[{ "node": "Code: Format Message Record", "type": "main", "index": 0 }]] },
+    "Code: Format Message Record": { "main": [[{ "node": "DB: Queue Message", "type": "main", "index": 0 }]] },
+    "DB: Queue Message": { "main": [[{ "node": "DB: Mark Campaign Approved", "type": "main", "index": 0 }]] },
+    "DB: Mark Campaign Approved": { "main": [[{ "node": "Respond: Campaign Approved", "type": "main", "index": 0 }]] }
+  },
+  "meta": { "instanceId": "lead-reactivation-engine-v1" }
+}

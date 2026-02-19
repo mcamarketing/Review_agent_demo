@@ -1,0 +1,202 @@
+{
+  "name": "WF-1: Lead Ingestion",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ingest-leads",
+        "options": { "rawBody": true }
+      },
+      "id": "wf1-01",
+      "name": "Webhook: Ingest Leads",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-800, 400],
+      "webhookId": "prod-ingest-leads-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.headers['x-api-key'] }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "wf1-02",
+      "name": "IF: Auth Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [-580, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"error\": \"Unauthorized\" }",
+        "options": { "responseCode": 401 }
+      },
+      "id": "wf1-03",
+      "name": "Respond: 401 Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [-580, 580]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, business_name, industry FROM clients WHERE api_key = '{{ $('Webhook: Ingest Leads').item.json.headers['x-api-key'] }}' AND status = 'active' LIMIT 1;",
+        "options": {}
+      },
+      "id": "wf1-04",
+      "name": "DB: Validate Client API Key",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [-360, 400],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [{ "value1": "={{ $json.length }}", "operation": "largerEqual", "value2": 1 }]
+        }
+      },
+      "id": "wf1-05",
+      "name": "IF: Client Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [-140, 400]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO campaigns (client_id, name, status, channel, settings)\nVALUES (\n  '{{ $('DB: Validate Client API Key').item.json.id }}',\n  '{{ $json.body.campaign_name ?? 'Reactivation Campaign ' + new Date().toISOString().split('T')[0] }}',\n  'ingesting',\n  '{{ $json.body.channel ?? 'sms' }}',\n  '{{ JSON.stringify($json.body.settings ?? {}) }}'\n)\nRETURNING id;",
+        "options": {}
+      },
+      "id": "wf1-06",
+      "name": "DB: Create Campaign Row",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [80, 400],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse CSV or JSON lead array from request body\nconst body = $('Webhook: Ingest Leads').item.json.body;\nconst campaignId = $('DB: Create Campaign Row').item.json.id;\nconst clientId = $('DB: Validate Client API Key').item.json.id;\n\nlet rawLeads = [];\nif (body.leads && Array.isArray(body.leads)) {\n  // CRM webhook - already JSON array\n  rawLeads = body.leads;\n} else if (body.csv) {\n  // CSV string - parse it\n  const lines = body.csv.split('\\n').filter(l => l.trim());\n  const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_'));\n  rawLeads = lines.slice(1).map(line => {\n    const vals = line.split(',');\n    const obj = {};\n    headers.forEach((h, i) => { obj[h] = (vals[i] || '').trim(); });\n    return obj;\n  });\n}\n\n// Normalise field names - map common CRM variants\nconst fieldMap = body.field_map || {};\nconst normalisedLeads = rawLeads.map(raw => {\n  const get = (keys) => {\n    for (const k of keys) { if (raw[k]) return raw[k]; }\n    return null;\n  };\n  return {\n    campaign_id: campaignId,\n    client_id: clientId,\n    first_name: raw[fieldMap.first_name] || get(['first_name', 'firstname', 'first name', 'fname', 'contact_first_name']),\n    last_name: raw[fieldMap.last_name] || get(['last_name', 'lastname', 'last name', 'lname', 'contact_last_name']),\n    phone: raw[fieldMap.phone] || get(['phone', 'mobile', 'phone_number', 'mobile_number', 'cell']),\n    email: raw[fieldMap.email] || get(['email', 'email_address', 'contact_email']),\n    last_contact_date: raw[fieldMap.last_contact_date] || get(['last_contact_date', 'last_contact', 'last_activity', 'last_activity_date']),\n    last_interaction_type: raw[fieldMap.last_interaction_type] || get(['last_interaction_type', 'interaction_type', 'deal_stage', 'pipeline_stage']),\n    source_notes: raw[fieldMap.source_notes] || get(['notes', 'source_notes', 'crm_notes', 'comments']),\n    raw_data: JSON.stringify(raw)\n  };\n});\n\n// Remove leads with no phone AND no email\nconst validLeads = normalisedLeads.filter(l => l.phone || l.email);\nreturn validLeads.map(l => ({ json: l }));"
+      },
+      "id": "wf1-07",
+      "name": "Code: Normalise Lead Fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [300, 400]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT phone, email FROM opt_outs WHERE phone = '{{ $json.phone }}' OR email = '{{ $json.email }}' LIMIT 1;",
+        "options": {}
+      },
+      "id": "wf1-08",
+      "name": "DB: Check Opt-Out",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [520, 400],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [{ "value1": "={{ $json.length }}", "value2": 0, "operation": "equal" }]
+        }
+      },
+      "id": "wf1-09",
+      "name": "IF: Not Opted Out",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [740, 400]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO leads (campaign_id, client_id, first_name, last_name, phone, email, last_contact_date, last_interaction_type, source_notes, raw_data, status)\nVALUES (\n  '{{ $('Code: Normalise Lead Fields').item.json.campaign_id }}',\n  '{{ $('Code: Normalise Lead Fields').item.json.client_id }}',\n  '{{ $('Code: Normalise Lead Fields').item.json.first_name }}',\n  '{{ $('Code: Normalise Lead Fields').item.json.last_name }}',\n  '{{ $('Code: Normalise Lead Fields').item.json.phone }}',\n  '{{ $('Code: Normalise Lead Fields').item.json.email }}',\n  '{{ $('Code: Normalise Lead Fields').item.json.last_contact_date }}',\n  '{{ $('Code: Normalise Lead Fields').item.json.last_interaction_type }}',\n  '{{ $('Code: Normalise Lead Fields').item.json.source_notes }}',\n  '{{ $('Code: Normalise Lead Fields').item.json.raw_data }}',\n  'pending'\n);",
+        "options": {}
+      },
+      "id": "wf1-10",
+      "name": "DB: Insert Lead",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [960, 300],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE campaigns SET status = 'pending_scoring', total_leads = (SELECT COUNT(*) FROM leads WHERE campaign_id = '{{ $('DB: Create Campaign Row').item.json.id }}') WHERE id = '{{ $('DB: Create Campaign Row').item.json.id }}';",
+        "options": {}
+      },
+      "id": "wf1-11",
+      "name": "DB: Update Campaign Status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1180, 400],
+      "credentials": {
+        "postgres": { "id": "iNd3pXEEaSrJVoEW", "name": "Postgres account" }
+      }
+    },
+    {
+      "parameters": {
+        "url": "REPLACE_WITH_N8N_WEBHOOK_URL/trigger-scoring",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [{ "name": "campaign_id", "value": "={{ $('DB: Create Campaign Row').item.json.id }}" }]
+        },
+        "options": {}
+      },
+      "id": "wf1-12",
+      "name": "HTTP: Trigger WF-2 Scoring",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1400, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, campaign_id: $('DB: Create Campaign Row').item.json.id, leads_ingested: $('DB: Update Campaign Status').item.json.total_leads }) }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "wf1-13",
+      "name": "Respond: Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1620, 400]
+    }
+  ],
+  "connections": {
+    "Webhook: Ingest Leads": { "main": [[{ "node": "IF: Auth Check", "type": "main", "index": 0 }]] },
+    "IF: Auth Check": {
+      "main": [
+        [{ "node": "DB: Validate Client API Key", "type": "main", "index": 0 }],
+        [{ "node": "Respond: 401 Unauthorized", "type": "main", "index": 0 }]
+      ]
+    },
+    "DB: Validate Client API Key": { "main": [[{ "node": "IF: Client Found", "type": "main", "index": 0 }]] },
+    "IF: Client Found": { "main": [[{ "node": "DB: Create Campaign Row", "type": "main", "index": 0 }]] },
+    "DB: Create Campaign Row": { "main": [[{ "node": "Code: Normalise Lead Fields", "type": "main", "index": 0 }]] },
+    "Code: Normalise Lead Fields": { "main": [[{ "node": "DB: Check Opt-Out", "type": "main", "index": 0 }]] },
+    "DB: Check Opt-Out": { "main": [[{ "node": "IF: Not Opted Out", "type": "main", "index": 0 }]] },
+    "IF: Not Opted Out": { "main": [[{ "node": "DB: Insert Lead", "type": "main", "index": 0 }]] },
+    "DB: Insert Lead": { "main": [[{ "node": "DB: Update Campaign Status", "type": "main", "index": 0 }]] },
+    "DB: Update Campaign Status": { "main": [[{ "node": "HTTP: Trigger WF-2 Scoring", "type": "main", "index": 0 }]] },
+    "HTTP: Trigger WF-2 Scoring": { "main": [[{ "node": "Respond: Success", "type": "main", "index": 0 }]] }
+  },
+  "meta": { "instanceId": "lead-reactivation-engine-v1" }
+}

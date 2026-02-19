@@ -4,12 +4,12 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Rekindle Pro — Turn Missed Opportunities Into Revenue</title>
+    <title>Rekindle Pro — Your Business Is Leaking Revenue. We'll Show You Exactly Where.</title>
     <meta name="description"
-        content="Rekindle Pro helps you fix missed reviews, recover lost leads, and reduce no-shows. Get a free AI audit to see what's costing you customers." />
-    <meta property="og:title" content="Rekindle Pro — Turn Missed Opportunities Into Revenue" />
+        content="The average business loses tens of thousands a year to Ghost Lead Leak and Latency Tax. Get a free Forensic AI Audit — system agnostic, no obligation — and see the exact figure yours is losing." />
+    <meta property="og:title" content="Rekindle Pro — Your Business Is Leaking Revenue. We'll Show You Exactly Where." />
     <meta property="og:description"
-        content="We fix the gaps in your business: missed reviews, lost leads, no-shows. Get a free AI audit today." />
+        content="Forensic AI Audit reveals the exact pound value of your stale leads and missed reviews. Performance-only billing — you pay nothing until we deliver revenue." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://rekindlepro.com" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -53,23 +53,23 @@
                 "name": "What is Rekindle Pro?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Rekindle Pro helps businesses fix missed opportunities: automated reviews, lead reactivation, and no-show recovery."
+                    "text": "Rekindle Pro is a forensic revenue recovery system. We identify Ghost Lead Leak and Latency Tax — the revenue silently bleeding from your stale CRM leads and missed reviews — then rekindle it through three performance-only services: Review Reactivation, Ghost Lead Recovery, and No-Show Recovery."
                 }
             },
             {
                 "@type": "Question",
-                "name": "How does the review automation work?",
-                "acceptedAnswer": {
-                    "@type": "Answer", 
-                    "text": "We send automated SMS messages after customer visits. Happy customers are directed to leave reviews, unhappy ones are handled privately before they post negative reviews."
-                }
-            },
-            {
-                "@type": "Question",
-                "name": "Is there a free trial?",
+                "name": "How does the Forensic AI Audit work?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Yes! We offer a free AI audit to show you what's broken, plus a free demo of our review automation system."
+                    "text": "We connect to whatever system you're already using — Salesforce, HubSpot, Pipedrive, or a spreadsheet — run a cross-system revenue leak scan, and produce a precise report showing the exact pound figure you're losing. No migration, no setup, no obligation."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What does it cost?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "The Forensic AI Audit is completely free. Our services run on performance-only billing — you pay nothing until we deliver recovered revenue. If we don't find you money, you owe nothing."
                 }
             }
         ]
@@ -77,12 +77,25 @@
     </script>
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- DNS prefetch for external resources -->
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <!-- Preload LCP image -->
+    <link rel="preload" as="image" href="./assets/dashboard_full.png" />
+    <!-- Preconnect to Google Fonts origin for faster DNS + TLS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Load fonts non-render-blocking -->
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Google+Sans:wght@400;500;700&amp;display=swap"
-        rel="stylesheet" />
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    </noscript>
     <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-        rel="stylesheet" />
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+        rel="stylesheet" media="print" onload="this.media='all'" />
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -451,15 +464,19 @@
         // ROI Calculator Initialization
         document.addEventListener('DOMContentLoaded', () => {
             const recoveryRate = document.getElementById('recovery-rate');
-            const rateLabel = document.querySelector('label[for="recovery-rate"] span.font-bold');
+            const rateLabel = document.getElementById('rate-label');
             if (recoveryRate && rateLabel) {
+                rateLabel.textContent = recoveryRate.value + '%';
                 recoveryRate.addEventListener('input', () => {
                     rateLabel.textContent = recoveryRate.value + '%';
                 });
             }
         });
 
-        document.getElementById('mobileMenuBtn').addEventListener('click', toggleMobileMenu);
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('mobileMenuBtn');
+            if (btn) btn.addEventListener('click', toggleMobileMenu);
+        });
     </script>
 </head>
 
@@ -492,7 +509,7 @@
                             class="absolute -bottom-1 left-0 w-0 h-0.5 bg-google-blue transition-all duration-300 group-hover:w-full will-change-[width]"></span>
                     </a>
                     <a class="text-[15px] font-semibold text-google-subtext hover:text-gray-900 transition-colors relative group py-2 focus:outline-none focus:text-google-blue"
-                        href="#solutions" role="menuitem">
+                        href="#features-heading" role="menuitem">
                         Solutions
                         <span
                             class="absolute -bottom-1 left-0 w-0 h-0.5 bg-google-blue transition-all duration-300 group-hover:w-full will-change-[width]"></span>
@@ -524,7 +541,7 @@
                 <div class="h-6 w-px bg-gray-200"></div>
                 <button
                     class="bioluminescent-border bg-gray-900 text-white hover:bg-black text-[15px] font-bold px-5 py-2.5 rounded-lg shadow-lg hover:shadow-glow transition-all duration-300 relative overflow-hidden group focus:outline-none focus:ring-4 focus:ring-google-blue/50 transform-gpu"
-                    onclick="window.location.href='onboarding.html'">
+                    onclick="window.location.href='../../Onboarding/onboarding.html'">
                     <span class="relative z-10 flex items-center gap-2">Get started <span aria-hidden="true"
                             class="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 transition-transform will-change-transform">arrow_forward</span></span>
                 </button>
@@ -539,7 +556,7 @@
             <div class="flex flex-col gap-6">
                 <a class="text-lg font-bold text-gray-900" href="#features-heading"
                     onclick="toggleMobileMenu()">Product</a>
-                <a class="text-lg font-bold text-gray-900" href="#solutions" onclick="toggleMobileMenu()">Solutions</a>
+                <a class="text-lg font-bold text-gray-900" href="#features-heading" onclick="toggleMobileMenu()">Solutions</a>
                 <a class="text-lg font-bold text-gray-900" href="resources.html"
                     onclick="toggleMobileMenu()">Resources</a>
                 <a class="text-lg font-bold text-gray-900" href="#pricing-heading"
@@ -547,17 +564,17 @@
                 <a class="text-lg font-bold text-gray-900" href="coming_soon.html">Enterprise</a>
                 <hr class="border-gray-200">
                 <a class="text-lg font-bold text-gray-900" href="dashboard.html">Sign In</a>
-                <a class="bg-google-blue text-white text-center py-4 rounded-xl font-bold" href="onboarding.html">Get
+                <a class="bg-google-blue text-white text-center py-4 rounded-xl font-bold" href="../../Onboarding/onboarding.html">Get
                     started</a>
             </div>
         </div>
     </nav>
     <main class="relative pt-40 pb-32 overflow-hidden hero-bg" id="main-content">
         <div aria-hidden="true" class="absolute inset-0 z-0 pointer-events-none">
-            <div class="absolute top-0 left-1/3 w-[600px] h-[600px] bg-blue-100/40 rounded-full blur-[120px] mix-blend-multiply animate-pulse transform-gpu blur-orb-optimized"
-                style="animation-duration: 8s;"></div>
-            <div class="absolute bottom-0 right-1/3 w-[500px] h-[500px] bg-purple-100/40 rounded-full blur-[100px] mix-blend-multiply animate-pulse transform-gpu blur-orb-optimized"
-                style="animation-duration: 10s;"></div>
+            <div class="absolute top-0 left-1/3 w-[600px] h-[600px] bg-blue-100/40 rounded-full blur-[120px] mix-blend-multiply"
+                style="animation: pulse 8s ease-in-out infinite; contain: strict;"></div>
+            <div class="absolute bottom-0 right-1/3 w-[500px] h-[500px] bg-purple-100/40 rounded-full blur-[100px] mix-blend-multiply"
+                style="animation: pulse 10s ease-in-out infinite; contain: strict;"></div>
             <div
                 class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/60 rounded-full blur-[80px] transform-gpu">
             </div>
@@ -571,7 +588,7 @@
                     <span
                         class="relative inline-flex rounded-full h-2 w-2 bg-google-blue shadow-[0_0_8px_rgba(26,115,232,0.6)]"></span>
                 </span>
-                <span class="text-[12px] font-bold tracking-widest uppercase text-google-subtext">Free AI Audit · Review Agent Demo</span>
+                <span class="text-[12px] font-bold tracking-widest uppercase text-google-subtext">Forensic Audit · Only 5 Slots Available This Week</span>
             </div>
             <h1 class="text-6xl md:text-7xl lg:text-[5.5rem] font-medium tracking-tight text-gray-900 mb-8 leading-[1.05] animate-divine-bloom delay-100"
                 style="will-change: transform, opacity, filter;">
@@ -590,30 +607,36 @@
             </h1>
             <p class="text-xl md:text-2xl text-google-subtext max-w-2xl mx-auto mb-12 leading-relaxed font-inter font-normal animate-divine-bloom delay-200"
                 style="will-change: transform, opacity, filter;">
-                We fix the gaps in your business: missed reviews, lost leads, no-shows. Get a free AI audit to see what's broken.
+                The average business loses tens of thousands a year to stale leads and missed reviews — silently, invisibly. Our Forensic AI Audit shows you the exact number. Zero commitment, zero cost, zero guesswork.
             </p>
-            <div class="flex flex-col sm:flex-row gap-5 justify-center items-center w-full mb-24 animate-divine-bloom delay-300"
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center w-full mb-6 animate-divine-bloom delay-300"
                 style="will-change: transform, opacity, filter;">
                 <button
                     class="cta-pulse relative group bg-[#1a73e8] hover:bg-[#1557b0] text-white text-lg font-bold px-8 py-4 rounded-xl shadow-[0_10px_30px_-10px_rgba(26,115,232,0.5)] hover:shadow-[0_20px_40px_-15px_rgba(26,115,232,0.6)] hover:-translate-y-1 transition-all duration-300 flex items-center gap-3 overflow-hidden focus:outline-none focus:ring-4 focus:ring-google-blue/50 transform-gpu will-change-transform"
-                    onclick="window.location.href='onboarding.html?type=audit'">
+                    onclick="window.location.href='../../Onboarding/onboarding.html?type=audit'">
                     <div
                         class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700 will-change-transform">
                     </div>
-                    <span class="relative z-10">Get Free AI Audit</span>
+                    <span class="relative z-10">Claim Forensic Audit</span>
                     <span aria-hidden="true"
-                        class="material-symbols-outlined text-xl relative z-10 group-hover:translate-x-1 transition-transform will-change-transform">auto_awesome</span>
+                        class="material-symbols-outlined text-xl relative z-10 group-hover:translate-x-1 transition-transform will-change-transform">search</span>
+                </button>
+                <button
+                    class="group bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 hover:border-gray-400 text-lg font-bold px-8 py-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-3 backdrop-blur-sm focus:outline-none focus:ring-4 focus:ring-gray-300 transform-gpu will-change-transform"
+                    onclick="window.location.href='../../Onboarding/onboarding.html?type=lead'">
+                    <span aria-hidden="true"
+                        class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform will-change-transform">recall</span>
+                    Reactivate Dead Leads
                 </button>
                 <button
                     class="group bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 hover:border-gray-400 text-lg font-bold px-8 py-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-3 backdrop-blur-sm focus:outline-none focus:ring-4 focus:ring-gray-300 transform-gpu will-change-transform"
                     onclick="document.getElementById('demo-modal').classList.remove('hidden'); document.getElementById('demo-modal').style.display='flex';">
-                    <div
-                        class="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center group-hover:scale-110 transition-transform will-change-transform">
-                        <span aria-hidden="true" class="material-symbols-outlined text-sm">sms</span>
-                    </div>
+                    <span aria-hidden="true"
+                        class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform will-change-transform">sms</span>
                     Try Review Agent Demo
                 </button>
             </div>
+            <p class="text-xs text-gray-400 font-inter mb-20 animate-divine-bloom delay-300" style="will-change: transform, opacity, filter;">No setup. No contracts. Performance-only billing — you pay nothing until we deliver.</p>
             <div class="relative w-full max-w-7xl mx-auto animate-divine-bloom delay-400 perspective-1000 group/dashboard"
                 style="will-change: transform, opacity, filter;">
                 <!-- Atmospheric Glow Behind Dashboard -->
@@ -629,7 +652,7 @@
 
                     <img src="./assets/dashboard_full.png" alt="Rekindle Pro Dashboard"
                         class="w-full h-auto object-cover opacity-95 hover:opacity-100 transition-opacity"
-                        loading="eager">
+                        loading="eager" fetchpriority="high" decoding="async">
 
                     <!-- Glass Reflection Overlay -->
                     <div class="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none">
@@ -638,27 +661,6 @@
             </div>
 
 
-            <div class="mt-32 pt-16">
-                <p class="text-xs font-bold tracking-[0.2em] text-google-subtext mb-12 uppercase opacity-80 animate-divine-bloom delay-500"
-                    style="will-change: opacity, transform;">Powering Revenue Teams At</p>
-                <div class="flex flex-wrap justify-center gap-12 md:gap-20 opacity-70 hover:opacity-100 transition-opacity duration-700 grayscale hover:grayscale-0 animate-divine-bloom delay-500"
-                    role="list" style="will-change: opacity, filter;">
-                    <div class="flex items-center gap-2 text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors"
-                        role="listitem"><span class="w-6 h-6 bg-current rounded-full opacity-90"></span> Stripe</div>
-                    <div class="flex items-center gap-2 text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors"
-                        role="listitem"><span class="w-6 h-6 bg-current rounded-sm rotate-45 opacity-90"></span> Airbnb
-                    </div>
-                    <div class="flex items-center gap-2 text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors"
-                        role="listitem"><span class="w-6 h-6 bg-current rounded-md opacity-90"></span> Spotify</div>
-                    <div class="flex items-center gap-2 text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors"
-                        role="listitem"><span
-                            class="w-6 h-6 bg-current rounded-full border-4 border-white ring-2 ring-current opacity-90"></span>
-                        Linear</div>
-                    <div class="flex items-center gap-2 text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors"
-                        role="listitem"><span class="w-6 h-6 bg-current opacity-90 clip-path-polygon"></span> Vercel
-                    </div>
-                </div>
-            </div>
         </div>
     </main>
     <section aria-labelledby="features-heading" class="py-32 bg-white relative overflow-hidden">
@@ -670,11 +672,11 @@
         </div>
         <div class="max-w-[1200px] mx-auto px-6 relative z-10">
             <div class="text-center max-w-3xl mx-auto mb-24 scroll-reveal">
-                <div class="text-google-blue font-extrabold tracking-widest text-xs uppercase mb-4">Our Approach</div>
+                <div class="text-google-blue font-extrabold tracking-widest text-xs uppercase mb-4">How The Forensic Audit Works</div>
                 <h2 class="text-4xl md:text-5xl font-medium text-gray-900 mb-6 tracking-tight" id="features-heading">
-                    Diagnose first. <span class="text-google-blue">Prescribe second.</span></h2>
+                    We Map the Leak. <span class="text-google-blue">Then We Stop It.</span></h2>
                 <p class="text-xl text-google-subtext font-inter font-normal">
-                    We don't throw technology at problems and hope something sticks. We find the root cause first.
+                    We don't sell you software before we know your problem. We run a system-agnostic forensic audit on your revenue pipeline — then show you the exact pound figure you're leaving on the table.
                 </p>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 value-stack-container">
@@ -691,12 +693,12 @@
                         </div>
                         <h3
                             class="text-2xl font-bold text-gray-900 mb-2 group-hover:text-google-blue transition-colors">
-                            We Listen</h3>
-                        <p class="text-xs font-bold text-google-blue uppercase tracking-widest opacity-80">Step 1</p>
+                            We X-Ray Your Pipeline</h3>
+                        <p class="text-xs font-bold text-google-blue uppercase tracking-widest opacity-80">Forensic Scan</p>
                     </div>
                     <p
                         class="text-google-subtext leading-relaxed text-[15px] font-inter relative z-10 font-medium flex-grow">
-                        Before we suggest anything, we ask questions. What's broken? Where are you losing customers? What have you already tried? No assumptions, just understanding.
+                        We connect to your existing CRM, review platform, or booking system — whichever one you use. No migration, no setup, no commitment. We work inside your current stack and pull the raw data.
                     </p>
                 </div>
 
@@ -712,12 +714,12 @@
                             <span class="material-symbols-outlined text-3xl">search</span>
                         </div>
                         <h3 class="text-2xl font-bold text-gray-900 mb-2 group-hover:text-purple-700 transition-colors">
-                            We Diagnose</h3>
-                        <p class="text-xs font-bold text-purple-600 uppercase tracking-widest opacity-80">Step 2</p>
+                            We Quantify the Leak</h3>
+                        <p class="text-xs font-bold text-purple-600 uppercase tracking-widest opacity-80">Revenue Autopsy</p>
                     </div>
                     <p
                         class="text-google-subtext leading-relaxed text-[15px] font-inter relative z-10 font-medium flex-grow">
-                        Like a doctor running tests before prescribing medication, we run an AI audit on your business. We scan for where you're losing reviews, leads, and revenue.
+                        We calculate your exact Latency Tax — revenue lost to slow follow-up — and your Ghost Lead Leak — leads that went cold before your team noticed. You see the precise pound figure on screen, not a vague estimate.
                     </p>
                 </div>
 
@@ -733,15 +735,15 @@
                             <span class="material-symbols-outlined text-3xl">prescriptions</span>
                         </div>
                         <h3 class="text-2xl font-bold text-gray-900 mb-2 group-hover:text-green-700 transition-colors">
-                            We Prescribe</h3>
-                        <p class="text-xs font-bold text-green-600 uppercase tracking-widest opacity-80">Step 3</p>
+                            We Rekindle the Revenue</h3>
+                        <p class="text-xs font-bold text-green-600 uppercase tracking-widest opacity-80">Precision Recovery</p>
                     </div>
                     <p
                         class="text-google-subtext leading-relaxed text-[15px] font-inter relative z-10 font-medium mb-6 flex-grow">
-                        Only then do we recommend a solution. You get what you actually need, not what we want to sell.
+                        Only after we've shown you the evidence do we recommend an action. Most clients recover revenue in the first 30 days — without changing their CRM, hiring anyone new, or paying a penny upfront.
                     </p>
-                    <a href="onboarding.html?type=audit" class="inline-flex items-center gap-2 text-google-blue font-bold hover:underline">
-                        Book your free AI audit
+                    <a href="../../Onboarding/onboarding.html?type=audit" class="inline-flex items-center gap-2 text-google-blue font-bold hover:underline">
+                        Claim your Forensic Audit
                         <span class="material-symbols-outlined text-sm">arrow_forward</span>
                     </a>
                 </div>
@@ -752,11 +754,11 @@
     <section class="py-32 bg-gray-50 relative overflow-hidden border-t border-gray-200">
         <div class="max-w-7xl mx-auto px-6 relative z-10">
             <div class="text-center max-w-3xl mx-auto mb-16 scroll-reveal">
-                <div class="text-google-blue font-extrabold tracking-widest text-xs uppercase mb-4">What We Fix</div>
+                <div class="text-google-blue font-extrabold tracking-widest text-xs uppercase mb-4">The Three Revenue Bleeds We Stop</div>
                 <h2 class="text-4xl md:text-5xl font-medium text-gray-900 mb-6 tracking-tight">
-                    Turn missed opportunities into revenue</h2>
+                    The Silent Killers in Your Revenue Pipeline</h2>
                 <p class="text-xl text-google-subtext font-inter font-normal">
-                    We identify and fix the gaps in your business that cost you customers.
+                    Most businesses have at least one. Our audit shows you which — and the exact amount it's costing you every month.
                 </p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -765,8 +767,8 @@
                     <div class="w-14 h-14 rounded-2xl bg-google-blue/10 flex items-center justify-center mb-6">
                         <span class="material-symbols-outlined text-3xl text-google-blue">star</span>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Review Automation</h3>
-                    <p class="text-google-subtext mb-4">Automated SMS requests after every customer visit. Capture good reviews, fix bad ones privately.</p>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Review Reactivation</h3>
+                    <p class="text-google-subtext mb-4">Every customer who didn't leave a review is a missed trust signal. We automate the ask at exactly the right moment — and route unhappy customers away from public posts before the damage is done.</p>
                     <a href="#" onclick="document.getElementById('demo-modal').classList.remove('hidden'); document.getElementById('demo-modal').style.display='flex';" class="text-google-blue font-bold text-sm hover:underline">Try Demo →</a>
                 </div>
                 <!-- Lead Reactivation -->
@@ -774,9 +776,9 @@
                     <div class="w-14 h-14 rounded-2xl bg-google-blue/10 flex items-center justify-center mb-6">
                         <span class="material-symbols-outlined text-3xl text-google-blue">recall</span>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Lead Reactivation</h3>
-                    <p class="text-google-subtext mb-4">AI finds dormant leads and re-engages them with personalized outreach at the perfect time.</p>
-                    <a href="onboarding.html?type=lead" class="text-google-blue font-bold text-sm hover:underline">Get Audit →</a>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Ghost Lead Recovery</h3>
+                    <p class="text-google-subtext mb-4">That contact who went quiet six months ago? They likely still have the budget — they just got distracted. Our AI surfaces dormant leads with live buying signals and re-engages them with hyper-personalised outreach. You pay only when they convert.</p>
+                    <a href="../../Onboarding/onboarding.html?type=lead" class="text-google-blue font-bold text-sm hover:underline">Get Audit →</a>
                 </div>
                 <!-- No-Show Recovery -->
                 <div class="bg-white p-8 rounded-3xl border border-gray-200 hover:border-purple-500/30 hover:shadow-xl transition-all duration-300">
@@ -784,17 +786,17 @@
                         <span class="material-symbols-outlined text-3xl text-purple-600">event_busy</span>
                     </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-3">No-Show Recovery</h3>
-                    <p class="text-google-subtext mb-4">Automated follow-ups for missed appointments. Convert no-shows into rebookings.</p>
-                    <a href="onboarding.html?type=noshow" class="text-purple-600 font-bold text-sm hover:underline">Learn More →</a>
+                    <p class="text-google-subtext mb-4">A no-show isn't a lost sale — it's a hot lead who got distracted. Automated follow-up converts them back within 24 hours, before they book with a competitor.</p>
+                    <a href="../../Onboarding/onboarding.html?type=noshow" class="text-purple-600 font-bold text-sm hover:underline">Learn More →</a>
                 </div>
                 <!-- AI Audit -->
                 <div class="bg-white p-8 rounded-3xl border border-gray-200 hover:border-green-500/30 hover:shadow-xl transition-all duration-300">
                     <div class="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mb-6">
                         <span class="material-symbols-outlined text-3xl text-green-600">psychology</span>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Free AI Audit</h3>
-                    <p class="text-google-subtext mb-4">We scan your systems and show you exactly what's broken and how much it's costing you.</p>
-                    <a href="onboarding.html?type=audit" class="text-green-600 font-bold text-sm hover:underline">Get Free Audit →</a>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Forensic Revenue Audit</h3>
+                    <p class="text-google-subtext mb-4">System agnostic. We connect to whatever you're already using and produce a precise revenue leak report — the exact pound figure you're losing — no pitch, no obligation.</p>
+                    <a href="../../Onboarding/onboarding.html?type=audit" class="text-green-600 font-bold text-sm hover:underline">Get Free Audit →</a>
                 </div>
             </div>
         </div>
@@ -811,16 +813,15 @@
                 <div
                     class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-google-blue text-[11px] font-bold uppercase tracking-widest mb-6">
                     <span class="w-2 h-2 rounded-full bg-google-blue animate-pulse"></span>
-                    Interactive Protocol
+                    Live Forensic Intelligence
                 </div>
                 <h2 class="text-4xl md:text-5xl font-medium text-gray-900 mb-6 tracking-tight leading-tight">
-                    Three Agents. <br>One Strategic Decision.
+                    How Rekindle Replaces <br>Your Guessing System.
                 </h2>
                 <p class="text-xl text-google-subtext font-inter font-normal mb-10">
-                    For high-value opportunities, our Sovereign Engine convenes a digital war room. <br
+                    For high-value leads, Rekindle runs a three-agent forensic analysis before a single message is sent. <br
                         class="hidden md:block">
-                    Select a scenario to witness the <span class="text-gray-900 font-bold">actual debate logic</span> in
-                    real-time.
+                    Select a scenario to see the <span class="text-gray-900 font-bold">exact decision logic</span> in real-time.
                 </p>
 
                 <!-- Interactive Scenario Selector -->
@@ -1035,16 +1036,15 @@
                 <div
                     class="inline-flex items-center gap-2 text-google-red font-bold mb-8 bg-red-50 px-4 py-1.5 rounded-full border border-red-200 shadow-sm">
                     <span aria-hidden="true" class="material-symbols-outlined text-[18px] animate-pulse">error</span>
-                    <span class="text-[12px] uppercase tracking-wider">The Revenue Gap</span>
+                    <span class="text-[12px] uppercase tracking-wider">The Latency Tax</span>
                 </div>
                 <h2
                     class="text-4xl md:text-5xl lg:text-6xl font-medium text-gray-900 tracking-tight leading-[1.1] mb-8">
-                    Stop letting revenue <br />slip through the cracks.
+                    Every Stale Lead in Your CRM <br />Has a Price Tag.
                 </h2>
                 <p class="text-xl text-google-subtext leading-relaxed mb-10 font-inter font-normal">
-                    Most CRMs are graveyards of forgotten opportunities. Rekindle Pro acts as a <button
-                        class="text-gray-900 font-bold border-b-2 border-google-blue/30 hover:border-google-blue transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-google-blue focus:ring-offset-2">24/7
-                        auditor</button>, constantly scanning for buying signals.
+                    Every lead you paid to acquire and never followed up is generating a <button
+                        class="text-gray-900 font-bold border-b-2 border-google-blue/30 hover:border-google-blue transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-google-blue focus:ring-offset-2">Latency Tax</button> — compounding interest on inaction. Most businesses don't know the total until we show them.
                 </p>
                 <div class="space-y-4 font-inter">
                     <div class="flex items-center gap-5 p-5 rounded-2xl hover:bg-white transition-all duration-300 hover:translate-x-2 border border-transparent hover:border-gray-200 hover:shadow-card group cursor-default transform-gpu"
@@ -1054,9 +1054,8 @@
                             <span aria-hidden="true" class="material-symbols-outlined">check_circle</span>
                         </div>
                         <div>
-                            <h4 class="font-bold text-lg text-gray-900 mb-0.5">Seamless Integration</h4>
-                            <p class="text-google-subtext text-sm font-medium">Connects to Salesforce, HubSpot, and
-                                Pipedrive in 1 click.</p>
+                            <h4 class="font-bold text-lg text-gray-900 mb-0.5">Works With Any System</h4>
+                            <p class="text-google-subtext text-sm font-medium">System agnostic. Salesforce, HubSpot, Pipedrive, or a spreadsheet — we connect to what you're already using. No migration required.</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-5 p-5 rounded-2xl hover:bg-white transition-all duration-300 hover:translate-x-2 border border-transparent hover:border-gray-200 hover:shadow-card group cursor-default transform-gpu"
@@ -1066,9 +1065,8 @@
                             <span aria-hidden="true" class="material-symbols-outlined">security</span>
                         </div>
                         <div>
-                            <h4 class="font-bold text-lg text-gray-900 mb-0.5">Secure by Default</h4>
-                            <p class="text-google-subtext text-sm font-medium">Your data is encrypted in transit and at
-                                rest.</p>
+                            <h4 class="font-bold text-lg text-gray-900 mb-0.5">Zero Risk Entry</h4>
+                            <p class="text-google-subtext text-sm font-medium">Performance-only billing. We get paid when you get paid. If the audit doesn't surface revenue, you owe nothing.</p>
                         </div>
                     </div>
                 </div>
@@ -1080,7 +1078,7 @@
                         class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-gray-50 to-white rounded-bl-[100px] -z-0">
                     </div>
                     <div class="flex items-center justify-between mb-10 relative z-10">
-                        <h3 class="text-2xl font-bold text-gray-900">ROI Calculator</h3>
+                        <h3 class="text-2xl font-bold text-gray-900">Ghost Lead Leak Calculator</h3>
                         <span
                             class="bg-green-50 text-green-800 border border-green-200 text-[11px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm">Free
                             Tool</span>
@@ -1099,7 +1097,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-3 uppercase tracking-widest"
-                                for="avg-deal-size">Average Deal Size ($)</label>
+                                for="avg-deal-size">Average Deal Size (£)</label>
                             <div class="relative group/input">
                                 <input
                                     class="w-full bg-gray-50 border-0 border-b-2 border-gray-300 rounded-t-lg px-4 py-4 text-xl text-gray-900 font-bold focus:ring-0 focus:border-google-blue focus:bg-white transition-all outline-none placeholder-gray-500 font-mono"
@@ -1112,7 +1110,7 @@
                             <div class="flex justify-between mb-4">
                                 <label class="text-xs font-bold text-gray-700 uppercase tracking-widest"
                                     for="recovery-rate">Recovery Rate</label>
-                                <span
+                                <span id="rate-label"
                                     class="text-google-blue font-bold bg-blue-50 px-2 py-1 rounded text-sm font-mono shadow-sm">4.5%</span>
                             </div>
                             <input
@@ -1128,8 +1126,7 @@
                     <div
                         class="mt-10 pt-8 bg-gray-50 border-t border-gray-200 -mx-10 -mb-10 px-10 pb-10 relative overflow-hidden">
                         <div class="relative z-10">
-                            <p class="text-gray-600 text-[11px] font-bold uppercase tracking-widest mb-2">Potential
-                                Revenue Unlocked</p>
+                            <p class="text-gray-600 text-[11px] font-bold uppercase tracking-widest mb-2">Your Ghost Lead Leak</p>
                             <div id="roi-result"
                                 class="text-5xl font-bold text-gray-900 tracking-tight drop-shadow-sm font-mono">
                                 $562,500
@@ -1160,8 +1157,8 @@
         <div class="max-w-[1200px] mx-auto px-6 relative z-10">
             <div class="text-center mb-24 scroll-reveal">
                 <h2 class="text-4xl md:text-5xl font-medium text-gray-900 mb-6 tracking-tight" id="pricing-heading">
-                    Pay for results, not promises</h2>
-                <p class="text-xl text-google-subtext font-inter font-normal">No monthly fees. No setup costs. Only pay when we deliver.</p>
+                    Performance-Only Billing. Zero Risk, Zero Guesswork.</h2>
+                <p class="text-xl text-google-subtext font-inter font-normal">No retainers. No setup fees. No contracts. You pay nothing until we deliver recovered revenue. If we don't find your money, you owe nothing.</p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start value-stack-container">
                 <!-- Review Agent -->
@@ -1174,14 +1171,14 @@
                     <div class="flex items-baseline gap-1 mb-2">
                         <span class="text-4xl font-bold text-gray-900 tracking-tight">£2.50</span>
                     </div>
-                    <p class="text-sm text-google-subtext mb-8">per review captured</p>
+                    <p class="text-sm text-google-subtext mb-8">per verified review captured</p>
                     <button
                         class="w-full py-3 rounded-xl bg-google-blue text-white font-bold hover:bg-google-blueHover transition-colors mb-8 focus:outline-none focus:ring-4 focus:ring-google-blue/30"
-                        onclick="document.getElementById('demo-modal').classList.remove('hidden'); document.getElementById('demo-modal').style.display='flex';">Try Demo</button>
+                        onclick="document.getElementById('demo-modal').classList.remove('hidden'); document.getElementById('demo-modal').style.display='flex';">Try Live Demo</button>
                     <ul class="space-y-3 text-[14px] text-google-subtext font-inter">
-                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-green-600 text-lg">check</span>Automated SMS after every visit</li>
-                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-green-600 text-lg">check</span>Good reviews go public</li>
-                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-green-600 text-lg">check</span>Bad reviews handled privately</li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-green-600 text-lg">check</span>Automated SMS at exactly the right moment</li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-green-600 text-lg">check</span>5-star reviews routed to Google instantly</li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-green-600 text-lg">check</span>Negative feedback intercepted before it posts</li>
                     </ul>
                 </div>
                 <!-- Lead Reactivation -->
@@ -1192,18 +1189,18 @@
                     <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-4 mt-6">
                         <span class="material-symbols-outlined text-2xl text-purple-600">recall</span>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Lead Reactivation</h3>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Ghost Lead Recovery</h3>
                     <div class="flex items-baseline gap-1 mb-2">
                         <span class="text-4xl font-bold text-gray-900 tracking-tight">Performance</span>
                     </div>
-                    <p class="text-sm text-google-subtext mb-8">pay only for revived leads</p>
+                    <p class="text-sm text-google-subtext mb-8">you pay only when a lead books or converts</p>
                     <button
                         class="w-full py-3 rounded-xl bg-google-blue text-white font-bold hover:bg-google-blueHover shadow-lg shadow-google-blue/30 transition-all mb-8 hover:shadow-google-blue/50 focus:outline-none focus:ring-4 focus:ring-google-blue/50"
-                        onclick="window.location.href='onboarding.html?type=lead'">Test on 50 Leads</button>
+                        onclick="window.location.href='../../Onboarding/onboarding.html?type=lead'">Test on Your First 50 Leads Free</button>
                     <ul class="space-y-3 text-[14px] text-gray-900 font-inter font-medium">
-                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-google-blue text-lg">check_circle</span>AI finds dormant leads</li>
-                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-google-blue text-lg">check_circle</span>Personalized outreach</li>
-                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-google-blue text-lg">check_circle</span>Only pay on conversion</li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-google-blue text-lg">check_circle</span>Forensic scan surfaces leads with active buying signals</li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-google-blue text-lg">check_circle</span>Hyper-personalised re-engagement, not mass blasts</li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-google-blue text-lg">check_circle</span>Zero cost until a lead converts</li>
                     </ul>
                 </div>
                 <!-- AI Audit -->
@@ -1212,18 +1209,18 @@
                     <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
                         <span class="material-symbols-outlined text-2xl text-green-600">psychology</span>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">AI Audit</h3>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Forensic Revenue Audit</h3>
                     <div class="flex items-baseline gap-1 mb-2">
                         <span class="text-4xl font-bold text-gray-900 tracking-tight">Free</span>
                     </div>
-                    <p class="text-sm text-google-subtext mb-8">no strings attached</p>
+                    <p class="text-sm text-google-subtext mb-8">system agnostic · no obligation · only 5 slots/week</p>
                     <button
                         class="w-full py-3 rounded-xl border-2 border-green-600 text-green-600 font-bold hover:bg-green-50 transition-colors mb-8 focus:outline-none focus:ring-4 focus:ring-green-600/30"
-                        onclick="window.location.href='onboarding.html?type=audit'">Book Your AI Audit</button>
+                        onclick="window.location.href='../../Onboarding/onboarding.html?type=audit'">Claim Your Forensic Audit</button>
                     <ul class="space-y-3 text-[14px] text-google-subtext font-inter">
-                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-green-600 text-lg">check</span>Full system scan</li>
-                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-green-600 text-lg">check</span>Identify revenue leaks</li>
-                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-green-600 text-lg">check</span>Clear recommendations</li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-green-600 text-lg">check</span>Cross-system revenue leak scan</li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-green-600 text-lg">check</span>Exact £ figure of your Ghost Lead Leak</li>
+                        <li class="flex gap-3 items-center"><span aria-hidden="true" class="material-symbols-outlined text-green-600 text-lg">check</span>Prioritised action plan — no obligation to buy</li>
                     </ul>
                 </div>
             </div>
@@ -1264,7 +1261,7 @@
                         <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
                                 href="about.html">About</a></li>
                         <li><a class="hover:text-google-blue transition-colors hover:translate-x-1 inline-block focus:outline-none focus:text-google-blue focus:underline will-change-transform"
-                                href="mailto:contact@rekindle.ai">Contact</a></li>
+                                href="mailto:contact@rekindlepro.com">Contact</a></li>
                     </ul>
                 </div>
                 <div>
@@ -1291,7 +1288,8 @@
                     <span class="text-lg font-bold text-gray-600 tracking-tight">Rekindle Pro</span>
                     <span class="text-sm text-gray-500 ml-2">© 2025 Rekindle Pro</span>
                 </div>
-                <div class="flex gap-6">
+                <!-- Social links hidden until accounts are set up -->
+                <div class="hidden gap-6">
                     <a aria-label="Follow us on Twitter"
                         class="text-gray-500 hover:text-google-blue transition-colors hover:scale-110 focus:outline-none focus:ring-2 focus:ring-google-blue rounded-full p-1 will-change-transform"
                         href="#">
@@ -1339,9 +1337,9 @@
                 const revenue = leads * (recoveryRate / 100) * dealSize;
 
                 // Format currency
-                resultDisplay.textContent = new Intl.NumberFormat('en-US', {
+                resultDisplay.textContent = new Intl.NumberFormat('en-GB', {
                     style: 'currency',
-                    currency: 'USD',
+                    currency: 'GBP',
                     maximumFractionDigits: 0
                 }).format(revenue);
             }
@@ -1380,6 +1378,128 @@
             <p class="text-xs text-gray-400 text-center mt-4">We'll send you an SMS. Reply GOOD or BAD to see the automation.</p>
         </div>
     </div>
+
+    <!-- ===================== SUPPORT CHAT WIDGET ===================== -->
+    <div id="support-widget" style="position:fixed;bottom:24px;right:24px;z-index:9999;">
+
+        <!-- Toggle button -->
+        <button id="support-toggle"
+            onclick="toggleSupportChat()"
+            style="width:56px;height:56px;border-radius:50%;background:#1a73e8;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(26,115,232,0.4);transition:transform .2s,box-shadow .2s;"
+            onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"
+            aria-label="Open support chat">
+            <span id="support-icon" class="material-symbols-outlined" style="font-size:26px;">chat</span>
+        </button>
+
+        <!-- Chat panel -->
+        <div id="support-panel"
+            style="display:none;flex-direction:column;position:absolute;bottom:68px;right:0;width:320px;height:440px;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.15);border:1px solid #e5e7eb;overflow:hidden;">
+
+            <!-- Header -->
+            <div style="background:#111827;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+                <div style="width:32px;height:32px;border-radius:50%;background:#1a73e8;display:flex;align-items:center;justify-content:center;">
+                    <span class="material-symbols-outlined" style="color:#fff;font-size:16px;">smart_toy</span>
+                </div>
+                <div style="flex:1;">
+                    <div style="color:#fff;font-weight:700;font-size:14px;">Nathan</div>
+                    <div style="color:#9ca3af;font-size:11px;">Rekindle Pro Support</div>
+                </div>
+                <button onclick="toggleSupportChat()" style="background:none;border:none;cursor:pointer;color:#9ca3af;display:flex;align-items:center;" aria-label="Close chat">
+                    <span class="material-symbols-outlined" style="font-size:20px;">close</span>
+                </button>
+            </div>
+
+            <!-- Messages -->
+            <div id="support-messages"
+                style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;gap:8px;align-items:flex-start;">
+                    <div style="width:24px;height:24px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;">
+                        <span class="material-symbols-outlined" style="font-size:12px;color:#6b7280;">smart_toy</span>
+                    </div>
+                    <div style="background:#f3f4f6;border-radius:16px;border-top-left-radius:4px;padding:10px 12px;font-size:13px;color:#1f2937;max-width:230px;line-height:1.4;">
+                        Hi! I'm Nathan, Rekindle Pro's assistant. Ask me anything about our services.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input -->
+            <div style="border-top:1px solid #e5e7eb;padding:10px 12px;display:flex;gap:8px;flex-shrink:0;background:#fff;">
+                <input id="support-input" type="text" placeholder="Ask me anything..."
+                    style="flex:1;font-size:13px;border:1px solid #d1d5db;border-radius:10px;padding:8px 12px;outline:none;font-family:inherit;"
+                    onfocus="this.style.borderColor='#1a73e8'" onblur="this.style.borderColor='#d1d5db'"
+                    onkeydown="if(event.key==='Enter')sendSupportMessage()" />
+                <button onclick="sendSupportMessage()"
+                    style="width:36px;height:36px;border-radius:10px;background:#1a73e8;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s;"
+                    onmouseover="this.style.background='#1557b0'" onmouseout="this.style.background='#1a73e8'"
+                    aria-label="Send message">
+                    <span class="material-symbols-outlined" style="color:#fff;font-size:18px;">send</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSupportChat() {
+            const panel = document.getElementById('support-panel');
+            const icon = document.getElementById('support-icon');
+            const open = panel.style.display === 'none' || panel.style.display === '';
+            panel.style.display = open ? 'flex' : 'none';
+            icon.textContent = open ? 'close' : 'chat';
+            if (open) document.getElementById('support-input').focus();
+        }
+
+        async function sendSupportMessage() {
+            const input = document.getElementById('support-input');
+            const messages = document.getElementById('support-messages');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            input.disabled = true;
+
+            // User bubble
+            const userBubble = document.createElement('div');
+            userBubble.style.cssText = 'display:flex;justify-content:flex-end;';
+            userBubble.innerHTML = `<div style="background:#1a73e8;border-radius:16px;border-top-right-radius:4px;padding:10px 12px;font-size:13px;color:#fff;max-width:230px;line-height:1.4;">${text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`;
+            messages.appendChild(userBubble);
+
+            // Typing indicator
+            const typing = document.createElement('div');
+            typing.id = 'typing-indicator';
+            typing.style.cssText = 'display:flex;gap:8px;align-items:flex-start;';
+            typing.innerHTML = `<div style="width:24px;height:24px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;"><span class="material-symbols-outlined" style="font-size:12px;color:#6b7280;">smart_toy</span></div><div style="background:#f3f4f6;border-radius:16px;border-top-left-radius:4px;padding:10px 12px;font-size:13px;color:#9ca3af;font-style:italic;">typing…</div>`;
+            messages.appendChild(typing);
+            messages.scrollTop = messages.scrollHeight;
+
+            try {
+                const res = await fetch('https://n8n.srv1334356.hstgr.cloud/webhook/client-support', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text, phone: 'web-visitor' })
+                });
+                const data = await res.json();
+                const reply = (Array.isArray(data) ? data[0]?.reply : data?.reply)
+                    || 'Sorry, I could not get a response. Please try again.';
+
+                typing.remove();
+                const botBubble = document.createElement('div');
+                botBubble.style.cssText = 'display:flex;gap:8px;align-items:flex-start;';
+                botBubble.innerHTML = `<div style="width:24px;height:24px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;"><span class="material-symbols-outlined" style="font-size:12px;color:#6b7280;">smart_toy</span></div><div style="background:#f3f4f6;border-radius:16px;border-top-left-radius:4px;padding:10px 12px;font-size:13px;color:#1f2937;max-width:230px;line-height:1.4;">${reply.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`;
+                messages.appendChild(botBubble);
+            } catch (e) {
+                typing.remove();
+                const errBubble = document.createElement('div');
+                errBubble.style.cssText = 'display:flex;gap:8px;align-items:flex-start;';
+                errBubble.innerHTML = `<div style="width:24px;height:24px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;"><span class="material-symbols-outlined" style="font-size:12px;color:#6b7280;">smart_toy</span></div><div style="background:#fef2f2;border-radius:16px;border-top-left-radius:4px;padding:10px 12px;font-size:13px;color:#dc2626;max-width:230px;">Connection error. Please try again.</div>`;
+                messages.appendChild(errBubble);
+            }
+
+            input.disabled = false;
+            input.focus();
+            messages.scrollTop = messages.scrollHeight;
+        }
+    </script>
+    <!-- ==================== END SUPPORT CHAT WIDGET ==================== -->
 
     <script>
     function submitDemoForm(e) {
