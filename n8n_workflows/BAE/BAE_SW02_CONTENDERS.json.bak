@@ -1,0 +1,286 @@
+{
+  "name": "BAE_SW02_CONTENDERS",
+  "nodes": [
+    {
+      "id": "node-recv",
+      "name": "RECEIVE_CONTEXT",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [100, 400],
+      "parameters": {}
+    },
+    {
+      "id": "node-compress",
+      "name": "COMPRESS_INTAKE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [300, 400],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ── INTAKE COMPRESSOR & PROMPT BUILDER ──────────────────────────────────\n// Compresses the intake object to a minimal token footprint before sending\n// to the parallel LLM fan-out. The static system prompt is constructed\n// here once and reused across all 3 HTTP nodes — enabling DeepSeek prefix\n// caching (cache hit cost: $0.014 vs $0.28 per 1M tokens on cache miss).\n//\n// MODEL ROUTING (per BAE Knowledge Base):\n//   LLM_A: mistralai/mistral-7b-instruct:free  — generalist variety\n//   LLM_B: meta-llama/llama-3.1-8b-instruct:free — Groq-tier speed, 840 TPS\n//   LLM_C: google/gemma-2-9b-it:free           — Google reasoning variety\n// Three distinct models = three meaningfully different ideation perspectives.\n\nconst d = $input.first().json;\n\n// Minimal compressed profile — strip everything not needed for generation\n// Saves ~300-500 tokens per LLM call across all 3 parallel requests\nconst compressed = {\n  type:    d.intake.business_type,\n  skills:  d.intake.founder_skills,\n  budget:  d.intake.budget_usd,\n  months:  d.intake.timeline_months,\n  hrs_wk:  d.intake.founder_hours_per_week,\n  auto_pref: d.intake.automation_preference,\n  target_mrr: d.intake.revenue_target_monthly,\n  risk:    d.intake.risk_tolerance,\n  exclude: d.intake.sectors_exclude,\n  no_emp:  d.intake.constraints.no_employees,\n  bootstrap: d.intake.constraints.bootstrapped,\n  remote:  d.intake.constraints.must_be_remote,\n  fast_rev: d.intake.constraints.requires_fast_revenue\n};\n\n// ── STATIC SYSTEM PROMPT ───────────────────────────────────────────────\n// This block is IDENTICAL across all 3 HTTP nodes.\n// DeepSeek KV Cache on Disk matches on contiguous byte-for-byte prefix.\n// Any change here invalidates the cache for ALL 3 calls.\n// Dynamic data (founder profile) goes in the USER message only.\nconst SYS_PROMPT = `TOKEN BUDGET:600. Strict JSON array only.\nROLE: Expert business model architect. Generate 5 distinct, creative, highly automated business models.\nEach model must be independently viable for a solo founder within the stated constraints.\n\nOUTPUT: A JSON array of exactly 5 objects. Each object MUST contain:\n{\n  \"name\": \"Short memorable business name (3-5 words)\",\n  \"model_type\": \"SaaS|Agency|Marketplace|Info-Product|Service|Physical|Hybrid\",\n  \"revenue_stream\": \"How money is made (1 sentence)\",\n  \"month_1_revenue_usd\": <realistic integer>,\n  \"month_6_revenue_usd\": <realistic integer>,\n  \"gross_margin_pct\": <integer 0-100>,\n  \"startup_cost_usd\": <integer>,\n  \"automation_score\": <integer 1-10, 10=fully automated>,\n  \"founder_hours_weekly\": <integer at scale>,\n  \"execution_steps\": [\"Step 1\", \"Step 2\", \"Step 3\"],\n  \"top_risk\": \"Single biggest failure mode (1 sentence)\",\n  \"why_now\": \"Market timing rationale (1 sentence)\"\n}\n\nRULES:\n- All 5 models must be genuinely different business types (no duplicates).\n- Revenue estimates must be conservative and realistic for a solo founder.\n- Do NOT generate crypto, gambling, or any excluded sector ideas.\n- NEVER output markdown, prose, or explanations.\n- NEVER wrap in code blocks.\nOUTPUT JSON ARRAY ONLY.`;\n\nreturn [{\n  json: {\n    run_id:        d.run_id,\n    weights:       d.weights,\n    intake:        d.intake,\n    compressed:    JSON.stringify(compressed),\n    system_prompt: SYS_PROMPT\n  }\n}];"
+      }
+    },
+    {
+      "id": "node-llm-a",
+      "name": "HTTP_LLM_A",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [540, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "HTTP-Referer", "value": "https://bae.local" },
+            { "name": "X-Title",      "value": "BAE-Contender-A" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "mistralai/mistral-7b-instruct:free",
+          "max_tokens": 600,
+          "temperature": 0.85,
+          "messages": [
+            { "role": "system", "content": "={{ $json.system_prompt }}" },
+            { "role": "user",   "content": "=Generate 5 distinct automated business models for this founder profile:\n{{ $json.compressed }}\nExclude these sectors: {{ JSON.stringify($json.intake.sectors_exclude) }}\nOutput JSON array only. No text before or after the array." }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "credentials": { "httpHeaderAuth": { "id": "openrouter-key", "name": "openRouterApiKey" } },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-llm-b",
+      "name": "HTTP_LLM_B",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [540, 400],
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "HTTP-Referer", "value": "https://bae.local" },
+            { "name": "X-Title",      "value": "BAE-Contender-B" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "meta-llama/llama-3.1-8b-instruct:free",
+          "max_tokens": 600,
+          "temperature": 0.85,
+          "messages": [
+            { "role": "system", "content": "={{ $json.system_prompt }}" },
+            { "role": "user",   "content": "=Generate 5 distinct automated business models for this founder profile:\n{{ $json.compressed }}\nExclude these sectors: {{ JSON.stringify($json.intake.sectors_exclude) }}\nOutput JSON array only. No text before or after the array." }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "credentials": { "httpHeaderAuth": { "id": "openrouter-key", "name": "openRouterApiKey" } },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-llm-c",
+      "name": "HTTP_LLM_C",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [540, 600],
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "HTTP-Referer", "value": "https://bae.local" },
+            { "name": "X-Title",      "value": "BAE-Contender-C" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "google/gemma-2-9b-it:free",
+          "max_tokens": 600,
+          "temperature": 0.85,
+          "messages": [
+            { "role": "system", "content": "={{ $json.system_prompt }}" },
+            { "role": "user",   "content": "=Generate 5 distinct automated business models for this founder profile:\n{{ $json.compressed }}\nExclude these sectors: {{ JSON.stringify($json.intake.sectors_exclude) }}\nOutput JSON array only. No text before or after the array." }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "credentials": { "httpHeaderAuth": { "id": "openrouter-key", "name": "openRouterApiKey" } },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-repair-a",
+      "name": "REPAIR_JSON_A",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 200],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ── UNIVERSAL JSON REPAIR FUNCTION ──────────────────────────────────────\n// Handles: Markdown wrappers, DeepSeek-R1 <thinking> blocks,\n// trailing commas, truncated arrays, mismatched brackets.\n// Returns null on total failure — downstream DEDUP handles empty arrays.\nfunction repairJson(raw) {\n  let t = (raw || '')\n    // Strip DeepSeek-R1 <thinking>...</thinking> reasoning traces\n    .replace(/<thinking>[\\s\\S]*?<\\/thinking>/gi, '')\n    // Strip Markdown code fences\n    .replace(/```json\\s*/gi, '')\n    .replace(/```\\s*/g, '')\n    .trim();\n  // Fast path: direct parse\n  try { return JSON.parse(t); } catch (_) {}\n  // Find outermost JSON container\n  const fa = t.indexOf('['), fo = t.indexOf('{');\n  const start = (fa === -1) ? fo : (fo === -1) ? fa : Math.min(fa, fo);\n  if (start === -1) return null;\n  const opener = t[start], closer = opener === '[' ? ']' : '}';\n  const lastClose = t.lastIndexOf(closer);\n  t = lastClose === -1 ? t.slice(start) + closer : t.slice(start, lastClose + 1);\n  // Remove trailing commas before closing brackets\n  t = t.replace(/,\\s*([\\]}])/g, '$1');\n  try { return JSON.parse(t); } catch (e) { return null; }\n}\n\nconst item = $input.first();\nconst raw = item.json?.choices?.[0]?.message?.content\n         || item.json?.content?.[0]?.text\n         || '';\nlet parsed = repairJson(raw);\nif (!parsed || !Array.isArray(parsed)) parsed = [];\n// Tag each contender with its source model\nparsed = parsed.map(c => ({ ...c, _source: 'mistral-7b' }));\nreturn [{ json: { contenders_a: parsed, run_id: $('COMPRESS_INTAKE').first().json.run_id } }];"
+      }
+    },
+    {
+      "id": "node-repair-b",
+      "name": "REPAIR_JSON_B",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 400],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function repairJson(raw) {\n  let t = (raw || '')\n    .replace(/<thinking>[\\s\\S]*?<\\/thinking>/gi, '')\n    .replace(/```json\\s*/gi, '')\n    .replace(/```\\s*/g, '')\n    .trim();\n  try { return JSON.parse(t); } catch (_) {}\n  const fa = t.indexOf('['), fo = t.indexOf('{');\n  const start = (fa === -1) ? fo : (fo === -1) ? fa : Math.min(fa, fo);\n  if (start === -1) return null;\n  const opener = t[start], closer = opener === '[' ? ']' : '}';\n  const lastClose = t.lastIndexOf(closer);\n  t = lastClose === -1 ? t.slice(start) + closer : t.slice(start, lastClose + 1);\n  t = t.replace(/,\\s*([\\]}])/g, '$1');\n  try { return JSON.parse(t); } catch (e) { return null; }\n}\n\nconst item = $input.first();\nconst raw = item.json?.choices?.[0]?.message?.content\n         || item.json?.content?.[0]?.text\n         || '';\nlet parsed = repairJson(raw);\nif (!parsed || !Array.isArray(parsed)) parsed = [];\nparsed = parsed.map(c => ({ ...c, _source: 'llama-3.1-8b' }));\nreturn [{ json: { contenders_b: parsed, run_id: $('COMPRESS_INTAKE').first().json.run_id } }];"
+      }
+    },
+    {
+      "id": "node-repair-c",
+      "name": "REPAIR_JSON_C",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 600],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function repairJson(raw) {\n  let t = (raw || '')\n    .replace(/<thinking>[\\s\\S]*?<\\/thinking>/gi, '')\n    .replace(/```json\\s*/gi, '')\n    .replace(/```\\s*/g, '')\n    .trim();\n  try { return JSON.parse(t); } catch (_) {}\n  const fa = t.indexOf('['), fo = t.indexOf('{');\n  const start = (fa === -1) ? fo : (fo === -1) ? fa : Math.min(fa, fo);\n  if (start === -1) return null;\n  const opener = t[start], closer = opener === '[' ? ']' : '}';\n  const lastClose = t.lastIndexOf(closer);\n  t = lastClose === -1 ? t.slice(start) + closer : t.slice(start, lastClose + 1);\n  t = t.replace(/,\\s*([\\]}])/g, '$1');\n  try { return JSON.parse(t); } catch (e) { return null; }\n}\n\nconst item = $input.first();\nconst raw = item.json?.choices?.[0]?.message?.content\n         || item.json?.content?.[0]?.text\n         || '';\nlet parsed = repairJson(raw);\nif (!parsed || !Array.isArray(parsed)) parsed = [];\nparsed = parsed.map(c => ({ ...c, _source: 'gemma-2-9b' }));\nreturn [{ json: { contenders_c: parsed, run_id: $('COMPRESS_INTAKE').first().json.run_id } }];"
+      }
+    },
+    {
+      "id": "node-merge",
+      "name": "MERGE_CONTENDERS",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1020, 400],
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-dedup",
+      "name": "DEDUP_SELECT_5",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1240, 400],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ── DEDUPLICATION & SELECTION ENGINE ────────────────────────────────────\n// Merges all contenders from 3 LLM sources, validates schema,\n// deduplicates by model_type to ensure variety, then selects best 5.\n// Falls back gracefully if any LLM returned no usable contenders.\n\nconst all = $input.all();\n\n// Collect all contenders from all 3 branches\nlet pool = [];\nfor (const item of all) {\n  const a = item.json.contenders_a || [];\n  const b = item.json.contenders_b || [];\n  const c = item.json.contenders_c || [];\n  pool = pool.concat(a, b, c);\n}\n\n// Required fields for a valid contender\nconst REQUIRED = ['name', 'model_type', 'revenue_stream', 'month_1_revenue_usd', 'month_6_revenue_usd'];\n\n// Filter to valid contenders only\nconst valid = pool.filter(c => {\n  if (!c || typeof c !== 'object') return false;\n  return REQUIRED.every(f => c[f] !== undefined && c[f] !== null && c[f] !== '');\n});\n\n// First pass: one per model_type for variety\nconst selected = [];\nconst usedTypes = new Set();\nfor (const c of valid) {\n  if (selected.length >= 5) break;\n  const mt = c.model_type || 'Unknown';\n  if (!usedTypes.has(mt)) {\n    usedTypes.add(mt);\n    selected.push({ ...c, id: `C${selected.length + 1}` });\n  }\n}\n\n// Second pass: fill remaining slots with best remaining\nfor (const c of valid) {\n  if (selected.length >= 5) break;\n  // Skip if already selected (by name + source)\n  const dupe = selected.find(s => s.name === c.name && s._source === c._source);\n  if (!dupe) {\n    selected.push({ ...c, id: `C${selected.length + 1}` });\n  }\n}\n\n// Emergency fallback: if we have fewer than 3 valid, create synthetic stubs\n// Pipeline continues with degraded quality rather than crashing\nwhile (selected.length < 3) {\n  const idx = selected.length + 1;\n  selected.push({\n    id: `C${idx}`,\n    name: `Fallback Model ${idx}`,\n    model_type: 'Service',\n    revenue_stream: 'Consulting services',\n    month_1_revenue_usd: 500,\n    month_6_revenue_usd: 3000,\n    gross_margin_pct: 80,\n    startup_cost_usd: 500,\n    automation_score: 4,\n    founder_hours_weekly: 20,\n    execution_steps: ['Set up basic service', 'Find first client', 'Deliver and iterate'],\n    top_risk: 'Client acquisition difficulty',\n    why_now: 'Services always in demand',\n    _source: 'fallback',\n    _is_stub: true\n  });\n}\n\n// Get metadata from whichever branch had it\nconst meta = all.find(i => i.json.run_id) || all[0];\nconst run_id  = meta?.json?.run_id  || $('COMPRESS_INTAKE').first().json.run_id;\nconst weights = $('COMPRESS_INTAKE').first().json.weights;\nconst intake  = $('COMPRESS_INTAKE').first().json.intake;\n\nreturn [{ json: { run_id, weights, intake, contenders: selected.slice(0, 5) } }];"
+      }
+    },
+    {
+      "id": "node-pg-cont",
+      "name": "PG_INSERT_CONTENDERS",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1460, 400],
+      "credentials": { "postgres": { "id": "postgres-main", "name": "postgresMain" } },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO contenders (run_id, contender_id, source_model, data)\nSELECT\n  '{{ $json.run_id }}'::uuid,\n  c->>'id',\n  c->>'_source',\n  c\nFROM jsonb_array_elements('{{ JSON.stringify($json.contenders) }}'::jsonb) AS c\nON CONFLICT (run_id, contender_id) DO UPDATE\n  SET data = EXCLUDED.data,\n      source_model = EXCLUDED.source_model;",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-run-sw03",
+      "name": "RUN_SW03_JUDGING",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [1680, 400],
+      "parameters": {
+        "workflowId": { "__rl": true, "mode": "name", "value": "BAE_SW03_JUDGING" },
+        "waitForSubWorkflow": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "node-dlq-a",
+      "name": "DLQ_LLM_A_FAILURE",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [780, 80],
+      "credentials": { "postgres": { "id": "postgres-main", "name": "postgresMain" } },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO dlq_failures (run_id, workflow_name, node_name, error_code, error_message, raw_payload)\nVALUES (\n  '{{ $('COMPRESS_INTAKE').first().json.run_id }}'::uuid,\n  'BAE_SW02_CONTENDERS', 'HTTP_LLM_A',\n  '{{ $json.statusCode }}',\n  '{{ $json.message }}',\n  '{{ JSON.stringify($json) }}'::jsonb\n);",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-dlq-b",
+      "name": "DLQ_LLM_B_FAILURE",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [780, 280],
+      "credentials": { "postgres": { "id": "postgres-main", "name": "postgresMain" } },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO dlq_failures (run_id, workflow_name, node_name, error_code, error_message, raw_payload)\nVALUES (\n  '{{ $('COMPRESS_INTAKE').first().json.run_id }}'::uuid,\n  'BAE_SW02_CONTENDERS', 'HTTP_LLM_B',\n  '{{ $json.statusCode }}',\n  '{{ $json.message }}',\n  '{{ JSON.stringify($json) }}'::jsonb\n);",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-dlq-c",
+      "name": "DLQ_LLM_C_FAILURE",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [780, 720],
+      "credentials": { "postgres": { "id": "postgres-main", "name": "postgresMain" } },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO dlq_failures (run_id, workflow_name, node_name, error_code, error_message, raw_payload)\nVALUES (\n  '{{ $('COMPRESS_INTAKE').first().json.run_id }}'::uuid,\n  'BAE_SW02_CONTENDERS', 'HTTP_LLM_C',\n  '{{ $json.statusCode }}',\n  '{{ $json.message }}',\n  '{{ JSON.stringify($json) }}'::jsonb\n);",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "RECEIVE_CONTEXT":      { "main": [[{ "node": "COMPRESS_INTAKE",     "type": "main", "index": 0 }]] },
+    "COMPRESS_INTAKE":      { "main": [[
+      { "node": "HTTP_LLM_A", "type": "main", "index": 0 },
+      { "node": "HTTP_LLM_B", "type": "main", "index": 0 },
+      { "node": "HTTP_LLM_C", "type": "main", "index": 0 }
+    ]] },
+    "HTTP_LLM_A":           {
+      "main":  [[{ "node": "REPAIR_JSON_A",    "type": "main", "index": 0 }]],
+      "error": [[{ "node": "DLQ_LLM_A_FAILURE","type": "main", "index": 0 }]]
+    },
+    "HTTP_LLM_B":           {
+      "main":  [[{ "node": "REPAIR_JSON_B",    "type": "main", "index": 0 }]],
+      "error": [[{ "node": "DLQ_LLM_B_FAILURE","type": "main", "index": 0 }]]
+    },
+    "HTTP_LLM_C":           {
+      "main":  [[{ "node": "REPAIR_JSON_C",    "type": "main", "index": 0 }]],
+      "error": [[{ "node": "DLQ_LLM_C_FAILURE","type": "main", "index": 0 }]]
+    },
+    "REPAIR_JSON_A":        { "main": [[{ "node": "MERGE_CONTENDERS",   "type": "main", "index": 0 }]] },
+    "REPAIR_JSON_B":        { "main": [[{ "node": "MERGE_CONTENDERS",   "type": "main", "index": 1 }]] },
+    "REPAIR_JSON_C":        { "main": [[{ "node": "MERGE_CONTENDERS",   "type": "main", "index": 2 }]] },
+    "MERGE_CONTENDERS":     { "main": [[{ "node": "DEDUP_SELECT_5",     "type": "main", "index": 0 }]] },
+    "DEDUP_SELECT_5":       { "main": [[{ "node": "PG_INSERT_CONTENDERS","type": "main", "index": 0 }]] },
+    "PG_INSERT_CONTENDERS": { "main": [[{ "node": "RUN_SW03_JUDGING",   "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "instanceId": "bae-instance" }
+}

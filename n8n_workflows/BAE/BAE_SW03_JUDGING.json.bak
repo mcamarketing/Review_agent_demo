@@ -1,0 +1,260 @@
+{
+  "name": "BAE_SW03_JUDGING",
+  "nodes": [
+    {
+      "id": "node-recv",
+      "name": "RECEIVE_CONTENDERS",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [100, 400],
+      "parameters": {}
+    },
+    {
+      "id": "node-prep",
+      "name": "PREP_JUDGE_PAYLOADS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [300, 400],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ── JUDGE PAYLOAD BUILDER ────────────────────────────────────────────────\n// Compresses contender data into role-specific minimal payloads.\n// Each judge role gets ONLY the fields relevant to their evaluation domain.\n// This is the primary token optimization for the judging phase.\n//\n// MODEL ROUTING (per BAE Knowledge Base cost matrix):\n//   CFO Judge:          deepseek/deepseek-r1:free\n//     → Best for financial reasoning. Cache hit: $0.014/1M vs $0.28 miss.\n//     → The static system prompt is byte-for-byte identical on all runs.\n//     → DeepSeek KV Cache on Disk auto-activates on prefix match.\n//   Systems Judge:      meta-llama/llama-3.1-8b-instruct:free\n//     → 840 TPS on Groq LPU. Execution feasibility analysis.\n//   Entrepreneur Judge: mistralai/mistral-7b-instruct:free\n//     → Market realism, founder dependency, moat analysis.\n//\n// All 3 HTTP nodes fire SIMULTANEOUSLY from this single output item.\n\nconst d = $input.first().json;\nconst contenders = d.contenders || [];\nconst weights    = d.weights    || { revenue:0.30, speed:0.25, automation:0.20, margin:0.15, founder_dependence:0.10 };\n\n// ── CFO payload: financial metrics only ────────────────────────────────\n// month_1_revenue: primary cash flow indicator (weighted heavily)\n// month_6_revenue: medium-term trajectory\n// gross_margin: unit economics quality\n// startup_cost: capital efficiency\nconst forCFO = contenders.map(c => ({\n  id:  c.id,\n  m1:  c.month_1_revenue_usd,\n  m6:  c.month_6_revenue_usd,\n  gm:  c.gross_margin_pct,\n  cost: c.startup_cost_usd\n}));\n\n// ── Systems payload: automation and execution metrics only ──────────────\nconst forSys = contenders.map(c => ({\n  id:    c.id,\n  type:  c.model_type,\n  auto:  c.automation_score,\n  steps: c.execution_steps,\n  cost:  c.startup_cost_usd\n}));\n\n// ── Entrepreneur payload: founder experience and market pull ────────────\nconst forEnt = contenders.map(c => ({\n  id:   c.id,\n  type: c.model_type,\n  hrs:  c.founder_hours_weekly,\n  risk: c.top_risk,\n  now:  c.why_now,\n  rev:  c.revenue_stream\n}));\n\n// ── STATIC System Prompts ───────────────────────────────────────────────\n// These strings are NEVER changed at runtime.\n// Byte-for-byte prefix match = DeepSeek cache hit ($0.014 vs $0.28/1M tokens).\nconst CFO_SYS = `TOKEN BUDGET:500. Strict JSON only.\nROLE: CFO with 20 years evaluating early-stage business viability.\nEvaluate each contender on financial metrics ONLY. Be conservative and realistic.\nOUTPUT EXACTLY:\n{\"judgements\":[{\"contender_id\":string,\"revenue_score\":number,\"margin_score\":number,\"speed_score\":number,\"cfo_risk_flag\":\"low|medium|high\",\"cfo_note\":\"max 15 words\"}]}\nSCORING RULES:\n- revenue_score: month_1 >$2000=90+, $1000-2000=75-89, $500-1000=60-74, <$500=below 60.\n- margin_score: gross_margin maps directly (80%=80, 50%=50).\n- speed_score: (12 - months_to_cashflow) * 8, clamped 0-100. Month_1 >$200 = 3 months to cashflow.\n- cfo_risk_flag: high if startup_cost >80% of assumed $5k budget.\nNEVER output markdown. OUTPUT JSON ONLY.`;\n\nconst SYS_SYS = `TOKEN BUDGET:500. Strict JSON only.\nROLE: Systems architect with expertise in no-code/low-code automation stacks.\nEvaluate automation feasibility and execution realism for a SOLO founder.\nOUTPUT EXACTLY:\n{\"judgements\":[{\"contender_id\":string,\"automation_score\":number,\"execution_realism_score\":number,\"tech_stack_feasibility\":\"trivial|moderate|complex|expert-only\",\"automation_gaps\":[string],\"systems_note\":\"max 15 words\"}]}\nSCORING RULES:\n- automation_score: Can 80%+ of revenue operations run without the founder? 10=fully automated=100 score.\n- execution_realism_score: Can a solo founder with stated skills build this in 90 days on stated budget? Be HARSH.\n- tech_stack_feasibility: trivial=n8n+Stripe only. complex=custom APIs. expert-only=ML/hardware.\nNEVER output markdown. OUTPUT JSON ONLY.`;\n\nconst ENT_SYS = `TOKEN BUDGET:500. Strict JSON only.\nROLE: Serial entrepreneur with 3 successful exits. Evaluate market realism and founder dependency.\nOUTPUT EXACTLY:\n{\"judgements\":[{\"contender_id\":string,\"founder_dependence_score\":number,\"market_pull_score\":number,\"moat_score\":number,\"entrepreneur_verdict\":\"strong|viable|weak|avoid\",\"entrepreneur_note\":\"max 15 words\"}]}\nSCORING RULES:\n- founder_dependence_score: 0=fully automated (ideal), 100=owner must be present every hour (worst).\n- market_pull_score: Existing buyer intent? Urgent proven pain = high score. Speculative demand = low.\n- moat_score: Defensibility against copycats: network effects=90+, unique data=80+, just execution=40.\nNEVER output markdown. OUTPUT JSON ONLY.`;\n\nreturn [{\n  json: {\n    run_id:      d.run_id,\n    weights,\n    intake:      d.intake,\n    contenders,\n    cfo_payload: { system: CFO_SYS, user: `Score these contenders: ${JSON.stringify(forCFO)}` },\n    sys_payload: { system: SYS_SYS, user: `Score these contenders: ${JSON.stringify(forSys)}` },\n    ent_payload: { system: ENT_SYS, user: `Score these contenders: ${JSON.stringify(forEnt)} Founder hrs available/wk: ${d.intake?.founder_hours_per_week}` }\n  }\n}];"
+      }
+    },
+    {
+      "id": "node-cfo",
+      "name": "HTTP_JUDGE_CFO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [560, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "HTTP-Referer", "value": "https://bae.local" },
+            { "name": "X-Title",      "value": "BAE-CFO-Judge" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "deepseek/deepseek-r1:free",
+          "max_tokens": 500,
+          "temperature": 0.3,
+          "messages": [
+            { "role": "system", "content": "={{ $json.cfo_payload.system }}" },
+            { "role": "user",   "content": "={{ $json.cfo_payload.user }}" }
+          ]
+        },
+        "options": { "timeout": 45000 }
+      },
+      "credentials": { "httpHeaderAuth": { "id": "openrouter-key", "name": "openRouterApiKey" } },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-sys",
+      "name": "HTTP_JUDGE_SYSTEMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [560, 400],
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "HTTP-Referer", "value": "https://bae.local" },
+            { "name": "X-Title",      "value": "BAE-Systems-Judge" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "meta-llama/llama-3.1-8b-instruct:free",
+          "max_tokens": 500,
+          "temperature": 0.3,
+          "messages": [
+            { "role": "system", "content": "={{ $json.sys_payload.system }}" },
+            { "role": "user",   "content": "={{ $json.sys_payload.user }}" }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "credentials": { "httpHeaderAuth": { "id": "openrouter-key", "name": "openRouterApiKey" } },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-ent",
+      "name": "HTTP_JUDGE_ENTREPRENEUR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [560, 600],
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "HTTP-Referer", "value": "https://bae.local" },
+            { "name": "X-Title",      "value": "BAE-Entrepreneur-Judge" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "mistralai/mistral-7b-instruct:free",
+          "max_tokens": 500,
+          "temperature": 0.3,
+          "messages": [
+            { "role": "system", "content": "={{ $json.ent_payload.system }}" },
+            { "role": "user",   "content": "={{ $json.ent_payload.user }}" }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "credentials": { "httpHeaderAuth": { "id": "openrouter-key", "name": "openRouterApiKey" } },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-parse-cfo",
+      "name": "PARSE_CFO",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 200],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function repairJson(raw) {\n  let t = (raw || '')\n    .replace(/<thinking>[\\s\\S]*?<\\/thinking>/gi, '')\n    .replace(/```json\\s*/gi, '')\n    .replace(/```\\s*/g, '')\n    .trim();\n  try { return JSON.parse(t); } catch (_) {}\n  const fa = t.indexOf('['), fo = t.indexOf('{');\n  const start = (fa === -1) ? fo : (fo === -1) ? fa : Math.min(fa, fo);\n  if (start === -1) return null;\n  const opener = t[start], closer = opener === '[' ? ']' : '}';\n  const lastClose = t.lastIndexOf(closer);\n  t = lastClose === -1 ? t.slice(start) + closer : t.slice(start, lastClose + 1);\n  t = t.replace(/,\\s*([\\]}])/g, '$1');\n  try { return JSON.parse(t); } catch (e) { return null; }\n}\nconst raw = $input.first().json?.choices?.[0]?.message?.content\n          || $input.first().json?.content?.[0]?.text || '';\nconst parsed = repairJson(raw);\nconst judgements = parsed?.judgements || [];\nreturn [{ json: { cfo_judgements: judgements } }];"
+      }
+    },
+    {
+      "id": "node-parse-sys",
+      "name": "PARSE_SYS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 400],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function repairJson(raw) {\n  let t = (raw || '')\n    .replace(/<thinking>[\\s\\S]*?<\\/thinking>/gi, '')\n    .replace(/```json\\s*/gi, '')\n    .replace(/```\\s*/g, '')\n    .trim();\n  try { return JSON.parse(t); } catch (_) {}\n  const fa = t.indexOf('['), fo = t.indexOf('{');\n  const start = (fa === -1) ? fo : (fo === -1) ? fa : Math.min(fa, fo);\n  if (start === -1) return null;\n  const opener = t[start], closer = opener === '[' ? ']' : '}';\n  const lastClose = t.lastIndexOf(closer);\n  t = lastClose === -1 ? t.slice(start) + closer : t.slice(start, lastClose + 1);\n  t = t.replace(/,\\s*([\\]}])/g, '$1');\n  try { return JSON.parse(t); } catch (e) { return null; }\n}\nconst raw = $input.first().json?.choices?.[0]?.message?.content\n          || $input.first().json?.content?.[0]?.text || '';\nconst parsed = repairJson(raw);\nconst judgements = parsed?.judgements || [];\nreturn [{ json: { systems_judgements: judgements } }];"
+      }
+    },
+    {
+      "id": "node-parse-ent",
+      "name": "PARSE_ENT",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 600],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function repairJson(raw) {\n  let t = (raw || '')\n    .replace(/<thinking>[\\s\\S]*?<\\/thinking>/gi, '')\n    .replace(/```json\\s*/gi, '')\n    .replace(/```\\s*/g, '')\n    .trim();\n  try { return JSON.parse(t); } catch (_) {}\n  const fa = t.indexOf('['), fo = t.indexOf('{');\n  const start = (fa === -1) ? fo : (fo === -1) ? fa : Math.min(fa, fo);\n  if (start === -1) return null;\n  const opener = t[start], closer = opener === '[' ? ']' : '}';\n  const lastClose = t.lastIndexOf(closer);\n  t = lastClose === -1 ? t.slice(start) + closer : t.slice(start, lastClose + 1);\n  t = t.replace(/,\\s*([\\]}])/g, '$1');\n  try { return JSON.parse(t); } catch (e) { return null; }\n}\nconst raw = $input.first().json?.choices?.[0]?.message?.content\n          || $input.first().json?.content?.[0]?.text || '';\nconst parsed = repairJson(raw);\nconst judgements = parsed?.judgements || [];\nreturn [{ json: { entrepreneur_judgements: judgements } }];"
+      }
+    },
+    {
+      "id": "node-merge-scores",
+      "name": "MERGE_JUDGE_SCORES",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1040, 400],
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-score",
+      "name": "SCORE_AND_ELIMINATE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1280, 400],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ── DETERMINISTIC COMPOSITE SCORER ──────────────────────────────────────\n// Ingests outputs from 3 parallel judge roles.\n// Merges into per-contender composite scores using the adaptive weight vector.\n// Eliminates bottom 2, promotes top 3 to deep build.\n//\n// Score formula per dimension:\n//   raw_score = weighted average of judge sub-scores for that dimension\n//   weighted_component = raw_score * weight[dimension]\n//   finalScore = sum(weighted_components)  → range [0, 100]\n\nconst all = $input.all();\n\n// Extract judge arrays and metadata from merged branches\nlet cfo_judgements = [], systems_judgements = [], entrepreneur_judgements = [];\nlet weights = null, contenders = null, run_id = null, intake = null;\n\nfor (const item of all) {\n  const j = item.json;\n  if (j.cfo_judgements)          cfo_judgements          = j.cfo_judgements;\n  if (j.systems_judgements)      systems_judgements      = j.systems_judgements;\n  if (j.entrepreneur_judgements) entrepreneur_judgements = j.entrepreneur_judgements;\n  if (j.weights)    weights    = j.weights;\n  if (j.contenders) contenders = j.contenders;\n  if (j.run_id)     run_id     = j.run_id;\n  if (j.intake)     intake     = j.intake;\n}\n\n// Pull metadata from upstream node if not in merged data\nif (!weights || !contenders) {\n  const prep = $('PREP_JUDGE_PAYLOADS').first()?.json;\n  weights    = weights    || prep?.weights    || { revenue:0.30, speed:0.25, automation:0.20, margin:0.15, founder_dependence:0.10 };\n  contenders = contenders || prep?.contenders || [];\n  run_id     = run_id     || prep?.run_id;\n  intake     = intake     || prep?.intake;\n}\n\n// Build lookup maps for O(1) access\nconst cfoMap = Object.fromEntries((cfo_judgements || []).map(j => [j.contender_id, j]));\nconst sysMap = Object.fromEntries((systems_judgements || []).map(j => [j.contender_id, j]));\nconst entMap = Object.fromEntries((entrepreneur_judgements || []).map(j => [j.contender_id, j]));\n\nconst scored = (contenders || []).map(c => {\n  const cfo = cfoMap[c.id] || {};\n  const sys = sysMap[c.id] || {};\n  const ent = entMap[c.id] || {};\n\n  // ── Dimension raw scores (0-100) ──────────────────────────────────────\n  // Revenue: blend CFO revenue score + Entrepreneur market pull (credibility check)\n  const revenue = Math.min(100, Math.max(0,\n    ((cfo.revenue_score || 50) * 0.65) + ((ent.market_pull_score || 50) * 0.35)\n  ));\n\n  // Speed: blend CFO speed score + Systems execution realism\n  const speed = Math.min(100, Math.max(0,\n    ((cfo.speed_score || 50) * 0.60) + ((sys.execution_realism_score || 50) * 0.40)\n  ));\n\n  // Automation: blend Systems automation score + contender's stated score\n  const automation = Math.min(100, Math.max(0,\n    ((sys.automation_score || 50) * 0.70) + (((c.automation_score || 5) * 10) * 0.30)\n  ));\n\n  // Margin: directly from CFO (financial expertise owns this)\n  const margin = Math.min(100, Math.max(0, cfo.margin_score || c.gross_margin_pct || 50));\n\n  // Founder dependence: invert entrepreneur score (100 dependence = 0 score)\n  const founder_dependence = Math.min(100, Math.max(0,\n    100 - (ent.founder_dependence_score || 50)\n  ));\n\n  const raw = { revenue, speed, automation, margin, founder_dependence };\n\n  // ── Weighted composite score ───────────────────────────────────────────\n  const weighted = {};\n  let finalScore = 0;\n  for (const k of Object.keys(weights)) {\n    weighted[k] = +(raw[k] * weights[k]).toFixed(4);\n    finalScore  += weighted[k];\n  }\n  finalScore = +finalScore.toFixed(2);\n\n  return {\n    contender_id:        c.id,\n    contender_name:      c.name,\n    raw_scores:          raw,\n    weights,\n    weighted_components: weighted,\n    finalScore,\n    eliminated:          false,\n    elimination_rank:    null,\n    _contender:          c\n  };\n});\n\n// Sort descending by score\nscored.sort((a, b) => b.finalScore - a.finalScore);\n\n// Eliminate bottom 2 (keep top 3 for deep build)\nconst cutLine = Math.max(0, scored.length - 2);\nfor (let i = scored.length - 1; i >= cutLine; i--) {\n  scored[i].eliminated    = true;\n  scored[i].elimination_rank = scored.length - i;\n}\n\nconst top_3 = scored\n  .filter(s => !s.eliminated)\n  .slice(0, 3)\n  .map(s => s._contender);\n\nreturn [{ json: { run_id, weights, intake, contenders, scored_contenders: scored, top_3 } }];"
+      }
+    },
+    {
+      "id": "node-pg-judge",
+      "name": "PG_INSERT_JUDGEMENTS",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1520, 400],
+      "credentials": { "postgres": { "id": "postgres-main", "name": "postgresMain" } },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO judgements (run_id, contender_id, judge_role, score_output, final_score, eliminated, elimination_rank)\nSELECT\n  '{{ $json.run_id }}'::uuid,\n  s->>'contender_id',\n  'composite',\n  s,\n  (s->>'finalScore')::numeric,\n  (s->>'eliminated')::boolean,\n  CASE WHEN (s->>'elimination_rank') IS NOT NULL THEN (s->>'elimination_rank')::integer ELSE NULL END\nFROM jsonb_array_elements('{{ JSON.stringify($json.scored_contenders) }}'::jsonb) AS s\nON CONFLICT DO NOTHING;",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-run-sw04",
+      "name": "RUN_SW04_DEEPBUILD",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [1740, 400],
+      "parameters": {
+        "workflowId": { "__rl": true, "mode": "name", "value": "BAE_SW04_DEEPBUILD" },
+        "waitForSubWorkflow": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "node-dlq-judge",
+      "name": "DLQ_JUDGE_FAILURE",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [800, 80],
+      "credentials": { "postgres": { "id": "postgres-main", "name": "postgresMain" } },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO dlq_failures (run_id, workflow_name, node_name, error_code, error_message, raw_payload)\nVALUES (\n  '{{ $('PREP_JUDGE_PAYLOADS').first().json.run_id }}'::uuid,\n  'BAE_SW03_JUDGING',\n  '{{ $json.node }}',\n  '{{ $json.statusCode }}',\n  '{{ $json.message }}',\n  '{{ JSON.stringify($json) }}'::jsonb\n);",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "RECEIVE_CONTENDERS":   { "main": [[{ "node": "PREP_JUDGE_PAYLOADS",  "type": "main", "index": 0 }]] },
+    "PREP_JUDGE_PAYLOADS":  { "main": [[
+      { "node": "HTTP_JUDGE_CFO",          "type": "main", "index": 0 },
+      { "node": "HTTP_JUDGE_SYSTEMS",      "type": "main", "index": 0 },
+      { "node": "HTTP_JUDGE_ENTREPRENEUR", "type": "main", "index": 0 }
+    ]] },
+    "HTTP_JUDGE_CFO":          {
+      "main":  [[{ "node": "PARSE_CFO",        "type": "main", "index": 0 }]],
+      "error": [[{ "node": "DLQ_JUDGE_FAILURE","type": "main", "index": 0 }]]
+    },
+    "HTTP_JUDGE_SYSTEMS":      {
+      "main":  [[{ "node": "PARSE_SYS",        "type": "main", "index": 0 }]],
+      "error": [[{ "node": "DLQ_JUDGE_FAILURE","type": "main", "index": 0 }]]
+    },
+    "HTTP_JUDGE_ENTREPRENEUR": {
+      "main":  [[{ "node": "PARSE_ENT",        "type": "main", "index": 0 }]],
+      "error": [[{ "node": "DLQ_JUDGE_FAILURE","type": "main", "index": 0 }]]
+    },
+    "PARSE_CFO":            { "main": [[{ "node": "MERGE_JUDGE_SCORES",  "type": "main", "index": 0 }]] },
+    "PARSE_SYS":            { "main": [[{ "node": "MERGE_JUDGE_SCORES",  "type": "main", "index": 1 }]] },
+    "PARSE_ENT":            { "main": [[{ "node": "MERGE_JUDGE_SCORES",  "type": "main", "index": 2 }]] },
+    "MERGE_JUDGE_SCORES":   { "main": [[{ "node": "SCORE_AND_ELIMINATE", "type": "main", "index": 0 }]] },
+    "SCORE_AND_ELIMINATE":  { "main": [[{ "node": "PG_INSERT_JUDGEMENTS","type": "main", "index": 0 }]] },
+    "PG_INSERT_JUDGEMENTS": { "main": [[{ "node": "RUN_SW04_DEEPBUILD",  "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "instanceId": "bae-instance" }
+}

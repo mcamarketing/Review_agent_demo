@@ -1,0 +1,149 @@
+{
+  "name": "BAE_SW05_AUDIT",
+  "nodes": [
+    {
+      "id": "node-recv",
+      "name": "RECEIVE_BUILDS",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [100, 300],
+      "parameters": {}
+    },
+    {
+      "id": "node-prep-audit",
+      "name": "PREP_AUDIT_PAYLOAD",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [320, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ── AUDIT PAYLOAD BUILDER ────────────────────────────────────────────────\n// Selects the highest-scoring passed build as the candidate for final audit.\n// Compresses the candidate to a minimal token footprint before sending to\n// the DeepSeek-R1 final audit judge.\n//\n// HARD RULE: composite_score < 75 → final_verdict MUST be NO_GO.\n// This is enforced both in the system prompt AND in VALIDATE_AUDIT_JSON.\n\nconst d     = $input.first().json;\nconst built = d.built_contenders || [];\n\n// Select highest-scoring non-hard-fail build\nconst best = built\n  .filter(b => b.status !== 'hard_fail' && b.scores?.finalScore != null)\n  .sort((a, b) => (b.scores?.finalScore || 0) - (a.scores?.finalScore || 0))[0];\n\nif (!best) {\n  throw new Error('BAE SW05: No valid built contender available for audit. All contenders hard-failed.');\n}\n\n// ── STATIC SYSTEM PROMPT ─────────────────────────────────────────────\n// Byte-for-byte identical on every call — DeepSeek prefix cache hit.\nconst AUDIT_SYS = `TOKEN BUDGET:600. Strict JSON only.\nROLE: Senior business analyst performing a final go/no-go audit on a fully built business model.\nOUTPUT EXACTLY this JSON (no other keys, no markdown):\n{\n  \"audit\": {\n    \"contender_id\": string,\n    \"final_verdict\": \"GO|GO_WITH_CONDITIONS|NO_GO\",\n    \"composite_score\": number,\n    \"audit_rationale\": \"max 25 words explaining the verdict\",\n    \"critical_risks\": [string, string, string],\n    \"first_30_day_actions\": [string, string, string, string, string],\n    \"revenue_milestone_90d\": number,\n    \"key_automations_required\": [string, string, string],\n    \"founder_time_week_1\": number,\n    \"founder_time_month_3\": number,\n    \"audit_confidence\": \"high|medium|low\"\n  }\n}\nHARD RULES:\n- first_30_day_actions MUST have exactly 5 items.\n- critical_risks MUST have exactly 3 items.\n- key_automations_required MUST have exactly 3 items.\n- If composite_score < 75: final_verdict MUST be NO_GO.\n- If composite_score 75-84: final_verdict MUST be GO_WITH_CONDITIONS.\n- If composite_score >= 85: final_verdict CAN be GO.\n- founder_time_week_1: integer hours/week required in the first week.\n- founder_time_month_3: integer hours/week required by month 3 (should be lower due to automation).\nNEVER output markdown. OUTPUT JSON ONLY.`;\n\n// Compress best build for minimal token usage\nconst compressed = {\n  id:     best.contender?.id,\n  name:   best.contender?.name,\n  type:   best.contender?.model_type,\n  score:  best.scores?.finalScore,\n  raw_scores: best.scores?.raw_scores,\n  weights:    best.scores?.weights,\n  revenue_stream: best.contender?.revenue_stream,\n  gtm:    best.build?.go_to_market_plan,\n  stack:  best.build?.automation_stack,\n  revenue: best.build?.revenue_model_detail,\n  risks:  best.contender?.top_risk,\n  why_now: best.contender?.why_now\n};\n\nreturn [{ json: {\n  run_id:       d.run_id,\n  weights:      d.weights,\n  intake:       d.intake,\n  best_build:   best,\n  all_builds:   built,\n  audit_system: AUDIT_SYS,\n  audit_user:   `Audit this business model and produce a GO/NO-GO verdict:\\n${JSON.stringify(compressed)}\\nOutput JSON only.`\n} }];"
+      }
+    },
+    {
+      "id": "node-audit-llm",
+      "name": "HTTP_AUDIT_JUDGE",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [540, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "HTTP-Referer", "value": "https://bae.local" },
+            { "name": "X-Title",      "value": "BAE-FinalAudit" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "deepseek/deepseek-r1:free",
+          "max_tokens": 600,
+          "temperature": 0.2,
+          "messages": [
+            { "role": "system", "content": "={{ $json.audit_system }}" },
+            { "role": "user",   "content": "={{ $json.audit_user }}" }
+          ]
+        },
+        "options": { "timeout": 60000 }
+      },
+      "credentials": { "httpHeaderAuth": { "id": "openrouter-key", "name": "openRouterApiKey" } },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-validate-audit",
+      "name": "VALIDATE_AUDIT_JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ── AUDIT VALIDATOR & FALLBACK ENFORCER ─────────────────────────────────\n// Repairs LLM JSON output, enforces hard rules (score < 75 = NO_GO),\n// and synthesizes a fallback audit if the LLM fails entirely.\n// NEVER throws — always produces a valid audit object.\n\nfunction repairJson(raw) {\n  let t = (raw || '')\n    .replace(/<thinking>[\\s\\S]*?<\\/thinking>/gi, '')\n    .replace(/```json\\s*/gi, '')\n    .replace(/```\\s*/g, '')\n    .trim();\n  try { return JSON.parse(t); } catch (_) {}\n  const fa = t.indexOf('['), fo = t.indexOf('{');\n  const start = (fa === -1) ? fo : (fo === -1) ? fa : Math.min(fa, fo);\n  if (start === -1) return null;\n  const opener = t[start], closer = opener === '[' ? ']' : '}';\n  const lastClose = t.lastIndexOf(closer);\n  t = lastClose === -1 ? t.slice(start) + closer : t.slice(start, lastClose + 1);\n  t = t.replace(/,\\s*([\\]}])/g, '$1');\n  try { return JSON.parse(t); } catch (e) { return null; }\n}\n\nconst item = $input.first();\nconst prev = $('PREP_AUDIT_PAYLOAD').first().json;\nconst raw  = item.json?.choices?.[0]?.message?.content\n           || item.json?.content?.[0]?.text || '';\n\nlet parsed = repairJson(raw);\n\n// ── Fallback audit: synthesized from scoring data if LLM fails ──────\nif (!parsed || !parsed.audit) {\n  const score = prev.best_build?.scores?.finalScore || 0;\n  const raw_scores = prev.best_build?.scores?.raw_scores || {};\n\n  // Determine weak areas for risk callouts\n  const weakDims = Object.entries(raw_scores)\n    .filter(([, v]) => v < 60)\n    .map(([k]) => k);\n\n  parsed = {\n    audit: {\n      contender_id:             prev.best_build?.contender?.id || 'unknown',\n      final_verdict:            score >= 85 ? 'GO' : score >= 75 ? 'GO_WITH_CONDITIONS' : 'NO_GO',\n      composite_score:          score,\n      audit_rationale:          `Score ${\n        score >= 75 ? 'meets' : 'does not meet'\n      } 75-point minimum threshold for viability.`,\n      critical_risks: [\n        weakDims.length > 0 ? `Weak ${weakDims[0]} dimension requires attention` : 'Founder execution risk at early stage',\n        'Client acquisition timeline may exceed projections',\n        'Automation setup complexity may increase initial capital needs'\n      ],\n      first_30_day_actions: [\n        'Set up core automation infrastructure (n8n + Stripe + CRM)',\n        'Define and publish clear service offering with pricing page',\n        'Reach out to 20 warm contacts for initial client pipeline',\n        'Complete first paid delivery to establish proof of concept',\n        'Collect testimonial and iterate on offer based on feedback'\n      ],\n      revenue_milestone_90d:    prev.best_build?.build?.revenue_model_detail?.month_3_target || 0,\n      key_automations_required: ['Lead capture and qualification', 'Payment processing and invoicing', 'Client onboarding and delivery'],\n      founder_time_week_1:      25,\n      founder_time_month_3:     10,\n      audit_confidence:         'low',\n      _fallback_audit:          true\n    }\n  };\n}\n\n// ── HARD RULE ENFORCEMENT ─────────────────────────────────────────────\n// Regardless of what the LLM said, score < 75 = NO_GO.\n// Score 75-84 = GO_WITH_CONDITIONS. Score 85+ = can be GO.\nconst s = parsed.audit.composite_score;\nif (s < 75) {\n  parsed.audit.final_verdict = 'NO_GO';\n} else if (s < 85 && parsed.audit.final_verdict === 'GO') {\n  parsed.audit.final_verdict = 'GO_WITH_CONDITIONS';\n}\n\n// ── Pad arrays to required lengths ───────────────────────────────────\nwhile ((parsed.audit.first_30_day_actions || []).length < 5) {\n  parsed.audit.first_30_day_actions.push('Define and execute next priority action');\n}\nwhile ((parsed.audit.critical_risks || []).length < 3) {\n  parsed.audit.critical_risks.push('Monitor market conditions and adjust strategy');\n}\nwhile ((parsed.audit.key_automations_required || []).length < 3) {\n  parsed.audit.key_automations_required.push('Identify and automate next highest-friction workflow');\n}\n\nreturn [{ json: { ...prev, audit_output: parsed.audit, _raw_audit: raw } }];"
+      }
+    },
+    {
+      "id": "node-build-report",
+      "name": "BUILD_REPORT",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [980, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ── MARKDOWN REPORT BUILDER ──────────────────────────────────────────────\n// Assembles the final client-facing report from all pipeline data.\n// Includes: verdict, scores, GTM plan, automation stack, all contenders.\n\nconst d      = $input.first().json;\nconst audit  = d.audit_output;\nconst best   = d.best_build;\nconst intake = d.intake;\nconst all    = d.all_builds || [];\nconst ts     = new Date().toISOString();\n\nconst verdictEmoji = {\n  'GO': '✅',\n  'GO_WITH_CONDITIONS': '⚠️',\n  'NO_GO': '❌'\n}[audit.final_verdict] || '🔍';\n\nconst report_md = `# Business Architecture Engine — Final Report\n> Generated: ${ts} | Run ID: ${d.run_id}\n\n---\n\n## ${verdictEmoji} Verdict: **${audit.final_verdict}** | Composite Score: **${audit.composite_score}/100**\n\n**Audit Rationale:** ${audit.audit_rationale || 'N/A'}\n**Audit Confidence:** ${audit.audit_confidence}\n\n---\n\n## 🏆 Winning Business Model\n**Name:** ${best.contender?.name || 'N/A'}\n**Type:** ${best.contender?.model_type || 'N/A'}\n**Revenue Stream:** ${best.contender?.revenue_stream || 'N/A'}\n**Why Now:** ${best.contender?.why_now || 'N/A'}\n\n### Score Breakdown\n| Dimension | Raw Score | Weight | Weighted |\n|-----------|-----------|--------|----------|\n${Object.entries(best.scores?.raw_scores || {}).map(([k, v]) => {\n  const w = best.scores?.weights?.[k] || 0;\n  const wv = best.scores?.weighted_components?.[k] || 0;\n  return `| ${k.replace(/_/g, ' ')} | ${Math.round(v)} | ${(w * 100).toFixed(0)}% | ${wv.toFixed(2)} |`;\n}).join('\\n')}\n| **TOTAL** | | | **${audit.composite_score}** |\n\n### Revenue Projections\n| Period | Target |\n|--------|--------|\n| Month 1 | $${best.build?.revenue_model_detail?.month_1_target?.toLocaleString() || 0} |\n| Month 3 | $${best.build?.revenue_model_detail?.month_3_target?.toLocaleString() || 0} |\n| Month 6 | $${best.build?.revenue_model_detail?.month_6_target?.toLocaleString() || 0} |\n| 90-Day Milestone | $${audit.revenue_milestone_90d?.toLocaleString() || 0} |\n\n### Pricing Tiers\n${(best.build?.revenue_model_detail?.pricing_tiers || []).map(t =>\n  `- **${t.name}**: $${t.price_usd}/mo — ${t.value_prop}`\n).join('\\n')}\n\n---\n\n## ⏱️ Founder Time Commitment\n- **Week 1:** ${audit.founder_time_week_1} hrs/week (heavy setup phase)\n- **Month 3:** ${audit.founder_time_month_3} hrs/week (post-automation)\n\n---\n\n## 📅 30-Day Action Plan\n${(audit.first_30_day_actions || []).map((a, i) => `${i + 1}. ${a}`).join('\\n')}\n\n---\n\n## ⚠️ Critical Risks\n${(audit.critical_risks || []).map(r => `- ${r}`).join('\\n')}\n\n---\n\n## 🤖 Automation Stack\n**Tools Required:**\n${(best.build?.automation_stack?.tools || []).map(t => `- ${t}`).join('\\n')}\n\n**Workflows to Build:**\n${(best.build?.automation_stack?.workflows_required || []).map(w => `- ${w}`).join('\\n')}\n\n**Estimated Setup Time:** ${best.build?.automation_stack?.estimated_setup_hrs || 'N/A'} hrs\n\n**Key Automations Required (Priority):**\n${(audit.key_automations_required || []).map((a, i) => `${i + 1}. ${a}`).join('\\n')}\n\n---\n\n## 🗺️ Go-To-Market Plan\n\n### Week 1\n${(best.build?.go_to_market_plan?.week_1_actions || []).map(a => `- ${a}`).join('\\n')}\n\n### Weeks 2-4\n${(best.build?.go_to_market_plan?.week_2_4_actions || []).map(a => `- ${a}`).join('\\n')}\n\n### Months 2-3\n${(best.build?.go_to_market_plan?.month_2_3_actions || []).map(a => `- ${a}`).join('\\n')}\n\n---\n\n## 📊 All Contenders Evaluated\n| ID | Name | Final Score | Status | Passes |\n|----|------|-------------|--------|--------|\n${all.map(b => `| ${b.contender?.id || '?'} | ${b.contender?.name || '?'} | ${b.scores?.finalScore || 0} | ${b.status || '?'} | ${b.pass || 0} |`).join('\\n')}\n\n---\n\n## 🔧 Client Input Summary\n- **Business Type:** ${intake?.business_type}\n- **Budget:** $${intake?.budget_usd?.toLocaleString()}\n- **Timeline:** ${intake?.timeline_months} months\n- **Founder Hours/Week:** ${intake?.founder_hours_per_week}\n- **Automation Preference:** ${intake?.automation_preference}/10\n- **No Employees:** ${intake?.constraints?.no_employees}\n- **Bootstrapped:** ${intake?.constraints?.bootstrapped}\n- **Remote Only:** ${intake?.constraints?.must_be_remote}\n- **Fast Revenue Required:** ${intake?.constraints?.requires_fast_revenue}\n\n---\n*Business Architecture Engine v1.1 — Powered by DeepSeek-R1, Llama 3.1 8B, Mistral 7B, Gemma 2 9B*\n`;\n\nreturn [{ json: {\n  run_id:         d.run_id,\n  audit_output:   audit,\n  report_md,\n  final_score:    audit.composite_score,\n  final_verdict:  audit.final_verdict,\n  weights:        d.weights,\n  best_contender: best\n} }];"
+      }
+    },
+    {
+      "id": "node-pg-report",
+      "name": "PG_INSERT_REPORT",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1200, 300],
+      "credentials": { "postgres": { "id": "postgres-main", "name": "postgresMain" } },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO reports (run_id, audit_output, report_md, final_score, final_verdict)\nVALUES (\n  '{{ $json.run_id }}'::uuid,\n  '{{ JSON.stringify($json.audit_output) }}'::jsonb,\n  '{{ $json.report_md.replace(/'/g, \"''\") }}',\n  {{ $json.final_score }},\n  '{{ $json.final_verdict }}'\n)\nON CONFLICT (run_id)\nDO UPDATE SET\n  audit_output  = EXCLUDED.audit_output,\n  report_md     = EXCLUDED.report_md,\n  final_score   = EXCLUDED.final_score,\n  final_verdict = EXCLUDED.final_verdict;",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-pg-complete",
+      "name": "PG_UPDATE_RUN_COMPLETE",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1420, 300],
+      "credentials": { "postgres": { "id": "postgres-main", "name": "postgresMain" } },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE runs\nSET status='complete', completed_at=NOW()\nWHERE run_id='{{ $json.run_id }}'::uuid;",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-respond",
+      "name": "WEBHOOK_RESPONSE",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1640, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  status: 'complete',\n  run_id: $json.run_id,\n  verdict: $json.final_verdict,\n  score: $json.final_score,\n  report_md: $json.report_md,\n  audit: $json.audit_output,\n  best_contender: $json.best_contender\n}) }}",
+        "options": { "responseCode": 200 }
+      }
+    },
+    {
+      "id": "node-dlq-audit",
+      "name": "DLQ_AUDIT_FAILURE",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [760, 500],
+      "credentials": { "postgres": { "id": "postgres-main", "name": "postgresMain" } },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO dlq_failures (run_id, workflow_name, node_name, error_code, error_message, raw_payload)\nVALUES (\n  '{{ $('PREP_AUDIT_PAYLOAD').first().json.run_id }}'::uuid,\n  'BAE_SW05_AUDIT',\n  'HTTP_AUDIT_JUDGE',\n  '{{ $json.statusCode }}',\n  '{{ $json.message }}',\n  '{{ JSON.stringify($json) }}'::jsonb\n);",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "RECEIVE_BUILDS":         { "main": [[{ "node": "PREP_AUDIT_PAYLOAD",    "type": "main", "index": 0 }]] },
+    "PREP_AUDIT_PAYLOAD":     { "main": [[{ "node": "HTTP_AUDIT_JUDGE",      "type": "main", "index": 0 }]] },
+    "HTTP_AUDIT_JUDGE":       {
+      "main":  [[{ "node": "VALIDATE_AUDIT_JSON",  "type": "main", "index": 0 }]],
+      "error": [[{ "node": "DLQ_AUDIT_FAILURE",    "type": "main", "index": 0 }]]
+    },
+    "VALIDATE_AUDIT_JSON":    { "main": [[{ "node": "BUILD_REPORT",          "type": "main", "index": 0 }]] },
+    "BUILD_REPORT":           { "main": [[{ "node": "PG_INSERT_REPORT",      "type": "main", "index": 0 }]] },
+    "PG_INSERT_REPORT":       { "main": [[{ "node": "PG_UPDATE_RUN_COMPLETE","type": "main", "index": 0 }]] },
+    "PG_UPDATE_RUN_COMPLETE": { "main": [[{ "node": "WEBHOOK_RESPONSE",      "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "instanceId": "bae-instance" }
+}

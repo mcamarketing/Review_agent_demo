@@ -1,0 +1,179 @@
+{
+  "name": "BAE_SW01_INTAKE",
+  "nodes": [
+    {
+      "id": "node-trigger",
+      "name": "INTAKE_TRIGGER",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 300],
+      "webhookId": "bae-intake-webhook",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "business-engine/run",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-validate",
+      "name": "VALIDATE_SCHEMA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [320, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ── BAE SCHEMA VALIDATOR & INTAKE NORMALIZER ───────────────────────────\n// Validates all required fields, applies defaults, and produces a\n// clean, normalized intake object for the rest of the pipeline.\n// Throws on hard validation failure — the webhook returns 400.\n\nconst body = $input.first().json.body || $input.first().json;\n\nconst errors = [];\n\n// Hard required fields\nif (!body.business_type || typeof body.business_type !== 'string') {\n  errors.push('business_type (string) is required');\n}\n\n// Soft validations\nif (body.budget_usd !== undefined && typeof body.budget_usd !== 'number') {\n  errors.push('budget_usd must be a number');\n}\nif (body.timeline_months !== undefined) {\n  if (typeof body.timeline_months !== 'number' || body.timeline_months < 1 || body.timeline_months > 36) {\n    errors.push('timeline_months must be a number between 1 and 36');\n  }\n}\nif (body.automation_preference !== undefined) {\n  if (typeof body.automation_preference !== 'number' || body.automation_preference < 1 || body.automation_preference > 10) {\n    errors.push('automation_preference must be 1-10');\n  }\n}\nif (body.risk_tolerance && !['low', 'medium', 'high'].includes(body.risk_tolerance)) {\n  errors.push('risk_tolerance must be: low | medium | high');\n}\nif (body.founder_hours_per_week !== undefined) {\n  if (typeof body.founder_hours_per_week !== 'number' || body.founder_hours_per_week < 0 || body.founder_hours_per_week > 168) {\n    errors.push('founder_hours_per_week must be 0-168');\n  }\n}\nif (body.sectors_exclude !== undefined && !Array.isArray(body.sectors_exclude)) {\n  errors.push('sectors_exclude must be an array of strings');\n}\nif (body.founder_skills !== undefined && !Array.isArray(body.founder_skills)) {\n  errors.push('founder_skills must be an array of strings');\n}\n\nif (errors.length > 0) {\n  throw new Error('BAE Validation Failed: ' + errors.join(' | '));\n}\n\n// ── Normalize with sensible defaults ────────────────────────────────────\nconst intake = {\n  business_type:          String(body.business_type).trim(),\n  founder_skills:         Array.isArray(body.founder_skills) ? body.founder_skills : [],\n  budget_usd:             typeof body.budget_usd === 'number' ? body.budget_usd : 5000,\n  timeline_months:        typeof body.timeline_months === 'number' ? body.timeline_months : 6,\n  revenue_target_monthly: typeof body.revenue_target_monthly === 'number' ? body.revenue_target_monthly : 5000,\n  risk_tolerance:         body.risk_tolerance || 'medium',\n  automation_preference:  typeof body.automation_preference === 'number' ? body.automation_preference : 7,\n  sectors_exclude:        Array.isArray(body.sectors_exclude) ? body.sectors_exclude : [],\n  founder_hours_per_week: typeof body.founder_hours_per_week === 'number' ? body.founder_hours_per_week : 20,\n  constraints: {\n    no_employees:          body.constraints?.no_employees          === true,\n    bootstrapped:          body.constraints?.bootstrapped          === true,\n    must_be_remote:        body.constraints?.must_be_remote        === true,\n    requires_fast_revenue: body.constraints?.requires_fast_revenue === true\n  },\n  weight_hints: {\n    prioritize_speed:       body.weight_hints?.prioritize_speed       === true,\n    prioritize_margin:      body.weight_hints?.prioritize_margin      === true,\n    prioritize_automation:  body.weight_hints?.prioritize_automation  === true\n  },\n  submitted_at: new Date().toISOString()\n};\n\nreturn [{ json: { intake } }];"
+      }
+    },
+    {
+      "id": "node-weights",
+      "name": "COMPUTE_WEIGHTS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [540, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ── ADAPTIVE WEIGHT CALCULATOR ──────────────────────────────────────────\n// Starts from a base weight vector and applies constraint-driven and\n// hint-driven deltas. Clamps each dimension to [0.05, 0.50] to prevent\n// any single dimension from dominating. Normalizes to sum = 1.0.\n// Float drift correction applied to founder_dependence (last key).\n\nconst intake = $input.first().json.intake;\nconst c = intake.constraints;\nconst w = intake.weight_hints;\n\n// Evidence-based base weights derived from BAE consulting rubric\nconst BASE = {\n  revenue:            0.30,\n  speed:              0.25,\n  automation:         0.20,\n  margin:             0.15,\n  founder_dependence: 0.10\n};\n\nconst delta = {\n  revenue:            0,\n  speed:              0,\n  automation:         0,\n  margin:             0,\n  founder_dependence: 0\n};\n\n// ── Constraint-driven deltas ────────────────────────────────────────────\n// requires_fast_revenue: Client needs early cashflow — boost speed + revenue\nif (c.requires_fast_revenue)           { delta.speed     += 0.08; delta.revenue    += 0.05; }\n// no_employees: Founder must automate everything — boost automation + independence\nif (c.no_employees)                    { delta.automation += 0.07; delta.founder_dependence += 0.05; }\n// bootstrapped: No external funding — margin survival is critical\nif (c.bootstrapped)                    { delta.margin     += 0.06; delta.speed      += 0.04; }\n// High automation preference (8+): Founder explicitly wants hands-off\nif (intake.automation_preference >= 8) { delta.automation += 0.05; }\n// Very low time availability: Model must function without constant founder input\nif (intake.founder_hours_per_week <= 10) { delta.founder_dependence += 0.08; delta.automation += 0.04; }\n// Low budget: Speed to revenue is critical, less room for slow-burn models\nif (intake.budget_usd < 2000)          { delta.speed     += 0.04; delta.margin    += 0.03; }\n// Remote-only: Eliminates physical business models — automation more relevant\nif (c.must_be_remote)                  { delta.automation += 0.03; }\n\n// ── Hint-driven deltas ──────────────────────────────────────────────────\nif (w.prioritize_speed)      { delta.speed     += 0.05; }\nif (w.prioritize_margin)     { delta.margin     += 0.05; }\nif (w.prioritize_automation) { delta.automation += 0.05; }\n\n// ── Compute raw weights with delta, clamp each to [0.05, 0.50] ─────────\nconst raw = {};\nfor (const k of Object.keys(BASE)) {\n  raw[k] = Math.min(0.50, Math.max(0.05, BASE[k] + delta[k]));\n}\n\n// ── Normalize to sum = 1.0 ──────────────────────────────────────────────\nconst total = Object.values(raw).reduce((a, b) => a + b, 0);\nconst weights = {};\nfor (const k of Object.keys(raw)) {\n  weights[k] = +(raw[k] / total).toFixed(4);\n}\n\n// ── Correct float drift (last key absorbs rounding error) ───────────────\nconst sumCheck = Object.values(weights).reduce((a, b) => a + b, 0);\nweights.founder_dependence = +(weights.founder_dependence + (1.0 - sumCheck)).toFixed(4);\n\nreturn [{ json: { intake, weights } }];"
+      }
+    },
+    {
+      "id": "node-driver-tree-fast-gate",
+      "name": "DRIVER_TREE_AND_FAST_GATE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ══════════════════════════════════════════════════════════════════════════════\n// NODE: DRIVER_TREE_AND_FAST_GATE\n// Position: After COMPUTE_WEIGHTS, before PG_INSERT_RUN\n// Purpose: KB v2.0 — Maps intake to primary Driver Tree node, runs FAST audit,\n//          tags ROI formula. Hard gates the pipeline if FAST composite < 8.\n// ══════════════════════════════════════════════════════════════════════════════\n\nconst d      = $input.first().json;\nconst intake = d.intake;\nconst c      = intake.constraints;\nconst w      = d.weights;\n\n// ── 1. DRIVER TREE CLASSIFICATION ───────────────────────────────────────────\nconst driverScore = {\n  Acquisition: 0,\n  Retention:   0,\n  Expansion:   0\n};\n\nif (c.requires_fast_revenue)           driverScore.Acquisition += 3;\nif (intake.business_type === 'new')    driverScore.Acquisition += 2;\nif (w.speed >= 0.28)                   driverScore.Acquisition += 2;\nif (intake.revenue_target_monthly > 5000) driverScore.Acquisition += 1;\nif (c.bootstrapped)                    driverScore.Acquisition += 1;\nif (intake.timeline_months <= 3)       driverScore.Acquisition += 1;\n\nif (intake.business_type === 'existing') driverScore.Retention += 4;\nif (intake.automation_preference >= 8)   driverScore.Retention += 2;\nif (w.founder_dependence >= 0.12)        driverScore.Retention += 2;\nif (c.no_employees)                      driverScore.Retention += 1;\nif (intake.risk_tolerance === 'low')     driverScore.Retention += 1;\n\nif (intake.business_type === 'existing' && intake.revenue_target_monthly > 10000)\n                                         driverScore.Expansion += 3;\nif (w.margin >= 0.18)                    driverScore.Expansion += 2;\nif (intake.founder_hours_per_week > 20)  driverScore.Expansion += 1;\nif (!c.bootstrapped && intake.budget_usd > 5000) driverScore.Expansion += 2;\n\nconst sorted = Object.entries(driverScore).sort((a, b) => b[1] - a[1]);\nconst primaryDriver   = sorted[0][0];\nconst secondaryDriver = sorted[1][0];\n\nconst driverRationale = `Primary driver is ${primaryDriver} (score: ${sorted[0][1]}) because: ` +\n  (primaryDriver === 'Acquisition'\n    ? `intake signals fast revenue need (fast_revenue: ${c.requires_fast_revenue}), ` +\n      `speed weight ${(w.speed*100).toFixed(0)}%, budget $${intake.budget_usd}.`\n  : primaryDriver === 'Retention'\n    ? `existing business signals, high automation preference (${intake.automation_preference}/10), ` +\n      `low risk tolerance (${intake.risk_tolerance}).`\n  : `margin-focused weight ${(w.margin*100).toFixed(0)}%, budget $${intake.budget_usd} ` +\n    `signals capacity for expansion beyond MVP.`);\n\n// ── 2. ROI FORMULA TAGGING ───────────────────────────────────────────────────\nlet roiFormulaTag;\nif (c.bootstrapped && intake.budget_usd < 3000) {\n  roiFormulaTag = 'A_PROFIT';\n} else if (c.requires_fast_revenue && w.speed >= 0.28) {\n  roiFormulaTag = 'B_GROWTH';\n} else if (intake.risk_tolerance === 'low' || w.founder_dependence >= 0.12) {\n  roiFormulaTag = 'C_VALUE';\n} else if (primaryDriver === 'Acquisition') {\n  roiFormulaTag = 'AB';\n} else if (primaryDriver === 'Expansion') {\n  roiFormulaTag = 'BC';\n} else {\n  roiFormulaTag = 'ABC';\n}\n\n// ── 3. FAST FRAMEWORK GATE ───────────────────────────────────────────────────\nconst F_score =\n  (c.must_be_remote ? 1 : 0) +\n  (c.no_employees ? 1 : 0) +\n  (intake.sectors_exclude?.length > 0 ? 1 : 0) +\n  (intake.budget_usd > 0 && intake.timeline_months > 0 ? 1 : 0);\n\nconst A_score =\n  (intake.timeline_months <= 6 ? 1 : 0) +\n  (c.requires_fast_revenue ? 1 : 0) +\n  (intake.founder_hours_per_week >= 5 ? 1 : 0) +\n  (intake.automation_preference >= 6 ? 1 : 0);\n\nconst exclusions = (intake.sectors_exclude?.length || 0);\nconst S_score =\n  (exclusions >= 2 ? 2 : exclusions >= 1 ? 1 : 0) +\n  (c.no_employees && c.must_be_remote ? 1 : 0) +\n  (intake.risk_tolerance ? 1 : 0);\n\nconst revenueRealistic = intake.revenue_target_monthly / Math.max(intake.budget_usd, 1);\nconst T_score =\n  (intake.founder_hours_per_week > 0 ? 1 : 0) +\n  (intake.revenue_target_monthly > 0 ? 1 : 0) +\n  (revenueRealistic < 20 ? 1 : 0) +\n  (intake.risk_tolerance && intake.timeline_months ? 1 : 0);\n\nconst fastComposite = F_score + A_score + S_score + T_score;\nconst fastGatePassed = fastComposite >= 8;\n\nconst fastScores = {\n  F: F_score, A: A_score, S: S_score, T: T_score,\n  composite: fastComposite,\n  gate_passed: fastGatePassed,\n  gate_threshold: 8\n};\n\nif (!fastGatePassed) {\n  return [{ json: {\n    ...d,\n    primary_driver:   primaryDriver,\n    driver_rationale: driverRationale,\n    fast_scores:      fastScores,\n    roi_formula_tag:  roiFormulaTag,\n    fast_gate_passed: false,\n    gate_failure_reason: `FAST composite score ${fastComposite}/16 below threshold 8/16. ` +\n      `Weakest dimension: ${['F','A','S','T'].reduce((min, k) =>\n        fastScores[k] < fastScores[min] ? k : min, 'F')}. ` +\n      `Intake requires more specificity before BAE can generate viable models.`\n  }}];\n}\n\n// ── 4. BEHAVIORAL ANCHOR SELECTION ──────────────────────────────────────────\nconst anchors = [];\n\nif (c.requires_fast_revenue)          anchors.push('Loss Aversion');\nif (intake.automation_preference >= 8) anchors.push('Cognitive Load');\nif (primaryDriver === 'Acquisition')   anchors.push('Social Proof');\nif (primaryDriver === 'Retention')     anchors.push('Dopamine Loops');\nif (primaryDriver === 'Expansion')     anchors.push('Choice Architecture');\nif (intake.risk_tolerance === 'low')   anchors.push('Friction Reduction');\n\nconst behavioralAnchors = [...new Set(anchors)].slice(0, 3);\n\nreturn [{ json: {\n  ...d,\n  primary_driver:    primaryDriver,\n  secondary_driver:  secondaryDriver,\n  driver_rationale:  driverRationale,\n  fast_scores:       fastScores,\n  roi_formula_tag:   roiFormulaTag,\n  behavioral_anchors: behavioralAnchors,\n  fast_gate_passed:  true\n} }];"
+      }
+    },
+    {
+      "id": "node-if-fast-gate",
+      "name": "IF_FAST_GATE_CHECK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [980, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition1",
+              "leftValue": "={{ $json.fast_gate_passed }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node-dlq-fast-gate",
+      "name": "DLQ_FAST_GATE_FAILURE",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1200, 450],
+      "credentials": { "postgres": { "id": "postgres-main", "name": "postgresMain" } },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO dlq_failures (workflow_name, node_name, error_code, error_message, raw_payload)\nVALUES (\n  'BAE_SW01_INTAKE',\n  'DRIVER_TREE_AND_FAST_GATE',\n  'FAST_GATE_FAILURE',\n  '{{ $json.gate_failure_reason }}',\n  '{{ JSON.stringify($json) }}'::jsonb\n);",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-pg-run",
+      "name": "PG_INSERT_RUN",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1200, 200],
+      "credentials": { "postgres": { "id": "postgres-main", "name": "postgresMain" } },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO runs (status, intake, weights, primary_driver, driver_rationale, fast_scores, roi_formula_tag)\nVALUES (\n  'running',\n  '{{ JSON.stringify($json.intake) }}'::jsonb,\n  '{{ JSON.stringify($json.weights) }}'::jsonb,\n  '{{ $json.primary_driver }}',\n  '{{ $json.driver_rationale }}',\n  '{{ JSON.stringify($json.fast_scores) }}'::jsonb,\n  '{{ $json.roi_formula_tag }}'\n)\nRETURNING run_id;",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-set-context",
+      "name": "PASS_CONTEXT",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1420, 200],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            { "id": "a1", "name": "run_id",  "value": "={{ $json.run_id }}", "type": "string" },
+            { "id": "a2", "name": "intake",  "value": "={{ $('DRIVER_TREE_AND_FAST_GATE').item.json.intake }}", "type": "object" },
+            { "id": "a3", "name": "weights", "value": "={{ $('DRIVER_TREE_AND_FAST_GATE').item.json.weights }}", "type": "object" },
+            { "id": "a4", "name": "primary_driver", "value": "={{ $('DRIVER_TREE_AND_FAST_GATE').item.json.primary_driver }}", "type": "string" },
+            { "id": "a5", "name": "driver_rationale", "value": "={{ $('DRIVER_TREE_AND_FAST_GATE').item.json.driver_rationale }}", "type": "string" },
+            { "id": "a6", "name": "fast_scores", "value": "={{ $('DRIVER_TREE_AND_FAST_GATE').item.json.fast_scores }}", "type": "object" },
+            { "id": "a7", "name": "roi_formula_tag", "value": "={{ $('DRIVER_TREE_AND_FAST_GATE').item.json.roi_formula_tag }}", "type": "string" },
+            { "id": "a8", "name": "behavioral_anchors", "value": "={{ $('DRIVER_TREE_AND_FAST_GATE').item.json.behavioral_anchors }}", "type": "object" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node-run-sw02",
+      "name": "RUN_SW02_CONTENDERS",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [1640, 200],
+      "parameters": {
+        "workflowId": { "__rl": true, "mode": "name", "value": "BAE_SW02_CONTENDERS" },
+        "waitForSubWorkflow": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "node-dlq-intake",
+      "name": "DLQ_INTAKE_FAILURE",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [760, 500],
+      "credentials": { "postgres": { "id": "postgres-main", "name": "postgresMain" } },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO dlq_failures (workflow_name, node_name, error_code, error_message, raw_payload)\nVALUES (\n  'BAE_SW01_INTAKE',\n  '{{ $json.node }}',\n  'INTAKE_ERROR',\n  '{{ $json.message }}',\n  '{{ JSON.stringify($json) }}'::jsonb\n);",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "INTAKE_TRIGGER":              { "main": [[{ "node": "VALIDATE_SCHEMA",              "type": "main", "index": 0 }]] },
+    "VALIDATE_SCHEMA":             { "main": [[{ "node": "COMPUTE_WEIGHTS",              "type": "main", "index": 0 }]] },
+    "COMPUTE_WEIGHTS":             { "main": [[{ "node": "DRIVER_TREE_AND_FAST_GATE",    "type": "main", "index": 0 }]] },
+    "DRIVER_TREE_AND_FAST_GATE":   { "main": [[{ "node": "IF_FAST_GATE_CHECK",           "type": "main", "index": 0 }]] },
+    "IF_FAST_GATE_CHECK":          {
+      "main": [
+        [{ "node": "DLQ_FAST_GATE_FAILURE", "type": "main", "index": 0 }],
+        [{ "node": "PG_INSERT_RUN",         "type": "main", "index": 0 }]
+      ]
+    },
+    "PG_INSERT_RUN":       {
+      "main":  [[{ "node": "PASS_CONTEXT",        "type": "main", "index": 0 }]],
+      "error": [[{ "node": "DLQ_INTAKE_FAILURE",  "type": "main", "index": 0 }]]
+    },
+    "PASS_CONTEXT":        { "main": [[{ "node": "RUN_SW02_CONTENDERS", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": false,
+    "callerPolicy": "any"
+  },
+  "meta": { "instanceId": "bae-instance" }
+}

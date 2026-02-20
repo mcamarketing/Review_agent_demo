@@ -10,7 +10,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "client-support",
+        "path": "agent-web",
         "responseMode": "responseNode",
         "responseNodeName": "Respond to Webhook",
         "options": {}
