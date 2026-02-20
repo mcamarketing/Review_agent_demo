@@ -81,18 +81,28 @@
     {
       "parameters": {
         "conditions": {
-          "number": [
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
             {
-              "value1": "={{ $json.length }}",
-              "operation": "larger"
+              "value1": "={{ $json[0]?.json?.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
             }
-          ]
+          ],
+          "combinator": "and"
         }
       },
       "id": "ed63856b-4015-4930-bf9d-e8d5ddaa925f",
       "name": "Client Exists?",
       "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
+      "typeVersion": 2,
       "position": [
         -1104,
         144
@@ -102,7 +112,8 @@
       "parameters": {
         "options": {
           "systemMessage": "You are Nathan, the Rekindle Pro support agent. You help business owners who are signed up to Rekindle Pro — an SMS review automation service. Be concise, helpful and direct. Never say 'someone will get back to you'. If asked about billing, explain they are charged £2.50 per review captured monthly. If asked to pause or resume their campaign, use the appropriate tool. If asked something you cannot resolve, escalate by telling them Riccardo will call them shortly. Keep replies under 160 characters when responding via SMS."
-        }
+        },
+        "text": "={{ $json.userMessage }}"
       },
       "id": "ee0763be-0e8d-47b3-bf96-ea5b2861677b",
       "name": "AI Agent: Nathan",
