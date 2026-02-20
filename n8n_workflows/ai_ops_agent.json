@@ -11,7 +11,8 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "client-support",
-        "responseMode": "lastNode",
+        "responseMode": "responseNode",
+        "responseNodeName": "Respond to Webhook",
         "options": {}
       },
       "id": "68e50ae8-c393-4696-ad4a-17f0d54d3e03",
@@ -340,6 +341,35 @@
       ],
       "id": "35920af2-3086-4cba-95e4-68e6131eb716",
       "name": "Call n8n Workflow Tool"
+    },
+    {
+      "parameters": {
+        "mode": "mergeByIndex",
+        "options": {}
+      },
+      "id": "merge-001",
+      "name": "Merge Responses",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        400,
+        -8
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "respond-001",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -8
+      ]
     }
   ],
   "connections": {
@@ -430,6 +460,50 @@
             "node": "Return Web Reply",
             "type": "main",
             "index": 0
+          }
+        ]
+      ]
+    },
+    "Send SMS Reply": {
+      "main": [
+        [
+          {
+            "node": "Merge Responses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Web Reply": {
+      "main": [
+        [
+          {
+            "node": "Merge Responses",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Responses": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Client Not Found": {
+      "main": [
+        [
+          {
+            "node": "Merge Responses",
+            "type": "main",
+            "index": 2
           }
         ]
       ]
@@ -534,7 +608,8 @@
         "parameters": {
           "httpMethod": "POST",
           "path": "client-support",
-          "responseMode": "lastNode",
+          "responseMode": "responseNode",
+          "responseNodeName": "Respond to Webhook",
           "options": {}
         },
         "id": "68e50ae8-c393-4696-ad4a-17f0d54d3e03",
@@ -863,6 +938,35 @@
         ],
         "id": "35920af2-3086-4cba-95e4-68e6131eb716",
         "name": "Call n8n Workflow Tool"
+      },
+      {
+        "parameters": {
+          "mode": "mergeByIndex",
+          "options": {}
+        },
+        "id": "merge-001",
+        "name": "Merge Responses",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          400,
+          -8
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        },
+        "id": "respond-001",
+        "name": "Respond to Webhook",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          640,
+          -8
+        ]
       }
     ],
     "connections": {
@@ -953,6 +1057,50 @@
               "node": "Return Web Reply",
               "type": "main",
               "index": 0
+            }
+          ]
+        ]
+      },
+      "Send SMS Reply": {
+        "main": [
+          [
+            {
+              "node": "Merge Responses",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Return Web Reply": {
+        "main": [
+          [
+            {
+              "node": "Merge Responses",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Merge Responses": {
+        "main": [
+          [
+            {
+              "node": "Respond to Webhook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Client Not Found": {
+        "main": [
+          [
+            {
+              "node": "Merge Responses",
+              "type": "main",
+              "index": 2
             }
           ]
         ]
