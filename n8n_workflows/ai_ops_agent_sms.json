@@ -2,7 +2,7 @@
   "updatedAt": "2026-02-19T01:01:20.269Z",
   "createdAt": "2026-02-17T23:50:10.391Z",
   "id": "H6sBvxFg1sRHOKBQ",
-  "name": "Rekindle Pro - AI Ops Agent (Proper Architecture)",
+  "name": "Rekindle Pro - SMS Agent",
   "description": null,
   "active": true,
   "isArchived": false,
@@ -36,12 +36,12 @@
             },
             {
               "name": "phone",
-              "value": "={{ $json.body.from || $json.body.phone || 'web-user' }}",
+              "value": "={{ $json.body.from || $json.body.phone }}",
               "type": "string"
             },
             {
               "name": "channel",
-              "value": "={{ $json.body.from ? 'sms' : 'web' }}",
+              "value": "sms",
               "type": "string"
             }
           ]
@@ -111,7 +111,7 @@
     {
       "parameters": {
         "options": {
-          "systemMessage": "You are Nathan, the Rekindle Pro support agent. You help business owners who are signed up to Rekindle Pro — an SMS review automation service. Be concise, helpful and direct. Never say 'someone will get back to you'. If asked about billing, explain they are charged £2.50 per review captured monthly. If asked to pause or resume their campaign, use the appropriate tool. If asked something you cannot resolve, escalate by telling them Riccardo will call them shortly. Keep replies under 160 characters when responding via SMS."
+          "systemMessage": "You are Nathan, the Rekindle Pro support agent. You help business owners who are signed up to Rekindle Pro \u00e2\u20ac\u201d an SMS review automation service. Be concise, helpful and direct. Never say 'someone will get back to you'. If asked about billing, explain they are charged \u00c2\u00a32.50 per review captured monthly. If asked to pause or resume their campaign, use the appropriate tool. If asked something you cannot resolve, escalate by telling them Riccardo will call them shortly. Keep replies under 160 characters when responding via SMS."
         },
         "text": "={{ $json.userMessage }}"
       },
@@ -226,27 +226,6 @@
     },
     {
       "parameters": {
-        "conditions": {
-          "string": [
-            {
-              "value1": "={{ $json.channel }}",
-              "operation": "equals",
-              "value2": "sms"
-            }
-          ]
-        }
-      },
-      "id": "bfb5b127-b526-4fdd-af86-1fb685438c02",
-      "name": "SMS or Web?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [
-        -64,
-        -16
-      ]
-    },
-    {
-      "parameters": {
         "method": "POST",
         "url": "https://rest.clicksend.com/v3/sms/send",
         "authentication": "predefinedCredentialType",
@@ -270,33 +249,6 @@
           "name": "ClickSend account 2"
         }
       }
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "name": "reply",
-              "value": "={{ $json.reply }}",
-              "type": "string"
-            },
-            {
-              "name": "status",
-              "value": "ok",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "61b6066a-045d-4d42-a4bc-b09e6222be07",
-      "name": "Return Web Reply",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        160,
-        96
-      ]
     },
     {
       "parameters": {
@@ -355,7 +307,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Pass through response from whichever branch executed\n// With responseNode mode, only one branch runs\nconst input = $input.first().json;\n\n// Normalize response for web\nif (input.reply) {\n  return [{ json: { reply: input.reply, status: input.status || 'ok' } }];\n}\n\n// SMS branch response\nreturn [{ json: { status: 'ok', sms_sent: true } }];"
+        "jsCode": "// SMS Agent - always respond via SMS\nconst input = $input.first().json;\nreturn [{ json: { status: 'ok', sms_sent: true } }];"
       },
       "id": "route-response-001",
       "name": "Route Response",
@@ -449,25 +401,7 @@
       "main": [
         [
           {
-            "node": "SMS or Web?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "SMS or Web?": {
-      "main": [
-        [
-          {
             "node": "Send SMS Reply",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Return Web Reply",
             "type": "main",
             "index": 0
           }
@@ -485,33 +419,11 @@
         ]
       ]
     },
-    "Return Web Reply": {
-      "main": [
-        [
-          {
-            "node": "Route Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Route Response": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Client Not Found": {
       "main": [
         [
           {
-            "node": "Route Response",
+            "node": "Send SMS Reply",
             "type": "main",
             "index": 0
           }
@@ -617,7 +529,7 @@
       {
         "parameters": {
           "httpMethod": "POST",
-          "path": "client-support",
+          "path": "agent-sms",
           "responseMode": "responseNode",
           "responseNodeName": "Respond to Webhook",
           "options": {}
@@ -708,7 +620,7 @@
       {
         "parameters": {
           "options": {
-            "systemMessage": "You are Nathan, the Rekindle Pro support agent. You help business owners who are signed up to Rekindle Pro — an SMS review automation service. Be concise, helpful and direct. Never say 'someone will get back to you'. If asked about billing, explain they are charged £2.50 per review captured monthly. If asked to pause or resume their campaign, use the appropriate tool. If asked something you cannot resolve, escalate by telling them Riccardo will call them shortly. Keep replies under 160 characters when responding via SMS."
+            "systemMessage": "You are Nathan, the Rekindle Pro support agent. You help business owners who are signed up to Rekindle Pro \u00e2\u20ac\u201d an SMS review automation service. Be concise, helpful and direct. Never say 'someone will get back to you'. If asked about billing, explain they are charged \u00c2\u00a32.50 per review captured monthly. If asked to pause or resume their campaign, use the appropriate tool. If asked something you cannot resolve, escalate by telling them Riccardo will call them shortly. Keep replies under 160 characters when responding via SMS."
           }
         },
         "id": "ee0763be-0e8d-47b3-bf96-ea5b2861677b",
