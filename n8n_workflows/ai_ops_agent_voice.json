@@ -2,7 +2,7 @@
   "updatedAt": "2026-02-19T01:01:20.269Z",
   "createdAt": "2026-02-17T23:50:10.391Z",
   "id": "H6sBvxFg1sRHOKBQ",
-  "name": "Rekindle Pro - AI Ops Agent (Proper Architecture)",
+  "name": "Rekindle Pro - Voice Agent",
   "description": null,
   "active": true,
   "isArchived": false,
@@ -10,7 +10,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "client-support",
+        "path": "agent-voice",
         "responseMode": "responseNode",
         "responseNodeName": "Respond to Webhook",
         "options": {}
@@ -31,17 +31,17 @@
           "assignments": [
             {
               "name": "userMessage",
-              "value": "={{ $json.body.message || $json.body.body }}",
+              "value": "={{ $json.body.message || $json.body.transcript || $json.body.text }}",
               "type": "string"
             },
             {
               "name": "phone",
-              "value": "={{ $json.body.from || $json.body.phone || 'web-user' }}",
+              "value": "={{ $json.body.from || $json.body.phone || $json.body.caller_id || 'voice-user' }}",
               "type": "string"
             },
             {
               "name": "channel",
-              "value": "={{ $json.body.from ? 'sms' : 'web' }}",
+              "value": "voice",
               "type": "string"
             }
           ]
@@ -81,28 +81,18 @@
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": false,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
+          "number": [
             {
-              "value1": "={{ $json[0]?.json?.id }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "exists"
-              }
+              "value1": "={{ $json.length }}",
+              "operation": "larger"
             }
-          ],
-          "combinator": "and"
+          ]
         }
       },
       "id": "ed63856b-4015-4930-bf9d-e8d5ddaa925f",
       "name": "Client Exists?",
       "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
+      "typeVersion": 1,
       "position": [
         -1104,
         144
@@ -111,9 +101,9 @@
     {
       "parameters": {
         "options": {
-          "systemMessage": "You are Nathan, the Rekindle Pro support agent. You help business owners who are signed up to Rekindle Pro — an SMS review automation service. Be concise, helpful and direct. Never say 'someone will get back to you'. If asked about billing, explain they are charged £2.50 per review captured monthly. If asked to pause or resume their campaign, use the appropriate tool. If asked something you cannot resolve, escalate by telling them Riccardo will call them shortly. Keep replies under 160 characters when responding via SMS."
+          "systemMessage": "You are Nathan, the Rekindle Pro support agent on a phone call. You help business owners who are signed up to Rekindle Pro — an SMS review automation service. Be concise, helpful and conversational. Speak naturally as if on a phone call. Never say 'someone will get back to you'. If asked about billing, explain they are charged £2.50 per review captured monthly. If asked to pause or resume their campaign, use the appropriate tool. If asked something you cannot resolve, escalate by telling them Riccardo will call them shortly. Keep responses brief and natural for voice."
         },
-        "text": "={{ $json.userMessage }}"
+        "text": "={{ $('Prepare Input').item.json.userMessage }}"
       },
       "id": "ee0763be-0e8d-47b3-bf96-ea5b2861677b",
       "name": "AI Agent: Nathan",
@@ -203,12 +193,17 @@
             },
             {
               "name": "channel",
-              "value": "={{ $('Prepare Input').item.json.channel }}",
+              "value": "voice",
               "type": "string"
             },
             {
               "name": "phone",
               "value": "={{ $('Prepare Input').item.json.phone }}",
+              "type": "string"
+            },
+            {
+              "name": "status",
+              "value": "ok",
               "type": "string"
             }
           ]
@@ -222,80 +217,6 @@
       "position": [
         -288,
         -16
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "string": [
-            {
-              "value1": "={{ $json.channel }}",
-              "operation": "equals",
-              "value2": "sms"
-            }
-          ]
-        }
-      },
-      "id": "bfb5b127-b526-4fdd-af86-1fb685438c02",
-      "name": "SMS or Web?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [
-        -64,
-        -16
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://rest.clicksend.com/v3/sms/send",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "clickSendApi",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"messages\": [\n    {\n      \"source\": \"n8n\",\n      \"from\": \"RekindlePro\",\n      \"body\": \"{{ $json.reply }}\",\n      \"to\": \"={{ $json.phone.startsWith('+') ? $json.phone : '+44' + $json.phone.slice(1) }}\"\n    }\n  ]\n}",
-        "options": {}
-      },
-      "id": "b6b9fa19-cdf2-4d2a-8f16-14145314dd15",
-      "name": "Send SMS Reply",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        160,
-        -112
-      ],
-      "credentials": {
-        "clickSendApi": {
-          "id": "9CcnKL7uI6GrC0rJ",
-          "name": "ClickSend account 2"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "name": "reply",
-              "value": "={{ $json.reply }}",
-              "type": "string"
-            },
-            {
-              "name": "status",
-              "value": "ok",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "61b6066a-045d-4d42-a4bc-b09e6222be07",
-      "name": "Return Web Reply",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        160,
-        96
       ]
     },
     {
@@ -449,57 +370,6 @@
       "main": [
         [
           {
-            "node": "SMS or Web?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "SMS or Web?": {
-      "main": [
-        [
-          {
-            "node": "Send SMS Reply",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Return Web Reply",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Send SMS Reply": {
-      "main": [
-        [
-          {
-            "node": "Route Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Return Web Reply": {
-      "main": [
-        [
-          {
-            "node": "Route Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Route Response": {
-      "main": [
-        [
-          {
             "node": "Respond to Webhook",
             "type": "main",
             "index": 0
@@ -511,7 +381,7 @@
       "main": [
         [
           {
-            "node": "Route Response",
+            "node": "Respond to Webhook",
             "type": "main",
             "index": 0
           }
@@ -617,7 +487,7 @@
       {
         "parameters": {
           "httpMethod": "POST",
-          "path": "client-support",
+          "path": "agent-voice",
           "responseMode": "responseNode",
           "responseNodeName": "Respond to Webhook",
           "options": {}
