@@ -1380,25 +1380,25 @@
     </div>
 
 <!-- ===================== SUPPORT CHAT WIDGET ===================== -->
-    <div id="support-widget" style="position:fixed;bottom:24px;right:24px;z-index:9999;font-family:'Google Sans','Product Sans',Roboto,Arial,sans-serif;">
+    <div id="support-widget" style="position:fixed;bottom:24px;right:24px;z-index:9999;font-family:'Inter',sans-serif;">
 
         <!-- Toggle button -->
         <button id="support-toggle"
             onclick="toggleSupportChat()"
-            style="width:60px;height:60px;border-radius:16px;background:#1a73e8;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(26,115,232,0.4);transition:all .25s cubic-bezier(0.4, 0, 0.2, 1);"
-            onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 8px 24px rgba(26,115,232,0.5)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 6px 16px rgba(26,115,232,0.4)'"
+            style="width:60px;height:60px;border-radius:16px;background:#C4622D;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(196,98,45,0.4);transition:all .25s cubic-bezier(0.4, 0, 0.2, 1);"
+            onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 8px 24px rgba(196,98,45,0.5)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 6px 16px rgba(196,98,45,0.4)'"
             aria-label="Open support chat">
             <span id="support-icon" class="material-symbols-outlined" style="font-size:28px;">chat</span>
         </button>
 
         <!-- Chat panel -->
         <div id="support-panel"
-            style="display:none;flex-direction:column;position:absolute;bottom:76px;right:0;width:360px;height:520px;background:#fff;border-radius:24px;box-shadow:0 12px 48px rgba(0,0,0,0.18);border:1px solid #e8eaed;overflow:hidden;opacity:0;transform:translateY(16px) scale(0.96);transition:all .25s cubic-bezier(0.4, 0, 0.2, 1);">
+            style="display:none;flex-direction:column;position:absolute;bottom:76px;right:0;width:380px;height:580px;background:#fff;border-radius:24px;box-shadow:0 12px 48px rgba(0,0,0,0.18);border:1px solid #e8eaed;overflow:hidden;opacity:0;transform:translateY(16px) scale(0.96);transition:all .25s cubic-bezier(0.4, 0, 0.2, 1);">
 
             <!-- Header -->
             <div style="background:#fff;padding:16px 20px;display:flex;align-items:center;gap:14px;flex-shrink:0;border-bottom:1px solid #f1f3f4;">
-                <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg, #4285f4, #34a853);display:flex;align-items:center;justify-content:center;">
-                    <span class="material-symbols-outlined" style="color:#fff;font-size:22px;">smart_toy</span>
+                <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;background:#fff;">
+                    <img src="https://rekindlepro.com/logo.png" alt="RekindlePro" style="width:100%;height:100%;object-fit:contain;">
                 </div>
                 <div style="flex:1;">
                     <div style="color:#202124;font-weight:600;font-size:15px;">Nathan</div>
@@ -1416,8 +1416,8 @@
             <div id="support-messages"
                 style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;background:#fff;">
                 <div style="display:flex;gap:10px;align-items:flex-start;">
-                    <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, #4285f4, #34a853);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;">
-                        <span class="material-symbols-outlined" style="color:#fff;font-size:16px;">smart_toy</span>
+                    <div style="width:32px;height:32px;border-radius:50%;overflow:hidden;background:#fff;flex-shrink:0;margin-top:2px;">
+                        <img src="https://rekindlepro.com/logo.png" alt="Nathan" style="width:100%;height:100%;object-fit:contain;">
                     </div>
                     <div style="background:#f8f9fa;border-radius:20px;border-top-left-radius:6px;padding:12px 16px;font-size:14px;color:#202124;max-width:260px;line-height:1.5;">
                         Hi! I'm Nathan, Rekindle Pro's assistant. Ask me anything about our services.
@@ -1427,20 +1427,20 @@
 
             <!-- Suggestions -->
             <div id="suggestion-chips" style="padding:0 16px 8px;display:flex;gap:8px;flex-wrap:wrap;">
-                <button onclick="sendSupportMessage('How much does it cost?')" style="background:#f1f3f4;border:none;border-radius:20px;padding:6px 14px;font-size:12px;color:#444;cursor:pointer;transition:all .2s;font-family:inherit;" onmouseover="this.style.background='#e8f0fe';this.style.color='#1a73e8'" onmouseout="this.style.background='#f1f3f4';this.style.color='#444'">How much?</button>
-                <button onclick="sendSupportMessage('What is Rekindle Pro?')" style="background:#f1f3f4;border:none;border-radius:20px;padding:6px 14px;font-size:12px;color:#444;cursor:pointer;transition:all .2s;font-family:inherit;" onmouseover="this.style.background='#e8f0fe';this.style.color='#1a73e8'" onmouseout="this.style.background='#f1f3f4';this.style.color='#444'">What is it?</button>
-                <button onclick="sendSupportMessage('How do reviews work?')" style="background:#f1f3f4;border:none;border-radius:20px;padding:6px 14px;font-size:12px;color:#444;cursor:pointer;transition:all .2s;font-family:inherit;" onmouseover="this.style.background='#e8f0fe';this.style.color='#1a73e8'" onmouseout="this.style.background='#f1f3f4';this.style.color='#444'">How does it work?</button>
+                <button onclick="sendSupportMessage('How much does it cost?')" style="background:#fef3ee;border:none;border-radius:20px;padding:6px 14px;font-size:12px;color:#C4622D;cursor:pointer;transition:all .2s;font-family:inherit;" onmouseover="this.style.background='#C4622D';this.style.color='#fff'" onmouseout="this.style.background='#fef3ee';this.style.color='#C4622D'">How much?</button>
+                <button onclick="sendSupportMessage('What is Rekindle Pro?')" style="background:#fef3ee;border:none;border-radius:20px;padding:6px 14px;font-size:12px;color:#C4622D;cursor:pointer;transition:all .2s;font-family:inherit;" onmouseover="this.style.background='#C4622D';this.style.color='#fff'" onmouseout="this.style.background='#fef3ee';this.style.color='#C4622D'">What is it?</button>
+                <button onclick="sendSupportMessage('How do reviews work?')" style="background:#fef3ee;border:none;border-radius:20px;padding:6px 14px;font-size:12px;color:#C4622D;cursor:pointer;transition:all .2s;font-family:inherit;" onmouseover="this.style.background='#C4622D';this.style.color='#fff'" onmouseout="this.style.background='#fef3ee';this.style.color='#C4622D'">How does it work?</button>
             </div>
 
             <!-- Input -->
             <div style="border-top:1px solid #f1f3f4;padding:12px 16px;display:flex;gap:10px;flex-shrink:0;background:#fff;">
                 <input id="support-input" type="text" placeholder="Ask me anything..."
                     style="flex:1;font-size:14px;border:1px solid #dadce0;border-radius:24px;padding:12px 18px;outline:none;font-family:inherit;transition:border-color .2s,box-shadow .2s;"
-                    onfocus="this.style.borderColor='#1a73e8';this.style.boxShadow='0 0 0 2px rgba(26,115,232,0.1)'" onblur="this.style.borderColor='#dadce0';this.style.boxShadow='none'"
+                    onfocus="this.style.borderColor='#C4622D';this.style.boxShadow='0 0 0 2px rgba(196,98,45,0.1)'" onblur="this.style.borderColor='#dadce0';this.style.boxShadow='none'"
                     onkeydown="if(event.key==='Enter')sendSupportMessage()" />
                 <button onclick="sendSupportMessage()"
-                    style="width:48px;height:48px;border-radius:50%;background:#1a73e8;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;"
-                    onmouseover="this.style.background='#1557b0';this.style.transform='scale(1.05)'" onmouseout="this.style.background='#1a73e8';this.style.transform='scale(1)'"
+                    style="width:48px;height:48px;border-radius:50%;background:#C4622D;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;"
+                    onmouseover="this.style.background='#a85425';this.style.transform='scale(1.05)'" onmouseout="this.style.background='#C4622D';this.style.transform='scale(1)'"
                     aria-label="Send message">
                     <span class="material-symbols-outlined" style="color:#fff;font-size:20px;">send</span>
                 </button>
@@ -1479,7 +1479,6 @@
             const messageText = text || input.value.trim();
             if (!messageText) return;
 
-            // Update input if triggered by chip
             if (text) {
                 input.value = text;
             } else {
@@ -1490,14 +1489,14 @@
             // User bubble
             const userBubble = document.createElement('div');
             userBubble.style.cssText = 'display:flex;justify-content:flex-end;';
-            userBubble.innerHTML = `<div style="background:#1a73e8;border-radius:20px;border-top-right-radius:6px;padding:12px 16px;font-size:14px;color:#fff;max-width:260px;line-height:1.5;">${messageText.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`;
+            userBubble.innerHTML = `<div style="background:#C4622D;border-radius:20px;border-top-right-radius:6px;padding:12px 16px;font-size:14px;color:#fff;max-width:260px;line-height:1.5;">${messageText.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`;
             messages.appendChild(userBubble);
 
             // Typing indicator
             const typing = document.createElement('div');
             typing.id = 'typing-indicator';
             typing.style.cssText = 'display:flex;gap:10px;align-items:flex-start;';
-            typing.innerHTML = `<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, #4285f4, #34a853);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;"><span class="material-symbols-outlined" style="color:#fff;font-size:16px;">smart_toy</span></div><div style="background:#f1f3f4;border-radius:20px;border-top-left-radius:6px;padding:12px 16px;font-size:14px;color:#5f6368;"><span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></div>`;
+            typing.innerHTML = `<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, #C4622D, #D4733E);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;"><span class="material-symbols-outlined" style="color:#fff;font-size:16px;">smart_toy</span></div><div style="background:#f1f3f4;border-radius:20px;border-top-left-radius:6px;padding:12px 16px;font-size:14px;color:#5f6368;"><span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></div>`;
             messages.appendChild(typing);
             messages.scrollTop = messages.scrollHeight;
 
@@ -1525,7 +1524,7 @@
                 typing.remove();
                 const botBubble = document.createElement('div');
                 botBubble.style.cssText = 'display:flex;gap:10px;align-items:flex-start;';
-                botBubble.innerHTML = `<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, #4285f4, #34a853);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;"><span class="material-symbols-outlined" style="color:#fff;font-size:16px;">smart_toy</span></div><div style="background:#f8f9fa;border-radius:20px;border-top-left-radius:6px;padding:12px 16px;font-size:14px;color:#202124;max-width:260px;line-height:1.5;">${reply.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`;
+                botBubble.innerHTML = `<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, #C4622D, #D4733E);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;"><span class="material-symbols-outlined" style="color:#fff;font-size:16px;">smart_toy</span></div><div style="background:#f8f9fa;border-radius:20px;border-top-left-radius:6px;padding:12px 16px;font-size:14px;color:#202124;max-width:260px;line-height:1.5;">${reply.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`;
                 messages.appendChild(botBubble);
             } catch (e) {
                 typing.remove();
